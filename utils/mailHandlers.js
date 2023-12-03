@@ -4,23 +4,61 @@ const prisma = require('./prisma')
 const { v4: uuidv4 } = require('uuid')
 const dayjs = require('dayjs')
 
-const sendEmailVerifyCode = asyncHandler(async (email, code, tx) => {
-  // Create email verify token
-  await tx.users.update({
-    where: {
-      email,
-    },
-    data: {
-      verification_tokens: {
-        create: {
-          code,
-          token: uuidv4(),
-          verify_type: 'EMAIL',
-          expires_at: dayjs().add(1, 'day'),
+const sendEmailVerifyCode = asyncHandler(async (email, role, code, tx) => {
+  // Create email verify token based on role
+  if (role === 'admin') {
+    await tx.admins.update({
+      where: {
+        email,
+      },
+      data: {
+        verification_tokens: {
+          create: {
+            code,
+            token: uuidv4(),
+            verify_type: 'EMAIL',
+            expires_at: dayjs().add(1, 'day'),
+          },
         },
       },
-    },
-  })
+    })
+  }
+
+  if (role === 'teacher') {
+    await tx.teachers.update({
+      where: {
+        email,
+      },
+      data: {
+        verification_tokens: {
+          create: {
+            code,
+            token: uuidv4(),
+            verify_type: 'EMAIL',
+            expires_at: dayjs().add(1, 'day'),
+          },
+        },
+      },
+    })
+  }
+
+  if (role === 'student') {
+    await tx.students.update({
+      where: {
+        email,
+      },
+      data: {
+        verification_tokens: {
+          create: {
+            code,
+            token: uuidv4(),
+            verify_type: 'EMAIL',
+            expires_at: dayjs().add(1, 'day'),
+          },
+        },
+      },
+    })
+  }
 
   // Send verification email
   await mailTransporter.sendMail({

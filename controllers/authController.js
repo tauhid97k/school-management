@@ -32,22 +32,22 @@ const register = asyncHandler(async (req, res, next) => {
   // Create new user
   await prisma.$transaction(
     async (tx) => {
-      const user = await tx.users.create({ data })
+      const admin = await tx.admins.create({ data })
 
-      // Assign a role (Default user)
-      const role = data.role ? data.role : 'user'
-      await assignRole(user.id, role, tx)
+      // Assign a role (Default admin for public registration)
+      await assignRole(admin.id, 'admin', tx)
 
       // Send a verification code to email
       const verificationCode = Math.floor(10000000 + Math.random() * 90000000)
-      await sendEmailVerifyCode(data.email, verificationCode, tx)
+      await sendEmailVerifyCode(data.email, 'admin', verificationCode, tx)
 
-      // Login the user
+      // Login the admin
       // Generate JWT Access Token
       const accessToken = jwt.sign(
         {
           user: {
-            email: user.email,
+            email: admin.email,
+            role: 'admin',
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
@@ -58,7 +58,8 @@ const register = asyncHandler(async (req, res, next) => {
       const refreshToken = jwt.sign(
         {
           user: {
-            email: user.email,
+            email: admin.email,
+            role: 'admin',
           },
         },
         process.env.REFRESH_TOKEN_SECRET,
@@ -81,7 +82,7 @@ const register = asyncHandler(async (req, res, next) => {
 
       await tx.personal_tokens.create({
         data: {
-          user_id: user.id,
+          admin_id: admin.id,
           refresh_token: refreshToken,
           expires_at: jwtExpireTime,
           user_device: deviceWithModel,

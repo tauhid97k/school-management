@@ -13,57 +13,109 @@ enum VerifyType {
   PASSWORD_RESET
 }
 
-model users {
-  id                  Int                   @id @default(autoincrement())
-  name                String
-  email               String                @unique
-  password            String
-  email_verified_at   DateTime?
-  is_suspended        Boolean               @default(false)
-  created_at          DateTime              @default(now())
-  updated_at          DateTime              @updatedAt
-  personal_tokens     personal_tokens[]
-  verification_tokens verification_tokens[]
+model super_admins {
+  id         Int      @id @default(autoincrement())
+  name       String
+  email      String   @unique
+  password   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model admins {
+  id                Int       @id @default(autoincrement())
+  name              String
+  email             String    @unique
+  password          String
+  email_verified_at DateTime?
+  is_suspended      Boolean   @default(false)
+  school            String
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
   user_roles          user_roles[]
+  verification_tokens verification_tokens[]
+  personal_tokens     personal_tokens[]
+}
+
+model teachers {
+  id                Int       @id @default(autoincrement())
+  name              String
+  email             String    @unique
+  password          String
+  email_verified_at DateTime?
+  is_suspended      Boolean   @default(false)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  user_roles          user_roles[]
+  verification_tokens verification_tokens[]
+  personal_tokens     personal_tokens[]
+}
+
+model students {
+  id                Int       @id @default(autoincrement())
+  name              String
+  email             String    @unique
+  password          String
+  email_verified_at DateTime?
+  is_suspended      Boolean   @default(false)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  user_roles          user_roles[]
+  verification_tokens verification_tokens[]
+  personal_tokens     personal_tokens[]
 }
 
 model personal_tokens {
-  id      Int @id @default(autoincrement())
-  user_id Int
-
+  id            Int      @id @default(autoincrement())
+  admin_id      Int?
+  teacher_id    Int?
+  student_id    Int?
   user_device   String?
   refresh_token String
   expires_at    Int
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  reachers teachers? @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  admins   admins?   @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  ttudents students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
 
   @@index([refresh_token], type: Hash)
 }
 
 model verification_tokens {
   id          Int        @id @default(autoincrement())
-  user_id     Int
+  admin_id    Int?
+  teacher_id  Int?
+  student_id  Int?
   code        Int
   token       String
   verify_type VerifyType
   expires_at  DateTime
   created_at  DateTime   @default(now())
 
-  users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  reachers teachers? @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  admins   admins?   @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  ttudents students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
 
   @@index([code], type: Hash)
   @@index([token], type: Hash)
 }
 
 model user_roles {
-  id      Int @id @default(autoincrement())
-  user_id Int @unique
-  role_id Int
+  id         Int  @id @default(autoincrement())
+  admin_id   Int? @unique
+  teacher_id Int? @unique
+  student_id Int? @unique
+  role_id    Int
 
-  users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  roles roles @relation(fields: [role_id], references: [id])
+  reachers teachers? @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  roles    roles     @relation(fields: [role_id], references: [id])
+  admins   admins?   @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  ttudents students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
 }
 
 model role_permissions {
@@ -86,19 +138,11 @@ model roles {
 }
 
 model permissions {
-  id               Int                @id @default(autoincrement())
-  name             String             @unique
-  group            String
-  created_at       DateTime           @default(now())
-  updated_at       DateTime           @updatedAt
-  role_permissions role_permissions[]
-}
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  group      String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-model todos {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  isCompleted Boolean  @default(false)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  role_permissions role_permissions[]
 }

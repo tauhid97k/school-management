@@ -7,18 +7,52 @@ const assignRole = asyncHandler(async (userId, roleName, tx) => {
     },
   })
 
-  await tx.user_roles.upsert({
-    where: {
-      user_id: userId,
-    },
-    create: {
-      user_id: userId,
-      role_id: role.id,
-    },
-    update: {
-      role_id: role.id,
-    },
-  })
+  if (role.name === 'admin') {
+    await tx.user_roles.upsert({
+      where: {
+        admin_id: userId,
+      },
+      create: {
+        admin_id: userId,
+        role_id: role.id,
+      },
+      update: {
+        role_id: role.id,
+      },
+    })
+    return
+  }
+
+  if (role.name === 'teacher') {
+    await tx.user_roles.upsert({
+      where: {
+        teacher_id: userId,
+      },
+      create: {
+        teacher_id: userId,
+        role_id: role.id,
+      },
+      update: {
+        role_id: role.id,
+      },
+    })
+    return
+  }
+
+  if (role.name === 'student') {
+    await tx.user_roles.upsert({
+      where: {
+        student_id: userId,
+      },
+      create: {
+        student_id: userId,
+        role_id: role.id,
+      },
+      update: {
+        role_id: role.id,
+      },
+    })
+  }
 })
 
 module.exports = assignRole
