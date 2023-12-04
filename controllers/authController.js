@@ -118,21 +118,25 @@ const resendEmail = asyncHandler(async (req, res, next) => {
   const verificationCode = Math.floor(10000000 + Math.random() * 90000000)
 
   await prisma.$transaction(async (tx) => {
+    if (user.email_verified_at) {
+      return res.json({ message: 'Your email is already verified' })
+    }
+
     // Delete other verification tokens (if exist)
-    await tx.users.update({
+    await tx.admins.update({
       where: {
         email: user.email,
       },
       data: {
         verification_tokens: {
           deleteMany: {
-            user_id: user.id,
+            admin_id: user.id,
           },
         },
       },
     })
 
-    await sendEmailVerifyCode(user.email, verificationCode, tx)
+    await sendEmailVerifyCode(user.email, 'admin', verificationCode, tx)
   })
 
   res.json({
@@ -163,14 +167,38 @@ const verifyEmail = asyncHandler(async (req, res, next) => {
       return res.json({ message: 'Invalid Code' })
     }
 
-    await tx.users.update({
-      where: {
-        email: user.email,
-      },
-      data: {
-        email_verified_at: new Date(),
-      },
-    })
+    if (user.role === 'admin') {
+      await tx.admins.update({
+        where: {
+          email: user.email,
+        },
+        data: {
+          email_verified_at: new Date(),
+        },
+      })
+    }
+
+    if (user.role === 'teacher') {
+      await tx.teachers.update({
+        where: {
+          email: user.email,
+        },
+        data: {
+          email_verified_at: new Date(),
+        },
+      })
+    }
+
+    if (user.role === 'student') {
+      await tx.students.update({
+        where: {
+          email: user.email,
+        },
+        data: {
+          email_verified_at: new Date(),
+        },
+      })
+    }
 
     res.json({
       message: 'Verification successful',
@@ -184,7 +212,6 @@ const verifyEmail = asyncHandler(async (req, res, next) => {
   @desc     User login
 */
 const login = asyncHandler(async (req, res, next) => {
-  console.log('Yes')
   // Check if any old cookie exist (delete it)
   const cookies = req.cookies
   if (cookies?.express_jwt) {
@@ -195,16 +222,35 @@ const login = asyncHandler(async (req, res, next) => {
     })
   }
 
-  const { email, password } = await loginValidator.validate(req.body, {
+  const { email, password, role } = await loginValidator.validate(req.body, {
     abortEarly: false,
   })
 
   await prisma.$transaction(async (tx) => {
-    const user = await tx.users.findUnique({
-      where: {
-        email,
-      },
-    })
+    let user
+    if (role === 'admin') {
+      user = await tx.admins.findUnique({
+        where: {
+          email,
+        },
+      })
+    }
+
+    if (role === 'teacher') {
+      user = await tx.teachers.findUnique({
+        where: {
+          email,
+        },
+      })
+    }
+
+    if (role === 'student') {
+      user = await tx.students.findUnique({
+        where: {
+          email,
+        },
+      })
+    }
 
     // Validate Password
     const isPasswordValid = await bcrypt.compare(password, user.password)
@@ -219,6 +265,7 @@ const login = asyncHandler(async (req, res, next) => {
         {
           user: {
             email: user.email,
+            role,
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
@@ -230,6 +277,7 @@ const login = asyncHandler(async (req, res, next) => {
         {
           user: {
             email: user.email,
+            role,
           },
         },
         process.env.REFRESH_TOKEN_SECRET,
@@ -250,14 +298,38 @@ const login = asyncHandler(async (req, res, next) => {
       const deviceWithModel =
         deviceBrand && deviceModel ? `${deviceBrand} ${deviceModel}` : 'unknown'
 
-      await tx.personal_tokens.create({
-        data: {
-          user_id: user.id,
-          refresh_token: refreshToken,
-          expires_at: jwtExpireTime,
-          user_device: deviceWithModel,
-        },
-      })
+      if (role === 'admin') {
+        await tx.personal_tokens.create({
+          data: {
+            admin_id: user.id,
+            refresh_token: refreshToken,
+            expires_at: jwtExpireTime,
+            user_device: deviceWithModel,
+          },
+        })
+      }
+
+      if (role === 'teacher') {
+        await tx.personal_tokens.create({
+          data: {
+            teacher_id: user.id,
+            refresh_token: refreshToken,
+            expires_at: jwtExpireTime,
+            user_device: deviceWithModel,
+          },
+        })
+      }
+
+      if (role === 'student') {
+        await tx.personal_tokens.create({
+          data: {
+            student_id: user.id,
+            refresh_token: refreshToken,
+            expires_at: jwtExpireTime,
+            user_device: deviceWithModel,
+          },
+        })
+      }
 
       // Create secure cookie with refresh token
       res.cookie('express_jwt', refreshToken, {
@@ -452,18 +524,58 @@ const logoutAll = asyncHandler(async (req, res, next) => {
       return res.status(401).json({ message: 'Unauthorized' })
 
     // Get the user
-    const user = await tx.users.findUnique({
-      where: {
-        email: req.user,
-      },
-    })
+    const email = req.user.email
+    const role = req.user.role
+    let user
+
+    if (role === 'admin') {
+      user = await tx.admins.findUnique({
+        where: {
+          email,
+        },
+      })
+    }
+
+    if (role === 'teacher') {
+      user = await tx.teachers.findUnique({
+        where: {
+          email,
+        },
+      })
+    }
+
+    if (role === 'student') {
+      user = await tx.students.findUnique({
+        where: {
+          email,
+        },
+      })
+    }
 
     // Delete refresh tokens from database
-    await tx.personal_tokens.deleteMany({
-      where: {
-        user_id: user.id,
-      },
-    })
+    if (role === 'admin') {
+      await tx.personal_tokens.deleteMany({
+        where: {
+          admin_id: user.id,
+        },
+      })
+    }
+
+    if (role === 'teacher') {
+      await tx.personal_tokens.deleteMany({
+        where: {
+          teacher_id: user.id,
+        },
+      })
+    }
+
+    if (role === 'student') {
+      await tx.personal_tokens.deleteMany({
+        where: {
+          student_id: user.id,
+        },
+      })
+    }
 
     // Clear cookie
     res.clearCookie('express_jwt', {

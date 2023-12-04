@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
-const prisma = require('../utils/prisma')
 const dayjs = require('dayjs')
+const getAuthUser = require('../utils/getAuthUser')
 
 const verifyAuth = (req, res, next) => {
   const authHeader = req.headers.authorization || req.headers.Authorization
@@ -13,26 +13,11 @@ const verifyAuth = (req, res, next) => {
 
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (error, decoded) => {
     if (error) return res.status(403).json({ message: 'Forbidden' })
-    const user = await prisma.users.findUnique({
-      where: {
-        email: decoded.user.email,
-      },
-      include: {
-        user_roles: {
-          include: {
-            roles: {
-              include: {
-                role_permissions: {
-                  include: {
-                    permissions: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    })
+
+    const role = decoded.user.role
+    const email = decoded.user.email
+
+    const user = await getAuthUser(role, email)
 
     // Check if user exist in db
     if (!user) {
@@ -42,11 +27,6 @@ const verifyAuth = (req, res, next) => {
     // Check if user is suspended
     if (user.is_suspended)
       return res.json({ message: 'Your account is suspended' })
-
-    // Check if user is verified
-    if (!user.email_verified_at) {
-      return res.json({ message: 'You must verify your email' })
-    }
 
     // Format User Data
     const formattedUser = {
@@ -62,9 +42,12 @@ const verifyAuth = (req, res, next) => {
     }
 
     // Format dates
-    formattedUser.email_verified_at = dayjs(user.created_at).format(
-      'DD MMM YYYY'
-    )
+    if (user.email_verified_at) {
+      formattedUser.email_verified_at = dayjs(user.created_at).format(
+        'DD MMM YYYY'
+      )
+    }
+
     formattedUser.created_at = dayjs(user.created_at).format('DD MMM YYYY')
 
     req.user = formattedUser

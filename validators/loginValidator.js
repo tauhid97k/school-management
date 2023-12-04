@@ -2,6 +2,19 @@ const yup = require('yup')
 const prisma = require('../utils/prisma')
 
 const loginValidator = yup.object({
+  role: yup
+    .string()
+    .required('Role is required')
+    .test('exist', 'Role does not exist', async (value) => {
+      const role = await prisma.roles.findUnique({
+        where: {
+          name: value,
+        },
+      })
+
+      if (role) return true
+      else return false
+    }),
   email: yup
     .string()
     .required('Email is required')
@@ -41,7 +54,6 @@ const loginValidator = yup.object({
       else return false
     }),
   password: yup.string().required('Password is required'),
-  role: yup.string().required('Role is required'),
 })
 
 module.exports = loginValidator
