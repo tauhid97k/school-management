@@ -596,13 +596,13 @@ const logoutAll = asyncHandler(async (req, res, next) => {
   @desc     Request for resetting password
 */
 const resetPassword = asyncHandler(async (req, res, next) => {
-  const data = await passwordResetValidator.validate(req.body, {
+  const { email, role } = await passwordResetValidator.validate(req.body, {
     abortEarly: false,
   })
 
   // Send a password reset code to email
   const resetCode = Math.floor(10000000 + Math.random() * 90000000)
-  await sendPasswordResetCode(data.email, resetCode)
+  await sendPasswordResetCode(email, role, resetCode)
 
   res.json({
     message: 'A verification code has been sent to your email',
@@ -629,15 +629,34 @@ const verifyResetCode = asyncHandler(async (req, res, next) => {
     return res.json({ message: 'Invalid Code' })
   }
 
+  // Get user id based on role
+  let userId
+  let role
+  if (checkVerifyCode.admin_id) {
+    userId = checkVerifyCode.admin_id
+    role = 'admin'
+  }
+
+  if (checkVerifyCode.teacher_id) {
+    userId = checkVerifyCode.teacher_id
+    role = 'teacher'
+  }
+
+  if (checkVerifyCode.student_id) {
+    userId = checkVerifyCode.student_id
+    role = 'student'
+  }
+
   // Generate A Token (With user id)
   const passwordResetToken = jwt.sign(
     {
       user: {
-        id: checkVerifyCode.user_id,
+        id: userId,
+        role,
       },
     },
     process.env.RESET_TOKEN_SECRET,
-    { expiresIn: '2m' }
+    { expiresIn: '4m' }
   )
 
   res.json({
@@ -670,40 +689,114 @@ const updatePassword = asyncHandler(async (req, res, next) => {
     if (error) return res.status(403).json({ message: 'Forbidden' })
 
     await prisma.$transaction(async (tx) => {
-      const user = await tx.users.findUnique({
-        where: {
-          id: decoded.user.id,
-        },
-      })
+      const role = decoded.user.role
+      const userId = decoded.user.id
+      let user
+
+      if (role === 'admin') {
+        user = await tx.admins.findUnique({
+          where: {
+            id: userId,
+          },
+        })
+      }
+
+      if (role === 'teacher') {
+        user = await tx.teachers.findUnique({
+          where: {
+            id: userId,
+          },
+        })
+      }
+
+      if (role === 'student') {
+        user = await tx.students.findUnique({
+          where: {
+            id: userId,
+          },
+        })
+      }
 
       if (!user) {
         return res.status(404).json({ message: 'User not found' })
       }
 
-      // Delete user's previous login tokens
-      await tx.personal_tokens.deleteMany({
-        where: {
-          user_id: user.id,
-        },
-      })
+      // Delete user's previous login tokens (based on role)
+      if (role === 'admin') {
+        await tx.personal_tokens.deleteMany({
+          where: {
+            admin_id: user.id,
+          },
+        })
+      }
+
+      if (role === 'teacher') {
+        await tx.personal_tokens.deleteMany({
+          where: {
+            teacher_id: user.id,
+          },
+        })
+      }
+
+      if (role === 'student') {
+        await tx.personal_tokens.deleteMany({
+          where: {
+            student_id: user.id,
+          },
+        })
+      }
 
       // Encrypt password
       data.password = await bcrypt.hash(data.password, 12)
 
-      // Update user password
-      await tx.users.update({
-        where: {
-          email: user.email,
-        },
-        data: {
-          password: data.password,
-          verification_tokens: {
-            deleteMany: {
-              user_id: user.id,
+      // Update user password (Based on role)
+      if (role === 'admin') {
+        await tx.admins.update({
+          where: {
+            email: user.email,
+          },
+          data: {
+            password: data.password,
+            verification_tokens: {
+              deleteMany: {
+                admin_id: user.id,
+              },
             },
           },
-        },
-      })
+        })
+      }
+
+      if (role === 'teacher') {
+        await tx.teachers.update({
+          where: {
+            email: user.email,
+          },
+          data: {
+            password: data.password,
+            verification_tokens: {
+              deleteMany: {
+                teacher_id: user.id,
+              },
+            },
+          },
+        })
+      }
+
+      if (role === 'student') {
+        await tx.students.update({
+          where: {
+            email: user.email,
+          },
+          data: {
+            password: data.password,
+            verification_tokens: {
+              deleteMany: {
+                student_id: user.id,
+              },
+            },
+          },
+        })
+      }
     })
 
     res.json({

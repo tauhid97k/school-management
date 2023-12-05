@@ -10,16 +10,53 @@ const emailVerifyValidator = yup.object({
 })
 
 const passwordResetValidator = yup.object({
+  role: yup
+    .string()
+    .required('Role is required')
+    .test('exist', 'Role does not exist', async (value) => {
+      const role = await prisma.roles.findUnique({
+        where: {
+          name: value,
+        },
+      })
+
+      if (role) return true
+      else return false
+    }),
   email: yup
     .string()
     .required('Email is required')
     .email('Email is invalid')
-    .test('exist', 'Email does not exist', async (value) => {
-      const email = await prisma.users.findUnique({
-        where: {
-          email: value,
-        },
-      })
+    .test('exist', 'Email does not exist', async (value, ctx) => {
+      const role = ctx.parent.role
+      let email
+
+      // Check School Admin
+      if (role === 'admin') {
+        email = await prisma.admins.findUnique({
+          where: {
+            email: value,
+          },
+        })
+      }
+
+      // Check Teacher
+      if (role === 'teacher') {
+        email = await prisma.teachers.findUnique({
+          where: {
+            email: value,
+          },
+        })
+      }
+
+      // Check Student
+      if (role === 'student') {
+        email = await prisma.students.findUnique({
+          where: {
+            email: value,
+          },
+        })
+      }
 
       if (email) return true
       else return false

@@ -69,23 +69,61 @@ const sendEmailVerifyCode = asyncHandler(async (email, role, code, tx) => {
   })
 })
 
-const sendPasswordResetCode = asyncHandler(async (email, code) => {
-  // Create password reset token
-  await prisma.users.update({
-    where: {
-      email,
-    },
-    data: {
-      verification_tokens: {
-        create: {
-          code,
-          token: uuidv4(),
-          verify_type: 'PASSWORD_RESET',
-          expires_at: dayjs().add(1, 'day'),
+const sendPasswordResetCode = asyncHandler(async (email, role, code) => {
+  // Create password reset token based on role
+  if (role === 'admin') {
+    await prisma.admins.update({
+      where: {
+        email,
+      },
+      data: {
+        verification_tokens: {
+          create: {
+            code,
+            token: uuidv4(),
+            verify_type: 'PASSWORD_RESET',
+            expires_at: dayjs().add(1, 'day'),
+          },
         },
       },
-    },
-  })
+    })
+  }
+
+  if (role === 'teacher') {
+    await prisma.teachers.update({
+      where: {
+        email,
+      },
+      data: {
+        verification_tokens: {
+          create: {
+            code,
+            token: uuidv4(),
+            verify_type: 'PASSWORD_RESET',
+            expires_at: dayjs().add(1, 'day'),
+          },
+        },
+      },
+    })
+  }
+
+  if (role === 'student') {
+    await prisma.students.update({
+      where: {
+        email,
+      },
+      data: {
+        verification_tokens: {
+          create: {
+            code,
+            token: uuidv4(),
+            verify_type: 'PASSWORD_RESET',
+            expires_at: dayjs().add(1, 'day'),
+          },
+        },
+      },
+    })
+  }
 
   // Send password reset code email
   await mailTransporter.sendMail({
