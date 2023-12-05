@@ -383,19 +383,59 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
         if (error) return res.status(403).json({ message: 'Forbidden' })
 
         // Check if user exist
-        const possibleCompromisedUser = await prisma.users.findUnique({
-          where: {
-            email: decoded.user.email,
-          },
-        })
+        const email = decoded.user.email
+        const role = decoded.user.role
+        let possibleCompromisedUser
+
+        if (role === 'admin') {
+          possibleCompromisedUser = await prisma.admins.findUnique({
+            where: {
+              email,
+            },
+          })
+        }
+
+        if (role === 'teacher') {
+          possibleCompromisedUser = await prisma.teachers.findUnique({
+            where: {
+              email,
+            },
+          })
+        }
+
+        if (role === 'student') {
+          possibleCompromisedUser = await prisma.students.findUnique({
+            where: {
+              email,
+            },
+          })
+        }
 
         // If user exist, delete all related tokens
         if (possibleCompromisedUser) {
-          await prisma.personal_tokens.deleteMany({
-            where: {
-              user_id: possibleCompromisedUser.id,
-            },
-          })
+          if (role === 'admin') {
+            await prisma.personal_tokens.deleteMany({
+              where: {
+                admin_id: possibleCompromisedUser.id,
+              },
+            })
+          }
+
+          if (role === 'teacher') {
+            await prisma.personal_tokens.deleteMany({
+              where: {
+                teacher_id: possibleCompromisedUser.id,
+              },
+            })
+          }
+
+          if (role === 'student') {
+            await prisma.personal_tokens.deleteMany({
+              where: {
+                student_id: possibleCompromisedUser.id,
+              },
+            })
+          }
         }
       })
     )
@@ -411,12 +451,34 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
     asyncHandler(async (error, decoded) => {
       if (error) return res.status(403).json({ message: 'Forbidden' })
 
+      const email = decoded.user.email
+      const role = decoded.user.role
+      let user
+
       // Get current user
-      const user = await prisma.users.findUnique({
-        where: {
-          email: decoded.user.email,
-        },
-      })
+      if (role === 'admin') {
+        user = await prisma.admins.findUnique({
+          where: {
+            email,
+          },
+        })
+      }
+
+      if (role === 'teacher') {
+        user = await prisma.teachers.findUnique({
+          where: {
+            email,
+          },
+        })
+      }
+
+      if (role === 'student') {
+        user = await prisma.students.findUnique({
+          where: {
+            email,
+          },
+        })
+      }
 
       if (!user) return res.status(401).json({ message: 'Unauthorized' })
 
@@ -425,6 +487,7 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
         {
           user: {
             email: user.email,
+            role,
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
@@ -436,6 +499,7 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
         {
           user: {
             email: user.email,
+            role,
           },
         },
         process.env.REFRESH_TOKEN_SECRET,
