@@ -146,3 +146,13 @@ model permissions {
 
   role_permissions role_permissions[]
 }
+
+// Class Management
+model classes {
+  id           Int      @id @default(autoincrement())
+  class_name   String   @unique
+  section_name String
+  room_number  Int      @unique
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+}
