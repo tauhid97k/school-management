@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler')
 const prisma = require('../utils/prisma')
 const { classValidator } = require('../validators/classValidator')
+const paginateWithSortingData = require('../utils/paginateData')
 
 /*
   @route    GET: /classes
@@ -8,8 +9,22 @@ const { classValidator } = require('../validators/classValidator')
   @desc     All classes
 */
 const getAllClasses = asyncHandler(async (req, res, next) => {
-  const classes = await prisma.classes.findMany()
-  res.json(classes)
+  const page = Number(req.query.page)
+  const limit = Number(req.query.limit)
+  const sortBy = req.query.sortBy
+  const sortOrder = req.query.sortOrder
+
+  const queries = paginateWithSortingData(page, limit, sortBy, sortOrder)
+
+  const [classes, total] = await prisma.$transaction([
+    prisma.classes.findMany({ ...queries }),
+    prisma.classes.count(),
+  ])
+
+  res.json({
+    data: classes,
+    total,
+  })
 })
 
 /*
@@ -30,7 +45,7 @@ const getClass = asyncHandler(async (req, res, next) => {
       message: 'No class found',
     })
 
-  res.json({ findClass })
+  res.json(findClass)
 })
 
 /*

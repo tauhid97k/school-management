@@ -9,5 +9,6 @@ router.use('/role-permissions', require('./rolePermissionsRoutes'))
 router.use('/auth', require('./authRoutes'))
 router.use('/users', require('./userRoutes'))
 router.use('/classes', require('./classRoutes'))
+router.use('/subjects', require('./subjectRoutes'))
 
 module.exports = router

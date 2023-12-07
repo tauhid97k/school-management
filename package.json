@@ -13,7 +13,7 @@
   "author": "Md. Tauhid",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.6.0",
+    "@prisma/client": "^5.7.0",
     "bcrypt": "^5.1.1",
     "bullmq": "^4.14.0",
     "cookie-parser": "^1.4.6",
@@ -33,6 +33,6 @@
   "devDependencies": {
     "dotenv": "^16.3.1",
     "nodemon": "^3.0.1",
-    "prisma": "^5.6.0"
+    "prisma": "^5.7.0"
   }
 }

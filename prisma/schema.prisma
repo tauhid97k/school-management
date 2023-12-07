@@ -13,6 +13,7 @@ enum VerifyType {
   PASSWORD_RESET
 }
 
+// Super Admin
 model super_admins {
   id         Int      @id @default(autoincrement())
   name       String
@@ -22,6 +23,7 @@ model super_admins {
   updated_at DateTime @updatedAt
 }
 
+// School Admin
 model admins {
   id                Int       @id @default(autoincrement())
   name              String
@@ -38,6 +40,7 @@ model admins {
   personal_tokens     personal_tokens[]
 }
 
+// Teacher
 model teachers {
   id                Int       @id @default(autoincrement())
   name              String
@@ -51,8 +54,10 @@ model teachers {
   user_roles          user_roles[]
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
+  class_teachers      class_teachers[]
 }
 
+// Student
 model students {
   id                Int       @id @default(autoincrement())
   name              String
@@ -68,6 +73,7 @@ model students {
   personal_tokens     personal_tokens[]
 }
 
+// Auth Token
 model personal_tokens {
   id            Int      @id @default(autoincrement())
   admin_id      Int?
@@ -86,6 +92,7 @@ model personal_tokens {
   @@index([refresh_token], type: Hash)
 }
 
+// Verification token (Email and password reset)
 model verification_tokens {
   id          Int        @id @default(autoincrement())
   admin_id    Int?
@@ -105,6 +112,7 @@ model verification_tokens {
   @@index([token], type: Hash)
 }
 
+// User's role
 model user_roles {
   id         Int  @id @default(autoincrement())
   admin_id   Int? @unique
@@ -118,6 +126,7 @@ model user_roles {
   ttudents students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
 }
 
+// Roles Permissions
 model role_permissions {
   id            Int @id @default(autoincrement())
   role_id       Int
@@ -127,6 +136,7 @@ model role_permissions {
   permissions permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
 }
 
+// Roles
 model roles {
   id         Int      @id @default(autoincrement())
   name       String   @unique
@@ -137,6 +147,7 @@ model roles {
   role_permissions role_permissions[]
 }
 
+// Permissions
 model permissions {
   id         Int      @id @default(autoincrement())
   name       String   @unique
@@ -149,10 +160,42 @@ model permissions {
 
 // Class Management
 model classes {
-  id           Int      @id @default(autoincrement())
-  class_name   String   @unique
-  section_name String
-  room_number  Int      @unique
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id             Int              @id @default(autoincrement())
+  class_name     String           @unique
+  section_name   String
+  room_number    Int              @unique
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
+  class_subjects class_subjects[]
+  class_teachers class_teachers[]
+}
+
+// Subject 
+model subjects {
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  code           String           @unique
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
+  class_subjects class_subjects[]
+}
+
+// Class subjects
+model class_subjects {
+  id         Int @id @default(autoincrement())
+  class_id   Int
+  subject_id Int
+
+  classes  classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  subjects subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+}
+
+// Class teachers
+model class_teachers {
+  id         Int @id @default(autoincrement())
+  teacher_id Int
+  class_id   Int
+
+  teachers teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  classes  classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
 }
