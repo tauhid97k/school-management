@@ -1,11 +1,37 @@
 const prisma = require('../utils/prisma')
-const createError = require('../utils/errorHandler')
 const asyncHandler = require('express-async-handler')
+const {
+  selectQueries,
+  paginateFields,
+  paginateWithSorting,
+} = require('../utils/transformData')
 
-const users = asyncHandler(async (req, res, next) => {
-  const users = await prisma.users.findMany()
-  if (!users.length) throw new createError(404, 'No data found')
-  res.json(users)
+/*
+  @route    GET: /admins
+  @access   private
+  @desc     Get all admins
+*/
+const getAdmins = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, paginateFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const [admins, total] = await prisma.$transaction([
+    prisma.admins.findMany({
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.admins.count(),
+  ])
+
+  res.json({
+    data: admins,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
 })
 
-module.exports = { users }
+module.exports = { getAdmins }

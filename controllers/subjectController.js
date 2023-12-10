@@ -1,6 +1,11 @@
 const asyncHandler = require('express-async-handler')
 const prisma = require('../utils/prisma')
 const { subjectValidator } = require('../validators/subjectValidator')
+const {
+  selectQueries,
+  paginateFields,
+  paginateWithSorting,
+} = require('../utils/transformData')
 
 /*
   @route    GET: /subjects
@@ -8,21 +13,21 @@ const { subjectValidator } = require('../validators/subjectValidator')
   @desc     All subjects
 */
 const getAllSubjects = asyncHandler(async (req, res, next) => {
-  const page = Number(req.query.page)
-  const limit = Number(req.query.limit)
-  const sortBy = req.query.sortBy
-  const sortOrder = req.query.sortOrder
-
-  const queries = paginateWithSortingData(page, limit, sortBy, sortOrder)
+  const selectedQueries = selectQueries(req.query, paginateFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const [subjects, total] = await prisma.$transaction([
-    prisma.subjects.findMany({ ...queries }),
+    prisma.subjects.findMany({ take, skip, orderBy }),
     prisma.subjects.count(),
   ])
 
   res.json({
     data: subjects,
-    total,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
   })
 })
 
