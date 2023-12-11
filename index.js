@@ -36,6 +36,7 @@ const limiter = rateLimit({
 // Middlewares
 app.use(cors())
 app.use(helmet())
+app.set('trust proxy', 1)
 app.use(limiter)
 app.use(cookieParser())
 app.use(express.json())
