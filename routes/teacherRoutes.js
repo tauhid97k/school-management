@@ -1,9 +1,9 @@
 const express = require('express')
 const router = express.Router()
 const verifyAuth = require('../middlewares/authMiddleware')
-const { getAdmins } = require('../controllers/userController')
+const { getTeachers } = require('../controllers/teacherController')
 
 router.use(verifyAuth)
-router.get('/admins', getAdmins)
+router.get('/', getTeachers)
 
 module.exports = router
