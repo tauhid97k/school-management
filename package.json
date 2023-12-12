@@ -2,11 +2,11 @@
   "name": "express-base",
   "version": "1.0.0",
   "description": "Backend Base With Express.js",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "start": "node index.js",
-    "prod": "SET NODE_ENV=production& nodemon index.js",
-    "dev": "SET NODE_ENV=development& nodemon index.js"
+    "start": "node app.js",
+    "prod": "SET NODE_ENV=production& nodemon app.js",
+    "dev": "SET NODE_ENV=development& nodemon app.js"
   },
   "author": "Md. Tauhid",
   "license": "ISC",

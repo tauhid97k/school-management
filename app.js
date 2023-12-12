@@ -44,6 +44,11 @@ app.use(express.urlencoded({ extended: true }))
 app.use(deviceInfoMiddleware)
 
 // Routes
+app.get('/', (req, res) =>
+  res.json({
+    message: 'Server is running...',
+  })
+)
 app.use('/api', router)
 
 // Error Handlers
