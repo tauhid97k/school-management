@@ -2,10 +2,10 @@ const yup = require('yup')
 const prisma = require('../utils/prisma')
 
 const teacherValidator = yup.object({
-  name: yup.string().required('Teacher name is required'),
+  name: yup.string().required('Full name is required'),
   email: yup
     .string()
-    .required('Admin email is required')
+    .required('Email is required')
     .email('Email is invalid')
     .test('unique', 'This email already exist', async (value) => {
       const email = await prisma.teachers.findUnique({
@@ -17,11 +17,30 @@ const teacherValidator = yup.object({
       if (email) return false
       else return true
     }),
+
   password: yup.string().required('Password is required'),
-  data_of_birth: yup.string().required('Date of birth is required'),
-  blood_group: yup.string().required('Blood group is required'),
+  date_of_birth: yup.string().required('Date of birth is required'),
+  blood_group: yup.object({
+    blood_type: yup
+      .string()
+      .required('Blood type is required')
+      .oneOf([
+        'O_POSITIVE',
+        'O_NEGATIVE',
+        'A_POSITIVE',
+        'A_NEGATIVE',
+        'B_POSITIVE',
+        'B_NEGATIVE',
+        'AB_POSITIVE',
+        'AB_NEGATIVE',
+      ]),
+    rarity: yup.string().optional().oneOf(['Common', 'Rare', 'Very rare']),
+  }),
   religion: yup.string().required('Religion is required'),
-  gender: yup.string().oneOf(['Male', 'Female', 'Other']),
+  gender: yup
+    .string()
+    .required('Gender is required')
+    .oneOf(['MALE', 'FEMALE', 'OTHER']),
   age: yup
     .number()
     .typeError('Age must be a number')
@@ -49,6 +68,7 @@ const teacherValidator = yup.object({
         grade: yup.string().required('Grade is required'),
       })
     )
+    .required('Minimum education qualification is required')
     .min(1, 'Minimum education qualification is required'),
   experience: yup
     .array()
