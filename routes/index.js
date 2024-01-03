@@ -11,5 +11,6 @@ router.use('/admins', require('./adminRoutes'))
 router.use('/teachers', require('./teacherRoutes'))
 router.use('/classes', require('./classRoutes'))
 router.use('/subjects', require('./subjectRoutes'))
+router.use('/notices', require('./noticeRoutes'))
 
 module.exports = router

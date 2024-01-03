@@ -19,6 +19,12 @@ enum genderType {
   OTHER
 }
 
+enum noticeRecipientType {
+  ALL
+  TEACHERS
+  STUDENTS
+}
+
 // Super Admin
 model super_admins {
   id         Int      @id @default(autoincrement())
@@ -75,6 +81,7 @@ model teachers {
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
   class_teachers      class_teachers[]
+  classes_noticeboard classes_noticeboard[]
 }
 
 // Student
@@ -218,4 +225,28 @@ model class_teachers {
 
   teachers teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   classes  classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
+}
+
+// NoticeBoard (School Official)
+model noticeboard {
+  id             Int                 @id @default(autoincrement())
+  recipient_id   Int
+  recipient_type noticeRecipientType
+  title          String
+  description    String              @db.Text
+  created_at     DateTime            @default(now())
+  updated_at     DateTime            @updatedAt
+}
+
+// NoticeBoard (Teacher to classes)
+model classes_noticeboard {
+  id          Int      @id @default(autoincrement())
+  teacher_id  Int
+  class_id    Int
+  title       String
+  description String   @db.Text
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 }
