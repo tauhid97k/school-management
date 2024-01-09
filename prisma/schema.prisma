@@ -22,7 +22,7 @@ enum genderType {
 enum noticeRecipientType {
   ALL
   TEACHERS
-  STUDENTS
+  CLASSES
 }
 
 // Super Admin
@@ -230,7 +230,7 @@ model class_teachers {
 // NoticeBoard (School Official)
 model noticeboard {
   id             Int                 @id @default(autoincrement())
-  recipient_id   Int
+  recipient_ids  Json?               @db.Json
   recipient_type noticeRecipientType
   title          String
   description    String              @db.Text

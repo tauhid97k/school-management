@@ -22,6 +22,9 @@ const registerValidator = yup.object({
     .string()
     .required('Password is required')
     .min(8, 'Password must be at least 8 characters'),
+  confirm_password: yup
+    .string()
+    .oneOf([yup.ref('password')], 'Passwords must match'),
 })
 
 module.exports = registerValidator

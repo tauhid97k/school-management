@@ -5,7 +5,37 @@ const {
   paginateFields,
   paginateWithSorting,
 } = require('../utils/transformData')
-const { classNoticeValidator } = require('../validators/noticeValidator')
+const {
+  classNoticeValidator,
+  noticeValidator,
+} = require('../validators/noticeValidator')
+
+/*
+  @route    POST: /notices
+  @access   private
+  @desc     Create a notice (For all, teachers or classes)
+*/
+const createNotice = asyncHandler(async (req, res, next) => {
+  const data = await noticeValidator.validate(req.body, { abortEarly: false })
+
+  await prisma.noticeboard.create({
+    data,
+  })
+
+  if (data.recipient_type === 'CLASSES') {
+    return res.json({
+      message: 'Notice has been sent to classes',
+    })
+  } else if (data.recipient_ids === 'TEACHERS') {
+    return res.json({
+      message: 'Notice has been sent to teachers',
+    })
+  } else {
+    return res.json({
+      message: 'Notice has been sent to everyone',
+    })
+  }
+})
 
 /*
   @route    GET: /notices/class/:id
@@ -87,4 +117,4 @@ const createClassNotice = asyncHandler(async (req, res, next) => {
   })
 })
 
-module.exports = { getClassNotice, createClassNotice }
+module.exports = { createNotice, getClassNotice, createClassNotice }

@@ -32,7 +32,14 @@ const register = asyncHandler(async (req, res, next) => {
   // Create new user
   await prisma.$transaction(
     async (tx) => {
-      const admin = await tx.admins.create({ data })
+      const admin = await tx.admins.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          school: data.school,
+        },
+      })
 
       // Assign a role (Default admin for public registration)
       await assignRole(admin.id, 'admin', tx)
@@ -92,8 +99,8 @@ const register = asyncHandler(async (req, res, next) => {
       // Create secure cookie with refresh token
       res.cookie('express_jwt', refreshToken, {
         httpOnly: true, // Accessible only by server
-        secure: false, // https
-        sameSite: 'lax',
+        secure: true, // https
+        sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -341,6 +348,7 @@ const login = asyncHandler(async (req, res, next) => {
 
       res.json({
         accessToken,
+        message: 'Login successful',
       })
     } else {
       throw new createError(401, 'Invalid email or password')
