@@ -2,9 +2,9 @@ const prisma = require('../utils/prisma')
 const asyncHandler = require('express-async-handler')
 const {
   selectQueries,
-  paginateFields,
+  commonFields,
   paginateWithSorting,
-} = require('../utils/transformData')
+} = require('../utils/metaData')
 const bcrypt = require('bcrypt')
 const { teacherValidator } = require('../validators/teacherValidator')
 
@@ -14,7 +14,7 @@ const { teacherValidator } = require('../validators/teacherValidator')
   @desc     Get all teachers
 */
 const getTeachers = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, paginateFields)
+  const selectedQueries = selectQueries(req.query, commonFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const [teachers, total] = await prisma.$transaction([

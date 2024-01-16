@@ -4,7 +4,7 @@ const cors = require('cors')
 const helmet = require('helmet')
 const { rateLimit } = require('express-rate-limit')
 const cookieParser = require('cookie-parser')
-const router = require('./routes')
+const allRoutes = require('./routes')
 const {
   urlNotFoundError,
   globalError,
@@ -36,7 +36,7 @@ const limiter = rateLimit({
 // Middlewares
 app.use(
   cors({
-    origin: ['http://localhost:5174'],
+    origin: 'http://localhost:5174',
     credentials: true,
   })
 )
@@ -54,11 +54,11 @@ app.get('/', (req, res) =>
     message: 'Server is running...',
   })
 )
-app.use('/api', router)
+app.use('/api', allRoutes)
 
 // Error Handlers
-app.all('*', urlNotFoundError)
 app.use(globalError)
+app.all('*', urlNotFoundError)
 
 const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`)

@@ -3,9 +3,9 @@ const prisma = require('../utils/prisma')
 const { classValidator } = require('../validators/classValidator')
 const {
   selectQueries,
-  paginateFields,
+  commonFields,
   paginateWithSorting,
-} = require('../utils/transformData')
+} = require('../utils/metaData')
 
 /*
   @route    GET: /classes
@@ -13,7 +13,7 @@ const {
   @desc     All classes
 */
 const getAllClasses = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, paginateFields)
+  const selectedQueries = selectQueries(req.query, commonFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const [classes, total] = await prisma.$transaction([

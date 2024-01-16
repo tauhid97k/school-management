@@ -2,9 +2,9 @@ const prisma = require('../utils/prisma')
 const asyncHandler = require('express-async-handler')
 const {
   selectQueries,
-  paginateFields,
+  commonFields,
   paginateWithSorting,
-} = require('../utils/transformData')
+} = require('../utils/metaData')
 const {
   classNoticeValidator,
   noticeValidator,
@@ -43,7 +43,7 @@ const createNotice = asyncHandler(async (req, res, next) => {
   @desc     Get Specific class notices
 */
 const getClassNotice = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, paginateFields)
+  const selectedQueries = selectQueries(req.query, commonFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const id = req.params.id

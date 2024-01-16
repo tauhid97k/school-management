@@ -3,7 +3,6 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const isEmpty = require('lodash/isEmpty')
 const asyncHandler = require('express-async-handler')
-const createError = require('../utils/errorHandler')
 const {
   sendEmailVerifyCode,
   sendPasswordResetCode,
@@ -58,7 +57,7 @@ const register = asyncHandler(async (req, res, next) => {
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '1d' }
+        { expiresIn: '30s' }
       )
 
       // Generate JWT Refresh Token
@@ -72,10 +71,6 @@ const register = asyncHandler(async (req, res, next) => {
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: '7d' }
       )
-
-      // JWT expiry
-      const jwtExpireTime = jwt.decode(refreshToken, { complete: true }).payload
-        .exp
 
       // Save refresh token to database with device model (if available)
       const deviceBrand = isEmpty(req.device.device.brand)
@@ -91,7 +86,6 @@ const register = asyncHandler(async (req, res, next) => {
         data: {
           admin_id: admin.id,
           refresh_token: refreshToken,
-          expires_at: jwtExpireTime,
           user_device: deviceWithModel,
         },
       })
@@ -219,13 +213,23 @@ const verifyEmail = asyncHandler(async (req, res, next) => {
   @desc     User login
 */
 const login = asyncHandler(async (req, res, next) => {
-  // Check if any old cookie exist (delete it)
+  // Check if any old cookie exist
   const cookies = req.cookies
   if (cookies?.express_jwt) {
+    const refreshToken = cookies.express_jwt
+
+    // Check if this token exist in database (Delete it)
+    await prisma.personal_tokens.deleteMany({
+      where: {
+        refresh_token: refreshToken,
+      },
+    })
+
+    // Delete old cookie
     res.clearCookie('express_jwt', {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
     })
   }
 
@@ -265,7 +269,9 @@ const login = asyncHandler(async (req, res, next) => {
     // Check user
     if (email === user.email && isPasswordValid) {
       if (user.is_suspended)
-        throw new createError(403, 'Your account is suspended')
+        return res.status(423).json({
+          message: 'Your account is suspended',
+        })
 
       // Generate JWT Access Token
       const accessToken = jwt.sign(
@@ -276,7 +282,7 @@ const login = asyncHandler(async (req, res, next) => {
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '1d' }
+        { expiresIn: '30s' }
       )
 
       // Generate JWT Refresh Token
@@ -290,10 +296,6 @@ const login = asyncHandler(async (req, res, next) => {
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: '7d' }
       )
-
-      // JWT expiry
-      const jwtExpireTime = jwt.decode(refreshToken, { complete: true }).payload
-        .exp
 
       // Save refresh token to database with device model (if available)
       const deviceBrand = isEmpty(req.device.device.brand)
@@ -310,7 +312,6 @@ const login = asyncHandler(async (req, res, next) => {
           data: {
             admin_id: user.id,
             refresh_token: refreshToken,
-            expires_at: jwtExpireTime,
             user_device: deviceWithModel,
           },
         })
@@ -321,7 +322,6 @@ const login = asyncHandler(async (req, res, next) => {
           data: {
             teacher_id: user.id,
             refresh_token: refreshToken,
-            expires_at: jwtExpireTime,
             user_device: deviceWithModel,
           },
         })
@@ -332,7 +332,6 @@ const login = asyncHandler(async (req, res, next) => {
           data: {
             student_id: user.id,
             refresh_token: refreshToken,
-            expires_at: jwtExpireTime,
             user_device: deviceWithModel,
           },
         })
@@ -341,8 +340,8 @@ const login = asyncHandler(async (req, res, next) => {
       // Create secure cookie with refresh token
       res.cookie('express_jwt', refreshToken, {
         httpOnly: true, // Accessible only by server
-        secure: false, // https
-        sameSite: 'lax',
+        secure: true, // https
+        sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -351,7 +350,9 @@ const login = asyncHandler(async (req, res, next) => {
         message: 'Login successful',
       })
     } else {
-      throw new createError(401, 'Invalid email or password')
+      res.status(400).json({
+        message: 'Invalid email or password',
+      })
     }
   })
 })
@@ -378,8 +379,8 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
   // Delete current cookie
   res.clearCookie('express_jwt', {
     httpOnly: true,
-    secure: false,
-    sameSite: 'lax',
+    secure: true,
+    sameSite: 'none',
   })
 
   // Possible reuse of refresh token detection
@@ -499,7 +500,7 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '2m' }
+        { expiresIn: '30s' }
       )
 
       // New JWT Refresh Token
@@ -514,10 +515,6 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
         { expiresIn: '7d' }
       )
 
-      // JWT expiry
-      const jwtExpireTime = jwt.decode(newRefreshToken, { complete: true })
-        .payload.exp
-
       // Save and update refresh token in database
       await prisma.personal_tokens.updateMany({
         where: {
@@ -525,15 +522,14 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
         },
         data: {
           refresh_token: newRefreshToken,
-          expires_at: jwtExpireTime,
         },
       })
 
       // Create new secure cookie with refresh token
       res.cookie('express_jwt', newRefreshToken, {
         httpOnly: true, // Accessible only by server
-        secure: false, // https
-        sameSite: 'lax',
+        secure: true, // https
+        sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -574,8 +570,8 @@ const logout = asyncHandler(async (req, res, next) => {
     // Clear cookie
     res.clearCookie('express_jwt', {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
     })
 
     res.json({
@@ -652,8 +648,8 @@ const logoutAll = asyncHandler(async (req, res, next) => {
     // Clear cookie
     res.clearCookie('express_jwt', {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
     })
 
     res.json({

@@ -1,13 +1,12 @@
 const express = require('express')
 const router = express.Router()
-const verifyAuth = require('../middlewares/authMiddleware')
+const authMiddleware = require('../middlewares/authMiddleware')
 const {
   getTeachers,
   createTeacher,
 } = require('../controllers/teacherController')
 
-router.use(verifyAuth)
-router.get('/', getTeachers)
-router.post('/', createTeacher)
+router.get('/', authMiddleware(), getTeachers)
+router.post('/', authMiddleware(), createTeacher)
 
 module.exports = router

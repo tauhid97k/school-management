@@ -1,8 +1,8 @@
-const createError = require('../utils/errorHandler')
-
 // Not Found URL Error
 const urlNotFoundError = (req, res, next) => {
-  next(new createError(404, `${req.originalUrl} not found`))
+  res.status(404).json({
+    message: `url ${req.originalUrl} not found`,
+  })
 }
 
 // Validation Error
@@ -31,11 +31,7 @@ const globalError = (error, req, res, next) => {
       error,
     })
   } else if (process.env.NODE_ENV === 'production') {
-    if (error.isOperational) {
-      res.status(error.statusCode).json({
-        message: error.message,
-      })
-    } else if (error.name === 'ValidationError') {
+    if (error.name === 'ValidationError') {
       validationErrorHandler(res, error)
     } else if (error?.code === 'P2028') {
       res.status(408).json({

@@ -1,7 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const verifyAuth = require('../middlewares/authMiddleware')
-const checkPermission = require('../middlewares/permissionMiddleware')
+const authMiddleware = require('../middlewares/authMiddleware')
 const {
   getAllClasses,
   getClass,
@@ -11,11 +10,10 @@ const {
 } = require('../controllers/classController')
 
 // Protected Routes
-router.use(verifyAuth)
-router.get('/', getAllClasses)
-router.get('/:id', getClass)
-router.post('/', createClass)
-router.put('/:id', updateClass)
-router.delete('/:id', deleteClass)
+router.get('/', authMiddleware(), getAllClasses)
+router.get('/:id', authMiddleware(), getClass)
+router.post('/', authMiddleware(), createClass)
+router.put('/:id', authMiddleware(), updateClass)
+router.delete('/:id', authMiddleware(), deleteClass)
 
 module.exports = router

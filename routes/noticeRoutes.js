@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const verifyAuth = require('../middlewares/authMiddleware')
+const authMiddleware = require('../middlewares/authMiddleware')
 const {
   createNotice,
   getClassNotice,
@@ -8,9 +8,8 @@ const {
 } = require('../controllers/noticeController')
 
 // Protected Routes
-router.use(verifyAuth)
-router.post('/', createNotice)
-router.get('/class/:id', getClassNotice)
-router.post('/class/:id', createClassNotice)
+router.post('/', authMiddleware(), createNotice)
+router.get('/class/:id', authMiddleware(), getClassNotice)
+router.post('/class/:id', authMiddleware(), createClassNotice)
 
 module.exports = router

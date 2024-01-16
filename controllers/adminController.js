@@ -2,9 +2,9 @@ const prisma = require('../utils/prisma')
 const asyncHandler = require('express-async-handler')
 const {
   selectQueries,
-  paginateFields,
+  commonFields,
   paginateWithSorting,
-} = require('../utils/transformData')
+} = require('../utils/metaData')
 
 /*
   @route    GET: /admins
@@ -12,7 +12,7 @@ const {
   @desc     Get all admins
 */
 const getAdmins = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, paginateFields)
+  const selectedQueries = selectQueries(req.query, commonFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const [admins, total] = await prisma.$transaction([

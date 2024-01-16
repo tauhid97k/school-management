@@ -1,7 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const verifyAuth = require('../middlewares/authMiddleware')
-const checkPermission = require('../middlewares/permissionMiddleware')
+const authMiddleware = require('../middlewares/authMiddleware')
 const {
   rolePermissions,
   createRolePermissions,
@@ -9,9 +8,8 @@ const {
 } = require('../controllers/rolePermissionsController')
 
 // Protected Routes
-router.use(verifyAuth)
-router.get('/', checkPermission('edit_user'), rolePermissions)
-router.post('/', createRolePermissions)
-router.put('/', updateRolePermissions)
+router.get('/', authMiddleware(), rolePermissions)
+router.post('/', authMiddleware(), createRolePermissions)
+router.put('/', authMiddleware(), updateRolePermissions)
 
 module.exports = router

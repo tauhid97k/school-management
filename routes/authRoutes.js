@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const verifyAuth = require('../middlewares/authMiddleware')
+const authMiddleware = require('../middlewares/authMiddleware')
 const {
   register,
   resendEmail,
@@ -22,13 +22,12 @@ router.post('/reset-password', resetPassword)
 router.post('/verify-reset-code', verifyResetCode)
 router.post('/update-password', updatePassword)
 router.get('/refresh-token', refreshAuthToken)
-
-// Protected Routes
-router.use(verifyAuth)
-router.get('/resend-email', resendEmail)
-router.post('/verify-email', verifyEmail)
-router.get('/user', authUser)
 router.post('/logout', logout)
 router.post('/logout-all', logoutAll)
+
+// Protected Routes
+router.get('/resend-email', authMiddleware(), resendEmail)
+router.post('/verify-email', authMiddleware(), verifyEmail)
+router.get('/user', authMiddleware(), authUser)
 
 module.exports = router

@@ -62,7 +62,7 @@ const sendEmailVerifyCode = asyncHandler(async (email, role, code, tx) => {
 
   // Send verification email
   await mailTransporter.sendMail({
-    from: 'test@example.com',
+    from: process.env.MAIL_SENDER,
     to: email,
     subject: 'Email verification',
     text: `Your email verification code is ${code}`,
@@ -127,7 +127,7 @@ const sendPasswordResetCode = asyncHandler(async (email, role, code) => {
 
   // Send password reset code email
   await mailTransporter.sendMail({
-    from: 'test@example.com',
+    from: process.env.MAIL_SENDER,
     to: email,
     subject: 'Password reset code',
     text: `Your password reset code is ${code}`,

@@ -3,9 +3,9 @@ const prisma = require('../utils/prisma')
 const { subjectValidator } = require('../validators/subjectValidator')
 const {
   selectQueries,
-  paginateFields,
+  commonFields,
   paginateWithSorting,
-} = require('../utils/transformData')
+} = require('../utils/metaData')
 
 /*
   @route    GET: /subjects
@@ -13,7 +13,7 @@ const {
   @desc     All subjects
 */
 const getAllSubjects = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, paginateFields)
+  const selectedQueries = selectQueries(req.query, commonFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const [subjects, total] = await prisma.$transaction([

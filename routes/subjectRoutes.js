@@ -1,7 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const verifyAuth = require('../middlewares/authMiddleware')
-const checkPermission = require('../middlewares/permissionMiddleware')
+const authMiddleware = require('../middlewares/authMiddleware')
 const {
   getAllSubjects,
   getSubject,
@@ -11,11 +10,10 @@ const {
 } = require('../controllers/subjectController')
 
 // Protected Routes
-router.use(verifyAuth)
-router.get('/', getAllSubjects)
-router.get('/:id', getSubject)
-router.post('/', createSubject)
-router.put('/:id', updateSubject)
-router.delete('/:id', deleteSubject)
+router.get('/', authMiddleware(), getAllSubjects)
+router.get('/:id', authMiddleware(), getSubject)
+router.post('/', authMiddleware(), createSubject)
+router.put('/:id', authMiddleware(), updateSubject)
+router.delete('/:id', authMiddleware(), deleteSubject)
 
 module.exports = router
