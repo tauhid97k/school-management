@@ -34,9 +34,9 @@ const authMiddleware = (requiredPermission) => {
         }
 
         // Check if user is verified
-        if (!user.email_verified_at) {
-          return res.status(423).json({ message: 'You must verify your email' })
-        }
+        // if (!user.email_verified_at) {
+        //   return res.status(423).json({ message: 'You must verify your email' })
+        // }
 
         // Format User Data
         const formattedUser = {

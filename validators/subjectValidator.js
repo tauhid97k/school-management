@@ -2,19 +2,7 @@ const yup = require('yup')
 const prisma = require('../utils/prisma')
 
 const subjectValidator = yup.object({
-  name: yup
-    .string()
-    .required('Subject name is required')
-    .test('unique', 'Subject already exist', async (value) => {
-      const subject = await prisma.subjects.findUnique({
-        where: {
-          name: value,
-        },
-      })
-
-      if (subject) return false
-      else return true
-    }),
+  name: yup.string().required('Subject name is required'),
   code: yup
     .string()
     .required('Subject code is required')
@@ -32,6 +20,20 @@ const subjectValidator = yup.object({
         else return true
       }
     ),
+  group_id: yup
+    .number()
+    .typeError('group id must be number')
+    .required('Group id is required')
+    .test('exists', 'Group id does not exist', async (value) => {
+      const findGroup = await prisma.groups.findUnique({
+        where: {
+          id: value,
+        },
+      })
+
+      if (findGroup) return true
+      else return false
+    }),
 })
 
 module.exports = { subjectValidator }

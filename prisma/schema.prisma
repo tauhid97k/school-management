@@ -184,26 +184,73 @@ model permissions {
   role_permissions role_permissions[]
 }
 
-// Class Management
-model classes {
-  id             Int              @id @default(autoincrement())
-  class_name     String           @unique
-  section_name   String
-  room_number    Int              @unique
-  created_at     DateTime         @default(now())
-  updated_at     DateTime         @updatedAt
-  class_subjects class_subjects[]
-  class_teachers class_teachers[]
+// Room Management
+model rooms {
+  id          Int        @id @default(autoincrement())
+  room_number String     @unique
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+  sections    sections[]
+}
+
+// Group 
+model groups {
+  id         Int        @id @default(autoincrement())
+  group_name String     @unique
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  subjects   subjects[]
 }
 
 // Subject 
 model subjects {
-  id             Int              @id @default(autoincrement())
-  name           String           @unique
-  code           String           @unique
-  created_at     DateTime         @default(now())
-  updated_at     DateTime         @updatedAt
+  id         Int      @id @default(autoincrement())
+  name       String
+  code       String   @unique
+  group_id   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  group groups @relation(fields: [group_id], references: [id])
+
   class_subjects class_subjects[]
+}
+
+// Class Management
+model classes {
+  id         Int      @id @default(autoincrement())
+  class_name String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  sections       sections[]
+  class_sections class_sections[]
+  class_subjects class_subjects[]
+  class_teachers class_teachers[]
+}
+
+// Section Management
+model sections {
+  id           Int      @id @default(autoincrement())
+  class_id     Int
+  room_id      Int
+  section_name String
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  class          classes          @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  room           rooms            @relation(fields: [room_id], references: [id])
+  class_sections class_sections[]
+}
+
+// Class Sections
+model class_sections {
+  id         Int @id @default(autoincrement())
+  class_id   Int
+  section_id Int
+
+  classes classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  section sections @relation(fields: [section_id], references: [id], onDelete: Cascade)
 }
 
 // Class subjects

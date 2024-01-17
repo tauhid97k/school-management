@@ -61,7 +61,7 @@ const createSubject = asyncHandler(async (req, res, next) => {
   const data = await subjectValidator.validate(req.body, { abortEarly: false })
   await prisma.subjects.create({ data })
 
-  res.status(201).json({ message: 'Subject created successfully' })
+  res.status(201).json({ message: 'Subject added successfully' })
 })
 
 /*

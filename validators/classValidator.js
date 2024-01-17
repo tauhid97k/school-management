@@ -15,25 +15,6 @@ const classValidator = yup.object({
       if (findClass) return false
       else return true
     }),
-  section_name: yup.string().required('Section name is required'),
-  room_number: yup
-    .number()
-    .typeError('Room number must be number')
-    .required('Room number is required')
-    .test(
-      'reserved',
-      'Room is already reserved by another class',
-      async (value) => {
-        const findRoom = await prisma.classes.findUnique({
-          where: {
-            room_number: value,
-          },
-        })
-
-        if (findRoom) return false
-        else return true
-      }
-    ),
 })
 
 module.exports = { classValidator }
