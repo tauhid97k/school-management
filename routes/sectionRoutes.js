@@ -6,5 +6,7 @@ const sectionController = require('../controllers/sectionController')
 // Protected Routes
 router.get('/', authMiddleware(), sectionController.getAllSections)
 router.post('/', authMiddleware(), sectionController.createSection)
+router.put('/:id', authMiddleware(), sectionController.updateSection)
+router.delete('/:id', authMiddleware(), sectionController.deleteSection)
 
 module.exports = router

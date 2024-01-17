@@ -6,5 +6,7 @@ const roomController = require('../controllers/roomController')
 // Protected Routes
 router.get('/', authMiddleware(), roomController.getAllRooms)
 router.post('/', authMiddleware(), roomController.createRoom)
+router.put('/:id', authMiddleware(), roomController.updateRoom)
+router.delete('/:id', authMiddleware(), roomController.deleteRoom)
 
 module.exports = router
