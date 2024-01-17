@@ -187,7 +187,7 @@ model permissions {
 // Room Management
 model rooms {
   id          Int        @id @default(autoincrement())
-  room_number String     @unique
+  room_number Int        @unique
   created_at  DateTime   @default(now())
   updated_at  DateTime   @updatedAt
   sections    sections[]

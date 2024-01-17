@@ -13,6 +13,7 @@ router.use('/groups', require('./groupRoutes'))
 router.use('/teachers', require('./teacherRoutes'))
 router.use('/classes', require('./classRoutes'))
 router.use('/subjects', require('./subjectRoutes'))
+router.use('/sections', require('./sectionRoutes'))
 router.use('/notices', require('./noticeRoutes'))
 
 module.exports = router
