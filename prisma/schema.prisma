@@ -25,6 +25,14 @@ enum noticeRecipientType {
   CLASSES
 }
 
+enum attendanceType {
+  PRESENT
+  ABSENCE
+  LATE
+  VACATION
+  UNKNOWN
+}
+
 // Super Admin
 model super_admins {
   id         Int      @id @default(autoincrement())
@@ -80,6 +88,7 @@ model teachers {
   user_roles          user_roles[]
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
+  attendance          teacher_attendance[]
   class_teachers      class_teachers[]
   classes_noticeboard classes_noticeboard[]
 }
@@ -293,6 +302,16 @@ model classes_noticeboard {
   description String   @db.Text
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
+
+  teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+}
+
+// Teacher Attendance
+model teacher_attendance {
+  id         Int            @id @default(autoincrement())
+  teacher_id Int
+  date       DateTime
+  status     attendanceType
 
   teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 }
