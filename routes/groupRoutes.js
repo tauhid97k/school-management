@@ -6,7 +6,7 @@ const groupController = require('../controllers/groupController')
 // Protected Routes
 router.get('/', authMiddleware(), groupController.getAllGroups)
 router.post('/', authMiddleware(), groupController.createGroup)
-router.put('/', authMiddleware(), groupController.updateGroup)
+router.put('/:id', authMiddleware(), groupController.updateGroup)
 router.delete('/:id', authMiddleware(), groupController.deleteGroup)
 
 module.exports = router

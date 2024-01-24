@@ -57,7 +57,7 @@ const register = asyncHandler(async (req, res, next) => {
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '30s' }
+        { expiresIn: '1h' }
       )
 
       // Generate JWT Refresh Token
@@ -282,7 +282,7 @@ const login = asyncHandler(async (req, res, next) => {
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '30s' }
+        { expiresIn: '1h' }
       )
 
       // Generate JWT Refresh Token
@@ -500,7 +500,7 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '30s' }
+        { expiresIn: '1h' }
       )
 
       // New JWT Refresh Token

@@ -14,7 +14,7 @@
   "author": "Md. Tauhid",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.7.1",
+    "@prisma/client": "^5.8.1",
     "bcrypt": "^5.1.1",
     "bullmq": "^4.14.0",
     "cookie-parser": "^1.4.6",
@@ -34,6 +34,6 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
-    "prisma": "^5.7.1"
+    "prisma": "^5.8.1"
   }
 }

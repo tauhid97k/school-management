@@ -16,15 +16,11 @@ const teachersAttendanceValidator = yup.object({
       if (findTeacher) return true
       else return false
     }),
-  attendance: yup.array().of(
-    yup.object({
-      status: yup
-        .string()
-        .oneOf(['PRESENT', 'ABSENCE', 'LATE', 'VACATION', 'UNKNOWN']),
-      date: yup.string(),
-      note: yup.string().optional(),
-    })
-  ),
+  status: yup
+    .string()
+    .required('Attendance status is required')
+    .oneOf(['PRESENT', 'ABSENCE', 'LATE', 'VACATION', 'UNKNOWN']),
+  note: yup.string().optional(),
 })
 
 module.exports = { teachersAttendanceValidator }
