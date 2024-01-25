@@ -52,7 +52,7 @@ const teacherValidator = yup.object({
     .required('Salary is required'),
   profile_img: yup.string().optional(),
   cover_letter: yup.string().optional(),
-  education_qualification: yup
+  education: yup
     .array()
     .of(
       yup.object({

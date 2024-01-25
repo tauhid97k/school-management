@@ -39,7 +39,7 @@ const authMiddleware = (requiredPermission) => {
         // }
 
         // Format User Data
-        const formattedUser = {
+        const formatUser = {
           id: user.id,
           name: user.name,
           email: user.email,
@@ -52,13 +52,13 @@ const authMiddleware = (requiredPermission) => {
         }
 
         // Format dates
-        formattedUser.email_verified_at = formatDate(user.email_verified_at)
-        formattedUser.created_at = formatDate(user.created_at)
+        formatUser.email_verified_at = formatDate(user.email_verified_at)
+        formatUser.created_at = formatDate(user.created_at)
 
         // Check if user has the required permission
         if (
           requiredPermission &&
-          !formattedUser.permissions.includes(requiredPermission)
+          !formatUser.permissions.includes(requiredPermission)
         ) {
           return res.status(403).json({
             message: 'Permission denied',
@@ -66,7 +66,7 @@ const authMiddleware = (requiredPermission) => {
         }
 
         // Save user
-        req.user = formattedUser
+        req.user = formatUser
 
         next()
       }

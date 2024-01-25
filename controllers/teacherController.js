@@ -50,6 +50,7 @@ const createTeacher = asyncHandler(async (req, res, next) => {
 
   // Correct date format
   data.date_of_birth = dayjs(data.date_of_birth).toISOString()
+  data.joining_date = dayjs(data.joining_date).toISOString()
 
   await prisma.teachers.create({
     data,
