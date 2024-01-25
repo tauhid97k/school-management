@@ -5,16 +5,21 @@ const sectionValidator = yup.object({
   section_name: yup
     .string()
     .required('Section name is required')
-    .test('unique', 'Section already exist', async (value) => {
-      const sectionName = await prisma.sections.findUnique({
-        where: {
-          section_name: value,
-        },
-      })
+    .test(
+      'assigned',
+      'This section already assigned for this class',
+      async (value, ctx) => {
+        const class_id = ctx.parent.class_id
+        const findSection = await prisma.sections.findFirst({
+          where: {
+            AND: [{ class_id }, { section_name: value }],
+          },
+        })
 
-      if (sectionName) return false
-      else return true
-    }),
+        if (findSection) return false
+        else return true
+      }
+    ),
   class_id: yup
     .number()
     .typeError('Class id must be number')
@@ -42,7 +47,21 @@ const sectionValidator = yup.object({
 
       if (room) return true
       else return false
-    }),
+    })
+    .test(
+      'assigned',
+      'Room is already assigned to another section',
+      async (value) => {
+        const findSection = await prisma.sections.findFirst({
+          where: {
+            room_id: value,
+          },
+        })
+
+        if (findSection) return false
+        else return true
+      }
+    ),
 })
 
 module.exports = { sectionValidator }

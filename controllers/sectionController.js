@@ -40,7 +40,7 @@ const createSection = asyncHandler(async (req, res, next) => {
   const data = await sectionValidator.validate(req.body, { abortEarly: false })
   await prisma.sections.create({ data })
 
-  res.status(201).json({ message: 'Room listed successfully' })
+  res.status(201).json({ message: 'Section added successfully' })
 })
 
 /*

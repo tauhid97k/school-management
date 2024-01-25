@@ -91,7 +91,7 @@ const updateSubject = asyncHandler(async (req, res, next) => {
     })
   })
 
-  res.status(201).json({ message: 'Subject updated successfully' })
+  res.json({ message: 'Subject updated successfully' })
 })
 
 /*
@@ -118,7 +118,7 @@ const deleteSubject = asyncHandler(async (req, res, next) => {
       where: { id },
     })
 
-    res.status(201).json({ message: 'Subject deleted successfully' })
+    res.json({ message: 'Subject deleted successfully' })
   })
 })
 

@@ -20,22 +20,19 @@ const teacherValidator = yup.object({
 
   password: yup.string().required('Password is required'),
   date_of_birth: yup.string().required('Date of birth is required'),
-  blood_group: yup.object({
-    blood_type: yup
-      .string()
-      .required('Blood type is required')
-      .oneOf([
-        'O_POSITIVE',
-        'O_NEGATIVE',
-        'A_POSITIVE',
-        'A_NEGATIVE',
-        'B_POSITIVE',
-        'B_NEGATIVE',
-        'AB_POSITIVE',
-        'AB_NEGATIVE',
-      ]),
-    rarity: yup.string().optional().oneOf(['Common', 'Rare', 'Very rare']),
-  }),
+  blood_group: yup
+    .string()
+    .required('Blood type is required')
+    .oneOf([
+      'O_POSITIVE',
+      'O_NEGATIVE',
+      'A_POSITIVE',
+      'A_NEGATIVE',
+      'B_POSITIVE',
+      'B_NEGATIVE',
+      'AB_POSITIVE',
+      'AB_NEGATIVE',
+    ]),
   religion: yup.string().required('Religion is required'),
   gender: yup
     .string()

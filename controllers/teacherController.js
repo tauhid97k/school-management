@@ -7,6 +7,7 @@ const {
 } = require('../utils/metaData')
 const bcrypt = require('bcrypt')
 const { teacherValidator } = require('../validators/teacherValidator')
+const dayjs = require('dayjs')
 
 /*
   @route    GET: /teachers
@@ -46,44 +47,9 @@ const createTeacher = asyncHandler(async (req, res, next) => {
 
   // Encrypt password
   data.password = await bcrypt.hash(data.password, 12)
+
   // Correct date format
-  data.date_of_birth = new Date(data.date_of_birth).toISOString()
-
-  // Blood type rarity match
-  const blood_rarity = ['Common', 'Rare', 'Very rare']
-  const blood_types = [
-    'O_POSITIVE',
-    'O_NEGATIVE',
-    'A_POSITIVE',
-    'A_NEGATIVE',
-    'B_POSITIVE',
-    'B_NEGATIVE',
-    'AB_POSITIVE',
-    'AB_NEGATIVE',
-  ]
-
-  const blood_info = blood_types.map((type) => {
-    let rarity
-
-    if (type.includes('O_POSITIVE')) {
-      rarity = blood_rarity[0] // Common for O+- blood types
-    } else if (type.includes('AB')) {
-      rarity = blood_rarity[2] // Very rare for AB blood types
-    } else {
-      rarity = blood_rarity[1] // Rare for other blood types
-    }
-
-    return {
-      blood_type: type,
-      rarity,
-    }
-  })
-  const blood_matching_info = blood_info.filter((type) =>
-    type.blood_type.includes(data.blood_group.blood_type)
-  )
-
-  // Update form data
-  data = { ...data, ...{ blood_group: blood_matching_info } }
+  data.date_of_birth = dayjs(data.date_of_birth).toISOString()
 
   await prisma.teachers.create({
     data,

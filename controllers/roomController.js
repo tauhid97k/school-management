@@ -6,6 +6,7 @@ const {
   commonFields,
   paginateWithSorting,
 } = require('../utils/metaData')
+const { formatDate } = require('../utils/transformData')
 
 /*
   @route    GET: /rooms
@@ -17,12 +18,44 @@ const getAllRooms = asyncHandler(async (req, res, next) => {
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const [rooms, total] = await prisma.$transaction([
-    prisma.rooms.findMany({ take, skip, orderBy }),
+    prisma.rooms.findMany({
+      take,
+      skip,
+      orderBy,
+      include: {
+        sections: {
+          select: {
+            section_name: true,
+            class: {
+              select: {
+                class_name: true,
+              },
+            },
+          },
+        },
+      },
+    }),
     prisma.rooms.count(),
   ])
 
+  // Format Data
+  const formatData = rooms.map((room) => ({
+    id: room.id,
+    room_number: room.room_number,
+    section_name:
+      room.sections.length > 0 ? room.sections.at(0).section_name : null,
+    class_name:
+      room.sections.length > 0
+        ? room.sections.at(0).class
+          ? room.sections.at(0).class.class_name
+          : null
+        : null,
+    created_at: room.created_at,
+    updated_at: room.updated_at,
+  }))
+
   res.json({
-    data: rooms,
+    data: formatData,
     meta: {
       page,
       limit: take,
