@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler')
 const prisma = require('../utils/prisma')
+const dayjs = require('dayjs')
 const {
   teachersAttendanceValidator,
 } = require('../validators/attendanceValidator')
@@ -30,9 +31,7 @@ const teacherAttendance = asyncHandler(async (req, res, next) => {
     }
 
     // Get the current date in ISO 8601 format
-    const currentDate = new Date().toISOString()
-
-    console.log(currentDate)
+    const currentDate = dayjs().toISOString()
 
     const existAttendance = await tx.teacher_attendance.findFirst({
       where: {

@@ -310,9 +310,11 @@ model classes_noticeboard {
 model teacher_attendance {
   id         Int            @id @default(autoincrement())
   teacher_id Int
-  date       DateTime       @default(now())
+  date       DateTime       @default(now()) @db.Date
   status     attendanceType
   note       String?
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
 
   teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 
