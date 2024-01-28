@@ -70,7 +70,7 @@ const getAllRooms = asyncHandler(async (req, res, next) => {
   @desc     List a new room
 */
 const createRoom = asyncHandler(async (req, res, next) => {
-  const data = await roomValidator.validate(req.body, { abortEarly: false })
+  const data = await roomValidator().validate(req.body, { abortEarly: false })
   await prisma.rooms.create({ data })
 
   res.status(201).json({ message: 'Room listed successfully' })
@@ -82,9 +82,10 @@ const createRoom = asyncHandler(async (req, res, next) => {
   @desc     Update a room
 */
 const updateRoom = asyncHandler(async (req, res, next) => {
-  const data = await roomValidator.validate(req.body, { abortEarly: false })
-
   const id = Number(req.params.id)
+
+  const data = await roomValidator(id).validate(req.body, { abortEarly: false })
+
   await prisma.$transaction(async (tx) => {
     const findRoom = await tx.rooms.findUnique({
       where: {
