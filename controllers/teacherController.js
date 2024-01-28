@@ -8,6 +8,8 @@ const {
 const bcrypt = require('bcrypt')
 const { teacherValidator } = require('../validators/teacherValidator')
 const dayjs = require('dayjs')
+const excludeFields = require('../utils/excludeFields')
+const { formatDate } = require('../utils/transformData')
 
 /*
   @route    GET: /teachers
@@ -38,6 +40,35 @@ const getTeachers = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /teachers/:id
+  @access   private
+  @desc     Get all teachers
+*/
+
+const getTeacher = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const findTeacher = await prisma.teachers.findUnique({
+    where: {
+      id,
+    },
+  })
+
+  if (!findTeacher)
+    return res.status(404).json({
+      message: 'No teacher found',
+    })
+
+  // Correct date format
+  findTeacher.date_of_birth = formatDate(findTeacher.date_of_birth)
+  findTeacher.joining_date = formatDate(findTeacher.date_of_birth)
+
+  // Exclude password field
+  const formatTeacher = excludeFields(findTeacher, ['password'])
+
+  res.json(formatTeacher)
+})
+
+/*
   @route    POST: /teachers
   @access   private
   @desc     Create a new teacher
@@ -61,4 +92,68 @@ const createTeacher = asyncHandler(async (req, res, next) => {
   })
 })
 
-module.exports = { getTeachers, createTeacher }
+/*
+  @route    PUT: /teachers/:id
+  @access   private
+  @desc     Update a teacher
+*/
+const updateTeacher = asyncHandler(async (req, res, next) => {
+  const data = await teacherValidator.validate(req.body, { abortEarly: false })
+
+  const id = Number(req.params.id)
+  await prisma.$transaction(async (tx) => {
+    const findTeacher = await tx.teachers.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findTeacher)
+      return res.status(404).json({
+        message: 'No teacher found',
+      })
+
+    await tx.teachers.update({
+      where: { id },
+      data,
+    })
+  })
+
+  res.json({ message: 'Teacher updated successfully' })
+})
+
+/*
+  @route    DELETE: /teachers/:id
+  @access   private
+  @desc     delete a teachers
+*/
+const deleteTeacher = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findTeacher = await tx.teachers.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findTeacher)
+      return res.status(404).json({
+        message: 'No teacher found',
+      })
+
+    await tx.teachers.delete({
+      where: { id },
+    })
+
+    res.json({ message: 'Teacher data removed' })
+  })
+})
+
+module.exports = {
+  getTeachers,
+  getTeacher,
+  createTeacher,
+  updateTeacher,
+  deleteTeacher,
+}
