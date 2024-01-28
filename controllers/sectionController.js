@@ -17,12 +17,30 @@ const getAllSections = asyncHandler(async (req, res, next) => {
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const [sections, total] = await prisma.$transaction([
-    prisma.sections.findMany({ take, skip, orderBy }),
+    prisma.sections.findMany({
+      take,
+      skip,
+      orderBy,
+      include: {
+        room: true,
+        class: true,
+      },
+    }),
     prisma.sections.count(),
   ])
 
+  // Format Data
+  const formatData = sections.map((section) => ({
+    id: section.id,
+    section_name: section.section_name,
+    room_number: section.room.room_number,
+    class_name: section.class.class_name,
+    created_at: section.created_at,
+    updated_at: section.updated_at,
+  }))
+
   res.json({
-    data: sections,
+    data: formatData,
     meta: {
       page,
       limit: take,

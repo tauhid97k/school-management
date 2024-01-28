@@ -42,7 +42,7 @@ const getTeachers = asyncHandler(async (req, res, next) => {
 /*
   @route    GET: /teachers/:id
   @access   private
-  @desc     Get all teachers
+  @desc     Get teacher details
 */
 
 const getTeacher = asyncHandler(async (req, res, next) => {
@@ -60,7 +60,7 @@ const getTeacher = asyncHandler(async (req, res, next) => {
 
   // Correct date format
   findTeacher.date_of_birth = formatDate(findTeacher.date_of_birth)
-  findTeacher.joining_date = formatDate(findTeacher.date_of_birth)
+  findTeacher.joining_date = formatDate(findTeacher.joining_date)
 
   // Exclude password field
   const formatTeacher = excludeFields(findTeacher, ['password'])
@@ -74,7 +74,7 @@ const getTeacher = asyncHandler(async (req, res, next) => {
   @desc     Create a new teacher
 */
 const createTeacher = asyncHandler(async (req, res, next) => {
-  let data = await teacherValidator.validate(req.body, { abortEarly: false })
+  let data = await teacherValidator().validate(req.body, { abortEarly: false })
 
   // Encrypt password
   data.password = await bcrypt.hash(data.password, 12)
@@ -98,9 +98,12 @@ const createTeacher = asyncHandler(async (req, res, next) => {
   @desc     Update a teacher
 */
 const updateTeacher = asyncHandler(async (req, res, next) => {
-  const data = await teacherValidator.validate(req.body, { abortEarly: false })
-
   const id = Number(req.params.id)
+
+  const data = await teacherValidator(id).validate(req.body, {
+    abortEarly: false,
+  })
+
   await prisma.$transaction(async (tx) => {
     const findTeacher = await tx.teachers.findUnique({
       where: {
@@ -112,6 +115,13 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
       return res.status(404).json({
         message: 'No teacher found',
       })
+
+    // Encrypt password
+    data.password = await bcrypt.hash(data.password, 12)
+
+    // Correct date format
+    data.date_of_birth = dayjs(data.date_of_birth).toISOString()
+    data.joining_date = dayjs(data.joining_date).toISOString()
 
     await tx.teachers.update({
       where: { id },

@@ -89,20 +89,34 @@ model teachers {
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
   attendance          teacher_attendance[]
-  class_teachers      class_teachers[]
   classes_noticeboard classes_noticeboard[]
 }
 
 // Student
 model students {
-  id                Int       @id @default(autoincrement())
+  id                Int        @id @default(autoincrement())
+  admission_no      Int        @unique
+  admission_date    DateTime
+  class_id          Int
+  roll              String     @unique
   name              String
-  email             String    @unique
+  email             String     @unique
   password          String
   email_verified_at DateTime?
-  is_suspended      Boolean   @default(false)
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
+  date_of_birth     DateTime
+  blood_group       Json
+  religion          String
+  gender            genderType
+  age               Int
+  phone_number      String?
+  address           String
+  profile_img       String?
+  guardians         Json?      @db.Json
+  is_suspended      Boolean    @default(false)
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+
+  class classes @relation(fields: [class_id], references: [id])
 
   user_roles          user_roles[]
   verification_tokens verification_tokens[]
@@ -221,8 +235,6 @@ model subjects {
   updated_at DateTime @updatedAt
 
   group groups @relation(fields: [group_id], references: [id])
-
-  class_subjects class_subjects[]
 }
 
 // Class Management
@@ -232,9 +244,8 @@ model classes {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  sections       sections[]
-  class_subjects class_subjects[]
-  class_teachers class_teachers[]
+  sections sections[]
+  students students[]
 }
 
 // Section Management
@@ -250,26 +261,6 @@ model sections {
   room  rooms   @relation(fields: [room_id], references: [id])
 
   @@index([section_name])
-}
-
-// Class subjects
-model class_subjects {
-  id         Int @id @default(autoincrement())
-  class_id   Int
-  subject_id Int
-
-  classes  classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  subjects subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
-}
-
-// Class teachers
-model class_teachers {
-  id         Int @id @default(autoincrement())
-  teacher_id Int
-  class_id   Int
-
-  teachers teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
-  classes  classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
 }
 
 // NoticeBoard (School Official)

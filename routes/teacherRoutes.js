@@ -12,7 +12,7 @@ const {
 router.get('/', authMiddleware(), getTeachers)
 router.get('/:id', authMiddleware(), getTeacher)
 router.post('/', authMiddleware(), createTeacher)
-router.put('/', authMiddleware(), updateTeacher)
+router.put('/:id', authMiddleware(), updateTeacher)
 router.delete('/:id', authMiddleware(), deleteTeacher)
 
 module.exports = router
