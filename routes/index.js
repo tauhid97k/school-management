@@ -7,6 +7,7 @@ router.use('/test', require('./testRoutes'))
 // Routes
 router.use('/role-permissions', require('./rolePermissionsRoutes'))
 router.use('/auth', require('./authRoutes'))
+router.use('/user', require('./userRoutes'))
 router.use('/admins', require('./adminRoutes'))
 router.use('/rooms', require('./roomRoutes'))
 router.use('/groups', require('./groupRoutes'))

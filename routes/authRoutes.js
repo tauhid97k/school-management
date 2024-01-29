@@ -7,7 +7,6 @@ const {
   verifyEmail,
   login,
   refreshAuthToken,
-  authUser,
   logout,
   logoutAll,
   resetPassword,
@@ -28,6 +27,5 @@ router.post('/logout-all', logoutAll)
 // Protected Routes
 router.get('/resend-email', authMiddleware(), resendEmail)
 router.post('/verify-email', authMiddleware(), verifyEmail)
-router.get('/user', authMiddleware(), authUser)
 
 module.exports = router

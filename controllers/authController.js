@@ -539,15 +539,6 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
 })
 
 /*
-  @route    GET: /user
-  @access   private
-  @desc     Auth user
-*/
-const authUser = asyncHandler(async (req, res, next) => {
-  res.json(req.user)
-})
-
-/*
   @route    POST: /logout
   @access   private
   @desc     Logout auth user
@@ -879,7 +870,6 @@ module.exports = {
   verifyEmail,
   login,
   refreshAuthToken,
-  authUser,
   logout,
   logoutAll,
   resetPassword,
