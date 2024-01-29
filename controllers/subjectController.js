@@ -58,7 +58,9 @@ const getSubject = asyncHandler(async (req, res, next) => {
   @desc     Create a new subject
 */
 const createSubject = asyncHandler(async (req, res, next) => {
-  const data = await subjectValidator.validate(req.body, { abortEarly: false })
+  const data = await subjectValidator().validate(req.body, {
+    abortEarly: false,
+  })
   await prisma.subjects.create({ data })
 
   res.status(201).json({ message: 'Subject added successfully' })
@@ -70,9 +72,12 @@ const createSubject = asyncHandler(async (req, res, next) => {
   @desc     Update a subject
 */
 const updateSubject = asyncHandler(async (req, res, next) => {
-  const data = await subjectValidator.validate(req.body, { abortEarly: false })
-
   const id = Number(req.params.id)
+
+  const data = await subjectValidator(id).validate(req.body, {
+    abortEarly: false,
+  })
+
   await prisma.$transaction(async (tx) => {
     const findSubject = await tx.subjects.findUnique({
       where: {

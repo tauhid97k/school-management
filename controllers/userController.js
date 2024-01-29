@@ -1,4 +1,3 @@
-const prisma = require('../utils/prisma')
 const asyncHandler = require('express-async-handler')
 
 /*
