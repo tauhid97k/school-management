@@ -66,14 +66,11 @@ const getStudent = asyncHandler(async (req, res, next) => {
   findStudent.admission_date = formatDate(findStudent.admission_date)
 
   // Exclude password field
-  const dataWithExcludeFields = excludeFields(findStudent, [
-    'class_id',
-    'password',
-  ])
+  const dataWithExcludeFields = excludeFields(findStudent, ['password'])
 
   // Format Data
   const formatData = {
-    ...findStudent,
+    ...dataWithExcludeFields,
     class_name: findStudent.class.class_name,
   }
 

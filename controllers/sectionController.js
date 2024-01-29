@@ -33,7 +33,7 @@ const getAllSections = asyncHandler(async (req, res, next) => {
   const formatData = sections.map((section) => ({
     id: section.id,
     section_name: section.section_name,
-    room_number: section.room.room_number,
+    room_number: section?.room ? section.room.room_number : null,
     class_name: section.class.class_name,
     created_at: section.created_at,
     updated_at: section.updated_at,

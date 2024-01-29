@@ -19,7 +19,7 @@ const studentValidator = (id) =>
         }
 
         if (admission_no && id) {
-          if (findStudent.id === id) {
+          if (admission_no.id === id) {
             return true
           } else {
             return false
@@ -48,15 +48,28 @@ const studentValidator = (id) =>
     roll: yup
       .string()
       .required('Roll is required')
-      .test('unique', 'Role already exist', async (value) => {
+      .test('unique', 'Roll already exist', async (value) => {
         const roll = await prisma.students.findUnique({
           where: {
             roll: value,
           },
         })
 
-        if (roll) return false
-        else return true
+        if (roll && !id) {
+          return false
+        }
+
+        if (roll && id) {
+          if (roll.id === id) {
+            return true
+          } else {
+            return false
+          }
+        }
+
+        if (!roll) {
+          return true
+        }
       }),
     name: yup.string().required('Full name is required'),
     email: yup

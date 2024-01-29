@@ -251,13 +251,13 @@ model classes {
 model sections {
   id           Int      @id @default(autoincrement())
   class_id     Int
-  room_id      Int
+  room_id      Int?
   section_name String
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 
   class classes @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  room  rooms   @relation(fields: [room_id], references: [id])
+  room  rooms?  @relation(fields: [room_id], references: [id])
 
   @@index([section_name])
 }
