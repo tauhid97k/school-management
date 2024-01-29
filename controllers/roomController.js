@@ -65,6 +65,57 @@ const getAllRooms = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /rooms/:id
+  @access   private
+  @desc     Get a room details
+*/
+const getRoom = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const findRoom = await prisma.rooms.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      sections: {
+        select: {
+          section_name: true,
+          class: {
+            select: {
+              id: true,
+              class_name: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!findRoom)
+    return res.status(404).json({
+      message: 'No room found',
+    })
+
+  const formatData = {
+    id: findRoom.id,
+    room_number: findRoom.room_number,
+    section_name:
+      findRoom.sections.length > 0
+        ? findRoom.sections.at(0).section_name
+        : null,
+    class_name:
+      findRoom.sections.length > 0
+        ? findRoom.sections.at(0).class
+          ? findRoom.sections.at(0).class.class_name
+          : null
+        : null,
+    created_at: findRoom.created_at,
+    updated_at: findRoom.updated_at,
+  }
+
+  res.json(formatData)
+})
+
+/*
   @route    POST: /rooms
   @access   private
   @desc     List a new room
@@ -137,6 +188,7 @@ const deleteRoom = asyncHandler(async (req, res, next) => {
 
 module.exports = {
   getAllRooms,
+  getRoom,
   createRoom,
   updateRoom,
   deleteRoom,

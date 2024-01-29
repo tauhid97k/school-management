@@ -50,12 +50,50 @@ const getAllSections = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /sections/:id
+  @access   private
+  @desc     Get a section details
+*/
+const getSection = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const findSection = await prisma.sections.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      class: true,
+      room: true,
+    },
+  })
+
+  if (!findSection)
+    return res.status(404).json({
+      message: 'No section found',
+    })
+
+  const formatData = {
+    id: findSection.id,
+    section_name: findSection.section_name,
+    room_id: findSection.room_id,
+    room_number: findSection?.room ? findSection.room.room_number : null,
+    class_id: findSection.class_id,
+    class_name: findSection.class.class_name,
+    created_at: findSection.created_at,
+    updated_at: findSection.updated_at,
+  }
+
+  res.json(formatData)
+})
+
+/*
   @route    POST: /sections
   @access   private
   @desc     Add a new section
 */
 const createSection = asyncHandler(async (req, res, next) => {
-  const data = await sectionValidator.validate(req.body, { abortEarly: false })
+  const data = await sectionValidator().validate(req.body, {
+    abortEarly: false,
+  })
   await prisma.sections.create({ data })
 
   res.status(201).json({ message: 'Section added successfully' })
@@ -67,9 +105,12 @@ const createSection = asyncHandler(async (req, res, next) => {
   @desc     Update a section
 */
 const updateSection = asyncHandler(async (req, res, next) => {
-  const data = await sectionValidator.validate(req.body, { abortEarly: false })
-
   const id = Number(req.params.id)
+
+  const data = await sectionValidator(id).validate(req.body, {
+    abortEarly: false,
+  })
+
   await prisma.$transaction(async (tx) => {
     const findSection = await tx.sections.findUnique({
       where: {
@@ -121,6 +162,7 @@ const deleteSection = asyncHandler(async (req, res, next) => {
 
 module.exports = {
   getAllSections,
+  getSection,
   createSection,
   updateSection,
   deleteSection,
