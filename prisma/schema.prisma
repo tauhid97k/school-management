@@ -89,7 +89,6 @@ model teachers {
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
   attendance          teacher_attendance[]
-  classes_noticeboard classes_noticeboard[]
 }
 
 // Student
@@ -261,30 +260,6 @@ model sections {
   room  rooms   @relation(fields: [room_id], references: [id])
 
   @@index([section_name])
-}
-
-// NoticeBoard (School Official)
-model noticeboard {
-  id             Int                 @id @default(autoincrement())
-  recipient_ids  Json?               @db.Json
-  recipient_type noticeRecipientType
-  title          String
-  description    String              @db.Text
-  created_at     DateTime            @default(now())
-  updated_at     DateTime            @updatedAt
-}
-
-// NoticeBoard (Teacher to classes)
-model classes_noticeboard {
-  id          Int      @id @default(autoincrement())
-  teacher_id  Int
-  class_id    Int
-  title       String
-  description String   @db.Text
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-
-  teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 }
 
 // Teacher Attendance
