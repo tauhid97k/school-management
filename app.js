@@ -10,6 +10,7 @@ const {
   globalError,
 } = require('./middlewares/errorMiddleware')
 const deviceInfoMiddleware = require('./middlewares/deviceInfoMiddleware')
+const fileUpload = require('express-fileupload')
 
 // Uncaught Exception Handler
 process.on('uncaughtException', (error) => {
@@ -46,6 +47,11 @@ app.use(limiter)
 app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(
+  fileUpload({
+    createParentPath: true,
+  })
+)
 app.use(deviceInfoMiddleware)
 
 // Routes

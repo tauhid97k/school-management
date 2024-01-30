@@ -11,7 +11,7 @@ const {
 
 router.get('/', authMiddleware(), getTeachers)
 router.get('/:id', authMiddleware(), getTeacher)
-router.post('/', authMiddleware(), createTeacher)
+router.post('/', createTeacher)
 router.put('/:id', authMiddleware(), updateTeacher)
 router.delete('/:id', authMiddleware(), deleteTeacher)
 

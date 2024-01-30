@@ -6,10 +6,16 @@ const {
   paginateWithSorting,
 } = require('../utils/metaData')
 const bcrypt = require('bcrypt')
-const { teacherValidator } = require('../validators/teacherValidator')
+const {
+  teacherValidator,
+  teacherProfileImageValidator,
+  demoValidator,
+} = require('../validators/teacherValidator')
 const dayjs = require('dayjs')
 const excludeFields = require('../utils/excludeFields')
 const { formatDate } = require('../utils/transformData')
+const { v4: uuid } = require('uuid')
+const generateFileLink = require('../utils/generateFileLink')
 
 /*
   @route    GET: /teachers
@@ -61,6 +67,9 @@ const getTeacher = asyncHandler(async (req, res, next) => {
   // Correct date format
   findTeacher.date_of_birth = formatDate(findTeacher.date_of_birth)
   findTeacher.joining_date = formatDate(findTeacher.joining_date)
+  findTeacher.profile_img = generateFileLink(
+    `uploads/teachers/profiles/${findTeacher.profile_img}`
+  )
 
   // Exclude password field
   const formatTeacher = excludeFields(findTeacher, ['password'])
@@ -75,6 +84,23 @@ const getTeacher = asyncHandler(async (req, res, next) => {
 */
 const createTeacher = asyncHandler(async (req, res, next) => {
   let data = await teacherValidator().validate(req.body, { abortEarly: false })
+
+  if (req.files) {
+    await teacherProfileImageValidator.validate(req.files, {
+      abortEarly: false,
+    })
+
+    const { profile_img } = req.files
+    const uniqueFilename = `${uuid()}_${profile_img.name}`
+
+    // The path where the file is uploaded
+    const uploadPath = `uploads/teachers/profiles/${uniqueFilename}`
+
+    // Move the uploaded file to the correct folder
+    profile_img.mv(uploadPath)
+
+    data.profile_img = uniqueFilename
+  }
 
   // Encrypt password
   data.password = await bcrypt.hash(data.password, 12)

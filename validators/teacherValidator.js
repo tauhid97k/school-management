@@ -1,6 +1,29 @@
 const yup = require('yup')
 const prisma = require('../utils/prisma')
 
+const teacherProfileImageValidator = yup.object({
+  profile_img: yup
+    .mixed()
+    .test(
+      'type',
+      'Invalid file type. Only JPG, JPEG, and PNG are allowed',
+      (file) => {
+        if (!file) return true
+
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+        if (!allowedTypes.includes(file.mimetype)) return false
+        else return true
+      }
+    )
+    .test('size', 'File size is too large; max 2mb is allowed', (file) => {
+      if (!file) return true
+
+      const maxSize = 2 * 1024 * 1024
+      if (file.size > maxSize) return false
+      return true
+    }),
+})
+
 const teacherValidator = (id) =>
   yup.object({
     name: yup.string().required('Full name is required'),
@@ -31,7 +54,7 @@ const teacherValidator = (id) =>
           return true
         }
       }),
-
+    profile_img: yup.string().optional(),
     password: yup.string().required('Password is required'),
     date_of_birth: yup.string().required('Date of birth is required'),
     blood_group: yup
@@ -64,7 +87,6 @@ const teacherValidator = (id) =>
       .number()
       .typeError('Salary must be in number')
       .required('Salary is required'),
-    profile_img: yup.string().optional(),
     cover_letter: yup.string().optional(),
     education: yup
       .array()
@@ -79,18 +101,43 @@ const teacherValidator = (id) =>
           grade: yup.string().required('Grade is required'),
         })
       )
+      .transform((originalValue) => {
+        try {
+          return JSON.parse(originalValue)
+        } catch (error) {
+          throw new yup.ValidationError(
+            'JSON parsing failed!',
+            originalValue,
+            'education'
+          )
+        }
+      })
       .required('Minimum education qualification is required')
       .min(1, 'Minimum education qualification is required'),
     experience: yup
       .array()
       .of(
         yup.object({
-          institute_name: yup.string().required(),
-          position: yup.string().required(),
-          job_period: yup.string().required(),
+          institute_name: yup.string().required('Institute name is required'),
+          position: yup.string().required('Position is required'),
+          job_period: yup.string().required('Job period is required'),
         })
       )
+      .transform((originalValue) => {
+        try {
+          return JSON.parse(originalValue)
+        } catch (error) {
+          throw new yup.ValidationError(
+            'JSON parsing failed!',
+            originalValue,
+            'experience'
+          )
+        }
+      })
       .optional(),
   })
 
-module.exports = { teacherValidator }
+module.exports = {
+  teacherProfileImageValidator,
+  teacherValidator,
+}
