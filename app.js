@@ -54,6 +54,9 @@ app.use(
 )
 app.use(deviceInfoMiddleware)
 
+// Static file serve
+app.use('/uploads', express.static('uploads'))
+
 // Routes
 app.get('/', (req, res) =>
   res.json({

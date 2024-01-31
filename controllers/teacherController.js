@@ -35,8 +35,17 @@ const getTeachers = asyncHandler(async (req, res, next) => {
     prisma.teachers.count(),
   ])
 
+  teachers.profile_img = generateFileLink(
+    `teachers/profiles/${teachers.profile_img}`
+  )
+
+  const formatTeachers = teachers.map((teacher) => ({
+    ...teacher,
+    profile_img: generateFileLink(`teachers/profiles/${teacher.profile_img}`),
+  }))
+
   res.json({
-    data: teachers,
+    data: formatTeachers,
     meta: {
       page,
       limit: take,
@@ -68,7 +77,7 @@ const getTeacher = asyncHandler(async (req, res, next) => {
   findTeacher.date_of_birth = formatDate(findTeacher.date_of_birth)
   findTeacher.joining_date = formatDate(findTeacher.joining_date)
   findTeacher.profile_img = generateFileLink(
-    `uploads/teachers/profiles/${findTeacher.profile_img}`
+    `teachers/profiles/${findTeacher.profile_img}`
   )
 
   // Exclude password field
