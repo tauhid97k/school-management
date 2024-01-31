@@ -22,7 +22,7 @@ const getAllExamCategory = asyncHandler(async (req, res, next) => {
       skip,
       orderBy,
     }),
-    prisma.rooms.count(),
+    prisma.exam_categories.count(),
   ])
 
   res.json({
@@ -92,13 +92,13 @@ const deleteExamCategory = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
   await prisma.$transaction(async (tx) => {
-    const findRoom = await tx.exam_categories.findUnique({
+    const findExamCategory = await tx.exam_categories.findUnique({
       where: {
         id,
       },
     })
 
-    if (!findRoom)
+    if (!findExamCategory)
       return res.status(404).json({
         message: 'No exam category found',
       })
