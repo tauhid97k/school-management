@@ -18,5 +18,6 @@ router.use('/subjects', require('./subjectRoutes'))
 router.use('/sections', require('./sectionRoutes'))
 router.use('/notices', require('./noticeRoutes'))
 router.use('/attendance', require('./attendanceRoutes'))
+router.use('/exam-categories', require('./examCategoryRoutes'))
 
 module.exports = router

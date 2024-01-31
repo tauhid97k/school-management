@@ -262,6 +262,29 @@ model sections {
   @@index([section_name])
 }
 
+// Exams
+model exam_categories {
+  id         Int      @id @default(autoincrement())
+  exam_name  String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  exams      exams[]
+}
+
+// Class Exams
+model exams {
+  id           Int      @id @default(autoincrement())
+  exam_id      Int
+  class_ids    Json     @db.Json
+  section_ids  Json     @db.Json
+  exam_date    DateTime @db.Date
+  exam_routine Json     @db.Json
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  exam_category exam_categories @relation(fields: [exam_id], references: [id])
+}
+
 // Teacher Attendance
 model teacher_attendance {
   id         Int            @id @default(autoincrement())
