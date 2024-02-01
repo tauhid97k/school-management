@@ -11,43 +11,62 @@ const subjectValidator = (id) =>
         'unique',
         'This code already assigned to another subject',
         async (value) => {
-          const subject = await prisma.subjects.findUnique({
+          const findSubject = await prisma.subjects.findUnique({
             where: {
               code: value,
             },
           })
 
-          if (subject && !id) {
+          if (findSubject && !id) {
             return false
           }
 
-          if (subject && id) {
-            if (subject.id === id) {
+          if (findSubject && id) {
+            if (findSubject.id === id) {
               return true
             } else {
               return false
             }
           }
 
-          if (!subject) {
+          if (!findSubject) {
             return true
           }
         }
       ),
-    group_id: yup
-      .number()
-      .typeError('group id must be number')
-      .required('Group id is required')
-      .test('exists', 'Group id does not exist', async (value) => {
-        const findGroup = await prisma.groups.findUnique({
+    groups: yup
+      .array(yup.number().typeError('Group must be an id'))
+      .required('At least one group is required')
+      .test('exist', 'One or more groups are invalid', async (values) => {
+        const checkGroups = await prisma.groups.findMany({
           where: {
-            id: value,
+            id: {
+              in: values,
+            },
           },
         })
 
-        if (findGroup) return true
+        if (checkGroups.length === values.length) return true
         else return false
-      }),
+      })
+      .min(1, 'At least one group is required'),
+    classes: yup
+      .array(yup.number().typeError('Class must be an id'))
+      .test('exist', 'One or more classes are invalid', async (values) => {
+        if (!values || !values.length) return true
+
+        const checkClasses = await prisma.classes.findMany({
+          where: {
+            id: {
+              in: values,
+            },
+          },
+        })
+
+        if (checkClasses.length === values.length) return true
+        else return false
+      })
+      .optional(),
   })
 
 module.exports = { subjectValidator }

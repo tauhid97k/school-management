@@ -17,7 +17,11 @@ const getAllSubjects = asyncHandler(async (req, res, next) => {
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const [subjects, total] = await prisma.$transaction([
-    prisma.subjects.findMany({ take, skip, orderBy }),
+    prisma.subjects.findMany({
+      take,
+      skip,
+      orderBy,
+    }),
     prisma.subjects.count(),
   ])
 
@@ -42,6 +46,18 @@ const getSubject = asyncHandler(async (req, res, next) => {
     where: {
       id,
     },
+    include: {
+      subject_groups: {
+        select: {
+          group_id: true,
+        },
+      },
+      subject_classes: {
+        select: {
+          class_id: true,
+        },
+      },
+    },
   })
 
   if (!findSubject)
@@ -49,7 +65,26 @@ const getSubject = asyncHandler(async (req, res, next) => {
       message: 'No Subject found',
     })
 
-  res.json(findSubject)
+  // Format the data
+  const groups = findSubject.subject_groups.map(
+    (subjectGroup) => subjectGroup.group_id
+  )
+
+  const classes = findSubject.subject_classes.map(
+    (subjectClass) => subjectClass.class_id
+  )
+
+  const formatData = {
+    id: findSubject.id,
+    name: findSubject.name,
+    code: findSubject.code,
+    groups: groups,
+    classes: classes,
+    created_at: findSubject.created_at,
+    updated_at: findSubject.updated_at,
+  }
+
+  res.json(formatData)
 })
 
 /*
@@ -58,10 +93,35 @@ const getSubject = asyncHandler(async (req, res, next) => {
   @desc     Create a new subject
 */
 const createSubject = asyncHandler(async (req, res, next) => {
-  const data = await subjectValidator().validate(req.body, {
-    abortEarly: false,
+  const { name, code, groups, classes } = await subjectValidator().validate(
+    req.body,
+    {
+      abortEarly: false,
+    }
+  )
+
+  // Format Data For Database
+  const formatGroups = groups.map((group_id) => ({ group_id }))
+  const formatClasses = classes.map((class_id) => ({ class_id }))
+
+  await prisma.subjects.create({
+    data: {
+      name,
+      code,
+      subject_groups: {
+        createMany: {
+          data: formatGroups,
+        },
+      },
+      ...(formatGroups.length > 0 && {
+        subject_classes: {
+          createMany: {
+            data: formatClasses,
+          },
+        },
+      }),
+    },
   })
-  await prisma.subjects.create({ data })
 
   res.status(201).json({ message: 'Subject added successfully' })
 })
@@ -74,9 +134,12 @@ const createSubject = asyncHandler(async (req, res, next) => {
 const updateSubject = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
-  const data = await subjectValidator(id).validate(req.body, {
-    abortEarly: false,
-  })
+  const { name, code, groups, classes } = await subjectValidator(id).validate(
+    req.body,
+    {
+      abortEarly: false,
+    }
+  )
 
   await prisma.$transaction(async (tx) => {
     const findSubject = await tx.subjects.findUnique({
@@ -90,13 +153,48 @@ const updateSubject = asyncHandler(async (req, res, next) => {
         message: 'No subject found',
       })
 
-    await tx.subjects.update({
-      where: { id },
-      data,
+    // Delete existing entries in subject groups
+    await tx.subject_groups.deleteMany({
+      where: {
+        subject_id: findSubject.id,
+      },
     })
-  })
 
-  res.json({ message: 'Subject updated successfully' })
+    // Delete existing entries in subject classes
+    await tx.subject_classes.deleteMany({
+      where: {
+        subject_id: findSubject.id,
+      },
+    })
+
+    // Format Data For Database
+    const formatGroups = groups.map((group_id) => ({ group_id }))
+    const formatClasses = classes.map((class_id) => ({ class_id }))
+
+    await tx.subjects.update({
+      where: {
+        id: findSubject.id,
+      },
+      data: {
+        name,
+        code,
+        subject_groups: {
+          createMany: {
+            data: formatGroups,
+          },
+        },
+        ...(formatGroups.length > 0 && {
+          subject_classes: {
+            createMany: {
+              data: formatClasses,
+            },
+          },
+        }),
+      },
+    })
+
+    res.json({ message: 'Subject updated successfully' })
+  })
 })
 
 /*

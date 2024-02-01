@@ -217,23 +217,46 @@ model rooms {
 
 // Group 
 model groups {
-  id         Int        @id @default(autoincrement())
-  group_name String     @unique
-  created_at DateTime   @default(now())
-  updated_at DateTime   @updatedAt
-  subjects   subjects[]
+  id             Int              @id @default(autoincrement())
+  group_name     String           @unique
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
+  subject_groups subject_groups[]
 }
 
 // Subject 
 model subjects {
+  id              Int               @id @default(autoincrement())
+  name            String
+  code            String            @unique
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+  subject_groups  subject_groups[]
+  subject_classes subject_classes[]
+}
+
+// Subject Groups
+model subject_groups {
   id         Int      @id @default(autoincrement())
-  name       String
-  code       String   @unique
+  subject_id Int
   group_id   Int
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  group groups @relation(fields: [group_id], references: [id])
+  subject subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+  group   groups   @relation(fields: [group_id], references: [id], onDelete: Cascade)
+}
+
+// Subject Classes
+model subject_classes {
+  id         Int      @id @default(autoincrement())
+  subject_id Int
+  class_id   Int?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  subject subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+  class   classes? @relation(fields: [class_id], references: [id], onDelete: Cascade)
 }
 
 // Class Management
@@ -243,8 +266,9 @@ model classes {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  sections sections[]
-  students students[]
+  sections        sections[]
+  students        students[]
+  subject_classes subject_classes[]
 }
 
 // Section Management
