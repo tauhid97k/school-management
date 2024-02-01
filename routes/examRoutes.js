@@ -4,6 +4,7 @@ const authMiddleware = require('../middlewares/authMiddleware')
 const {
   getAllClassesAndSections,
   getAllExams,
+  getExam,
   createExam,
   updateExam,
   deleteExam,
@@ -12,6 +13,7 @@ const {
 // Protected Routes
 router.get('/class-sections', authMiddleware(), getAllClassesAndSections)
 router.get('/', authMiddleware(), getAllExams)
+router.get('/:id', authMiddleware(), getExam)
 router.post('/', authMiddleware(), createExam)
 router.put('/:id', authMiddleware(), updateExam)
 router.delete('/:id', authMiddleware(), deleteExam)

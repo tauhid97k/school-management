@@ -27,14 +27,21 @@ const getAllClassesAndSections = asyncHandler(async (req, res, next) => {
 /*
   @route    GET: /exams
   @access   private
-  @desc     All exams list
+  @desc     All exams
 */
 const getAllExams = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, commonFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const [exams, total] = await prisma.$transaction([
-    prisma.exams.findMany({ take, skip, orderBy }),
+    prisma.exams.findMany({
+      take,
+      skip,
+      orderBy,
+      include: {
+        exam_category: true,
+      },
+    }),
     prisma.exams.count(),
   ])
 
@@ -49,16 +56,88 @@ const getAllExams = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /exams/:id
+  @access   private
+  @desc     Get an exam details
+*/
+const getExam = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const findExam = await prisma.exams.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      exam_category: true,
+      exam_classes: {
+        select: {
+          class_id: true,
+        },
+      },
+      exam_sections: {
+        select: {
+          section_id: true,
+        },
+      },
+    },
+  })
+
+  if (!findExam)
+    return res.status(404).json({
+      message: 'No exam found',
+    })
+
+  // Format the data
+  const classes = findExam.exam_classes.map((examClass) => examClass.class_id)
+
+  const sections = findExam.exam_sections.map(
+    (examSection) => examSection.section_id
+  )
+
+  const formatData = {
+    id: findExam.id,
+    exam_category: findExam.exam_category.exam_name,
+    classes,
+    sections,
+    created_at: findExam.created_at,
+    updated_at: findExam.updated_at,
+  }
+
+  res.json(formatData)
+})
+
+/*
   @route    POST: /exams
   @access   private
   @desc     Create a new exam
 */
 const createExam = asyncHandler(async (req, res, next) => {
-  const data = await examValidator().validate(req.body, {
-    abortEarly: false,
-  })
+  const { exam_category_id, classes, sections, exam_routine } =
+    await examValidator().validate(req.body, {
+      abortEarly: false,
+    })
 
-  await prisma.exams.create({ data })
+  // Format Data For Database
+  const formatClasses = classes.map((class_id) => ({ class_id }))
+  const formatSections = sections.map((section_id) => ({ section_id }))
+
+  await prisma.exams.create({
+    data: {
+      exam_category_id,
+      exam_routine,
+      exam_classes: {
+        createMany: {
+          data: formatClasses,
+        },
+      },
+      ...(formatSections.length > 0 && {
+        exam_sections: {
+          createMany: {
+            data: formatSections,
+          },
+        },
+      }),
+    },
+  })
 
   res.status(201).json({ message: 'Exam created successfully' })
 })
@@ -71,12 +150,13 @@ const createExam = asyncHandler(async (req, res, next) => {
 const updateExam = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
-  const data = await examValidator(id).validate(req.body, {
-    abortEarly: false,
-  })
+  const { exam_category_id, classes, sections, exam_routine } =
+    await examValidator(id).validate(req.body, {
+      abortEarly: false,
+    })
 
   await prisma.$transaction(async (tx) => {
-    const findExam = await tx.exam_categories.findUnique({
+    const findExam = await tx.exams.findUnique({
       where: {
         id,
       },
@@ -84,16 +164,51 @@ const updateExam = asyncHandler(async (req, res, next) => {
 
     if (!findExam)
       return res.status(404).json({
-        message: 'No exam category found',
+        message: 'No exam found',
       })
 
-    await tx.exam_categories.update({
-      where: { id },
-      data,
+    // Delete existing entries in exam classes
+    await tx.exam_classes.deleteMany({
+      where: {
+        exam_id: findExam.id,
+      },
     })
-  })
 
-  res.json({ message: 'Exam category updated' })
+    // Delete existing entries in exam sections
+    await tx.exam_sections.deleteMany({
+      where: {
+        exam_id: findExam.id,
+      },
+    })
+
+    // Format Data For Database
+    const formatClasses = classes.map((class_id) => ({ class_id }))
+    const formatSections = sections.map((section_id) => ({ section_id }))
+
+    await tx.exams.update({
+      where: {
+        id: findExam.id,
+      },
+      data: {
+        exam_category_id,
+        exam_routine,
+        exam_classes: {
+          createMany: {
+            data: formatClasses,
+          },
+        },
+        ...(formatSections.length > 0 && {
+          exam_sections: {
+            createMany: {
+              data: formatSections,
+            },
+          },
+        }),
+      },
+    })
+
+    res.json({ message: 'Exam updated successfully' })
+  })
 })
 
 /*
@@ -120,13 +235,14 @@ const deleteExam = asyncHandler(async (req, res, next) => {
       where: { id },
     })
 
-    res.json({ message: 'Exam deleted' })
+    res.json({ message: 'Exam deleted successfully' })
   })
 })
 
 module.exports = {
   getAllClassesAndSections,
   getAllExams,
+  getExam,
   createExam,
   updateExam,
   deleteExam,

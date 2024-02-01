@@ -269,6 +269,7 @@ model classes {
   sections        sections[]
   students        students[]
   subject_classes subject_classes[]
+  exam_classes    exam_classes[]
 }
 
 // Section Management
@@ -280,13 +281,14 @@ model sections {
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 
-  class classes @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  room  rooms?  @relation(fields: [room_id], references: [id])
+  class         classes         @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  room          rooms?          @relation(fields: [room_id], references: [id])
+  exam_sections exam_sections[]
 
   @@index([section_name])
 }
 
-// Exams
+// Exam Categories
 model exam_categories {
   id         Int      @id @default(autoincrement())
   exam_name  String   @unique
@@ -295,18 +297,41 @@ model exam_categories {
   exams      exams[]
 }
 
-// Class Exams
+// Exams
 model exams {
-  id           Int      @id @default(autoincrement())
-  exam_id      Int
-  class_ids    Json     @db.Json
-  section_ids  Json     @db.Json
-  exam_date    DateTime @db.Date
-  exam_routine Json     @db.Json
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id               Int      @id @default(autoincrement())
+  exam_category_id Int
+  exam_routine     Json     @db.Json
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 
-  exam_category exam_categories @relation(fields: [exam_id], references: [id])
+  exam_category exam_categories @relation(fields: [exam_category_id], references: [id])
+  exam_classes  exam_classes[]
+  exam_sections exam_sections[]
+}
+
+// Exam Classes
+model exam_classes {
+  id         Int      @id @default(autoincrement())
+  exam_id    Int
+  class_id   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  exam  exams   @relation(fields: [exam_id], references: [id], onDelete: Cascade)
+  class classes @relation(fields: [class_id], references: [id], onDelete: Cascade)
+}
+
+// Exam Sections
+model exam_sections {
+  id         Int      @id @default(autoincrement())
+  exam_id    Int
+  section_id Int?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  exam    exams     @relation(fields: [exam_id], references: [id], onDelete: Cascade)
+  section sections? @relation(fields: [section_id], references: [id], onDelete: Cascade)
 }
 
 // Teacher Attendance
