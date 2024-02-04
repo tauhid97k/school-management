@@ -6,6 +6,7 @@ const {
   paginateWithSorting,
 } = require('../utils/metaData')
 const { examValidator } = require('../validators/examValidator')
+const dayjs = require('dayjs')
 
 /*
   @route    GET: /exams/class-sections
@@ -40,13 +41,33 @@ const getAllExams = asyncHandler(async (req, res, next) => {
       orderBy,
       include: {
         exam_category: true,
+        exam_routines: true,
       },
     }),
     prisma.exams.count(),
   ])
 
+  // Format Exams
+  const formatExams = exams.map((exam) => {
+    // Extract all start_time strings
+    const startTimes = exam.exam_routines.map(
+      (routine) => new Date(routine.start_time)
+    )
+
+    // Find the earliest start_time for each exam
+    const earliestStartTime = new Date(Math.min(...startTimes))
+
+    return {
+      id: exam.id,
+      exam_name: exam.exam_category.exam_name,
+      exam_date: earliestStartTime,
+      created_at: exam.created_at,
+      updated_at: exam.updated_at,
+    }
+  })
+
   res.json({
-    data: exams,
+    data: formatExams,
     meta: {
       page,
       limit: take,
@@ -62,47 +83,68 @@ const getAllExams = asyncHandler(async (req, res, next) => {
 */
 const getExam = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
-  const findExam = await prisma.exams.findUnique({
-    where: {
-      id,
-    },
-    include: {
-      exam_category: true,
-      exam_classes: {
-        select: {
-          class_id: true,
+  await prisma.$transaction(async (tx) => {
+    const findExam = await tx.exams.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        exam_category: true,
+        exam_classes: {
+          include: {
+            class: true,
+          },
+        },
+        exam_sections: {
+          include: {
+            section: true,
+          },
+        },
+        exam_routines: {
+          include: {
+            subject: true,
+          },
         },
       },
-      exam_sections: {
-        select: {
-          section_id: true,
-        },
-      },
-    },
-  })
-
-  if (!findExam)
-    return res.status(404).json({
-      message: 'No exam found',
     })
 
-  // Format the data
-  const classes = findExam.exam_classes.map((examClass) => examClass.class_id)
+    if (!findExam)
+      return res.status(404).json({
+        message: 'No exam found',
+      })
 
-  const sections = findExam.exam_sections.map(
-    (examSection) => examSection.section_id
-  )
+    // Format Data
+    const formatData = {
+      id: findExam.id,
+      exam_category: findExam.exam_category,
+      classes: findExam.exam_classes.map(({ class: { id, class_name } }) => ({
+        id,
+        class_name,
+      })),
+      sections: findExam.exam_sections.map(
+        ({ section: { id, class_id, section_name } }) => ({
+          id,
+          class_id,
+          section_name,
+        })
+      ),
+      exam_routine: findExam.exam_routines.map(
+        ({ id, start_time, end_time, subject: { name, code } }) => ({
+          id,
+          start_time,
+          end_time,
+          subject: {
+            name,
+            code,
+          },
+        })
+      ),
+      created_at: findExam.created_at,
+      updated_at: findExam.updated_at,
+    }
 
-  const formatData = {
-    id: findExam.id,
-    exam_category: findExam.exam_category.exam_name,
-    classes,
-    sections,
-    created_at: findExam.created_at,
-    updated_at: findExam.updated_at,
-  }
-
-  res.json(formatData)
+    res.json(formatData)
+  })
 })
 
 /*
@@ -123,7 +165,6 @@ const createExam = asyncHandler(async (req, res, next) => {
   await prisma.exams.create({
     data: {
       exam_category_id,
-      exam_routine,
       exam_classes: {
         createMany: {
           data: formatClasses,
@@ -136,6 +177,11 @@ const createExam = asyncHandler(async (req, res, next) => {
           },
         },
       }),
+      exam_routines: {
+        createMany: {
+          data: exam_routine,
+        },
+      },
     },
   })
 
@@ -151,7 +197,7 @@ const updateExam = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
   const { exam_category_id, classes, sections, exam_routine } =
-    await examValidator(id).validate(req.body, {
+    await examValidator().validate(req.body, {
       abortEarly: false,
     })
 
@@ -181,6 +227,13 @@ const updateExam = asyncHandler(async (req, res, next) => {
       },
     })
 
+    // Delete existing entries in exam routine
+    await tx.exam_routines.deleteMany({
+      where: {
+        exam_id: findExam.id,
+      },
+    })
+
     // Format Data For Database
     const formatClasses = classes.map((class_id) => ({ class_id }))
     const formatSections = sections.map((section_id) => ({ section_id }))
@@ -204,6 +257,11 @@ const updateExam = asyncHandler(async (req, res, next) => {
             },
           },
         }),
+        exam_routines: {
+          createMany: {
+            data: exam_routine,
+          },
+        },
       },
     })
 

@@ -160,7 +160,7 @@ const verifyEmail = asyncHandler(async (req, res, next) => {
   await prisma.$transaction(async (tx) => {
     const checkVerifyCode = await tx.verification_tokens.findFirst({
       where: {
-        AND: [{ token }, { code }],
+        AND: [{ code }, { token }],
       },
     })
 
@@ -680,7 +680,7 @@ const verifyResetCode = asyncHandler(async (req, res, next) => {
 
   const checkVerifyCode = await prisma.verification_tokens.findFirst({
     where: {
-      AND: [{ token }, { code }],
+      AND: [{ code }, { token }],
     },
   })
 

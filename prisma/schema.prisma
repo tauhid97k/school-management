@@ -137,7 +137,10 @@ model personal_tokens {
   admins   admins?   @relation(fields: [admin_id], references: [id], onDelete: Cascade)
   ttudents students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
 
-  @@index([refresh_token], type: Hash)
+  @@index([admin_id])
+  @@index([teacher_id])
+  @@index([student_id])
+  @@index([refresh_token])
 }
 
 // Verification token (Email and password reset)
@@ -156,8 +159,10 @@ model verification_tokens {
   admins   admins?   @relation(fields: [admin_id], references: [id], onDelete: Cascade)
   ttudents students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
 
-  @@index([code], type: Hash)
-  @@index([token], type: Hash)
+  @@index([admin_id])
+  @@index([teacher_id])
+  @@index([student_id])
+  @@index([code, token])
 }
 
 // User's role
@@ -172,6 +177,8 @@ model user_roles {
   roles    roles     @relation(fields: [role_id], references: [id])
   admins   admins?   @relation(fields: [admin_id], references: [id], onDelete: Cascade)
   ttudents students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@index([role_id])
 }
 
 // Roles Permissions
@@ -182,6 +189,8 @@ model role_permissions {
 
   roles       roles       @relation(fields: [role_id], references: [id], onDelete: Cascade)
   permissions permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  @@index([role_id, permission_id])
 }
 
 // Roles
@@ -233,6 +242,7 @@ model subjects {
   updated_at      DateTime          @updatedAt
   subject_groups  subject_groups[]
   subject_classes subject_classes[]
+  exam_routines   exam_routines[]
 }
 
 // Subject Groups
@@ -245,6 +255,9 @@ model subject_groups {
 
   subject subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
   group   groups   @relation(fields: [group_id], references: [id], onDelete: Cascade)
+
+  @@index([subject_id])
+  @@index([group_id])
 }
 
 // Subject Classes
@@ -257,6 +270,9 @@ model subject_classes {
 
   subject subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
   class   classes? @relation(fields: [class_id], references: [id], onDelete: Cascade)
+
+  @@index([subject_id])
+  @@index([class_id])
 }
 
 // Class Management
@@ -286,6 +302,8 @@ model sections {
   exam_sections exam_sections[]
 
   @@index([section_name])
+  @@index([class_id])
+  @@index([room_id])
 }
 
 // Exam Categories
@@ -301,13 +319,13 @@ model exam_categories {
 model exams {
   id               Int      @id @default(autoincrement())
   exam_category_id Int
-  exam_routine     Json     @db.Json
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
   exam_category exam_categories @relation(fields: [exam_category_id], references: [id])
   exam_classes  exam_classes[]
   exam_sections exam_sections[]
+  exam_routines exam_routines[]
 }
 
 // Exam Classes
@@ -320,6 +338,9 @@ model exam_classes {
 
   exam  exams   @relation(fields: [exam_id], references: [id], onDelete: Cascade)
   class classes @relation(fields: [class_id], references: [id], onDelete: Cascade)
+
+  @@index([exam_id])
+  @@index([class_id])
 }
 
 // Exam Sections
@@ -332,6 +353,26 @@ model exam_sections {
 
   exam    exams     @relation(fields: [exam_id], references: [id], onDelete: Cascade)
   section sections? @relation(fields: [section_id], references: [id], onDelete: Cascade)
+
+  @@index([exam_id])
+  @@index([section_id])
+}
+
+// Exam Routine
+model exam_routines {
+  id         Int      @id @default(autoincrement())
+  exam_id    Int
+  subject_id Int
+  start_time DateTime
+  end_time   DateTime
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  exam    exams    @relation(fields: [exam_id], references: [id], onDelete: Cascade)
+  subject subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+
+  @@index([exam_id])
+  @@index([subject_id])
 }
 
 // Teacher Attendance
@@ -346,5 +387,7 @@ model teacher_attendance {
 
   teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 
-  @@index([date, status])
+  @@index([teacher_id])
+  @@index([date])
+  @@index([status])
 }

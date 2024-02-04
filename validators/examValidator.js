@@ -1,7 +1,7 @@
 const yup = require('yup')
 const prisma = require('../utils/prisma')
 
-const examValidator = (id) =>
+const examValidator = () =>
   yup.object({
     exam_category_id: yup
       .number()
@@ -64,9 +64,42 @@ const examValidator = (id) =>
               if (findSubject) return true
               else return false
             }),
-          start_time: yup.string().required('Start time is required'),
-          end_time: yup.string().required('End time is required'),
-          exam_date: yup.string().required('Exam date is required'),
+          start_time: yup
+            .date()
+            .typeError('Start time must be a valid date time')
+            .required('Start time is required')
+            .test('time', 'Start time must be in the future', (value) => {
+              const currentDate = new Date()
+              return value && value > currentDate
+            }),
+          end_time: yup
+            .date()
+            .typeError('End time must be a valid date time')
+            .required('End time is required')
+            .test('time', 'End time must be in the future', (value) => {
+              const currentDate = new Date()
+              return value && value > currentDate
+            })
+            .test(
+              'compare',
+              'End time must be after start time; and must be on the same day',
+              (value, ctx) => {
+                const startTime = ctx.parent.start_time
+
+                if (!startTime) {
+                  throw new yup.ValidationError(
+                    'Please, select start time first',
+                    value,
+                    'start_time'
+                  )
+                }
+
+                const startDate = startTime.toISOString().split('T')[0]
+                const endDate = value.toISOString().split('T')[0]
+
+                return value > startTime && startDate === endDate
+              }
+            ),
         })
       )
       .required('Exam routine is required')
