@@ -104,6 +104,9 @@ const getExam = asyncHandler(async (req, res, next) => {
           include: {
             subject: true,
           },
+          orderBy: {
+            start_time: 'asc',
+          },
         },
       },
     })
@@ -116,6 +119,7 @@ const getExam = asyncHandler(async (req, res, next) => {
     // Format Data
     const formatData = {
       id: findExam.id,
+      exam_date: findExam.exam_routines.at(0).start_time,
       exam_category: findExam.exam_category,
       classes: findExam.exam_classes.map(({ class: { id, class_name } }) => ({
         id,

@@ -70,7 +70,8 @@ const examValidator = () =>
             .required('Start time is required')
             .test('time', 'Start time must be in the future', (value) => {
               const currentDate = new Date()
-              return value && value > currentDate
+              const startDate = new Date(value)
+              return startDate > currentDate
             }),
           end_time: yup
             .date()
@@ -78,7 +79,8 @@ const examValidator = () =>
             .required('End time is required')
             .test('time', 'End time must be in the future', (value) => {
               const currentDate = new Date()
-              return value && value > currentDate
+              const endDate = new Date(value)
+              return endDate > currentDate
             })
             .test(
               'compare',

@@ -375,6 +375,18 @@ model exam_routines {
   @@index([subject_id])
 }
 
+// Exam Grading System
+model grades {
+  id            Int      @id @default(autoincrement())
+  start_range   Int
+  end_range     Int
+  grading_name  String   @unique
+  grading_point Float
+  comment       String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
+
 // Teacher Attendance
 model teacher_attendance {
   id         Int            @id @default(autoincrement())
