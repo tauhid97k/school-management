@@ -94,8 +94,10 @@ const examValidator = () =>
                   )
                 }
 
-                const startDate = startTime.toISOString().split('T')[0]
-                const endDate = value.toISOString().split('T')[0]
+                const startDate = new Date(startTime)
+                  .toISOString()
+                  .split('T')[0]
+                const endDate = new Date(value).toISOString().split('T')[0]
 
                 return value > startTime && startDate === endDate
               }
