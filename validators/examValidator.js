@@ -64,6 +64,12 @@ const examValidator = () =>
               if (findSubject) return true
               else return false
             }),
+          full_mark: yup
+            .number()
+            .typeError('Subject mark must be in number')
+            .integer('Subject mark must be an integer')
+            .positive('Subject mark must be a positive number')
+            .required('Subject full mark is required'),
           start_time: yup
             .date()
             .typeError('Start time must be a valid date time')
@@ -108,6 +114,7 @@ const examValidator = () =>
       )
       .required('Exam routine is required')
       .min(1, 'Exam routine is required'),
+    status: yup.string().optional().oneOf(['ACTIVE', 'CANCELLED']),
   })
 
 module.exports = { examValidator }

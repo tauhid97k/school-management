@@ -6,7 +6,6 @@ const {
   paginateWithSorting,
 } = require('../utils/metaData')
 const { examValidator } = require('../validators/examValidator')
-const dayjs = require('dayjs')
 
 /*
   @route    GET: /exams/class-sections
@@ -41,7 +40,11 @@ const getAllExams = asyncHandler(async (req, res, next) => {
       orderBy,
       include: {
         exam_category: true,
-        exam_routines: true,
+        exam_routines: {
+          orderBy: {
+            start_time: 'asc',
+          },
+        },
       },
     }),
     prisma.exams.count(),
@@ -49,18 +52,11 @@ const getAllExams = asyncHandler(async (req, res, next) => {
 
   // Format Exams
   const formatExams = exams.map((exam) => {
-    // Extract all start_time strings
-    const startTimes = exam.exam_routines.map(
-      (routine) => new Date(routine.start_time)
-    )
-
-    // Find the earliest start_time for each exam
-    const earliestStartTime = new Date(Math.min(...startTimes))
-
     return {
       id: exam.id,
       exam_name: exam.exam_category.exam_name,
-      exam_date: earliestStartTime,
+      exam_date: exam.exam_routines.at(0).start_time,
+      status: exam.status,
       created_at: exam.created_at,
       updated_at: exam.updated_at,
     }
@@ -119,6 +115,7 @@ const getExam = asyncHandler(async (req, res, next) => {
     // Format Data
     const formatData = {
       id: findExam.id,
+      status: findExam.status,
       exam_date: findExam.exam_routines.at(0).start_time,
       exam_category: findExam.exam_category,
       classes: findExam.exam_classes.map(({ class: { id, class_name } }) => ({
@@ -133,11 +130,19 @@ const getExam = asyncHandler(async (req, res, next) => {
         })
       ),
       exam_routine: findExam.exam_routines.map(
-        ({ id, start_time, end_time, subject: { name, code } }) => ({
+        ({
           id,
+          full_mark,
+          start_time,
+          end_time,
+          subject: { id: subjectId, name, code },
+        }) => ({
+          id,
+          full_mark,
           start_time,
           end_time,
           subject: {
+            id: subjectId,
             name,
             code,
           },
@@ -166,27 +171,36 @@ const createExam = asyncHandler(async (req, res, next) => {
   const formatClasses = classes.map((class_id) => ({ class_id }))
   const formatSections = sections.map((section_id) => ({ section_id }))
 
-  await prisma.exams.create({
-    data: {
-      exam_category_id,
-      exam_classes: {
-        createMany: {
-          data: formatClasses,
-        },
-      },
-      ...(formatSections.length > 0 && {
-        exam_sections: {
+  await prisma.$transaction(async (tx) => {
+    const exam = await tx.exams.create({
+      data: {
+        exam_category_id,
+        exam_classes: {
           createMany: {
-            data: formatSections,
+            data: formatClasses,
           },
         },
-      }),
-      exam_routines: {
-        createMany: {
-          data: exam_routine,
+        ...(formatSections.length > 0 && {
+          exam_sections: {
+            createMany: {
+              data: formatSections,
+            },
+          },
+        }),
+        exam_routines: {
+          createMany: {
+            data: exam_routine,
+          },
         },
       },
-    },
+    })
+
+    // Create result publish
+    await tx.exam_results_publish.create({
+      data: {
+        exam_id: exam.id,
+      },
+    })
   })
 
   res.status(201).json({ message: 'Exam created successfully' })
@@ -200,7 +214,7 @@ const createExam = asyncHandler(async (req, res, next) => {
 const updateExam = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
-  const { exam_category_id, classes, sections, exam_routine } =
+  const { exam_category_id, classes, sections, exam_routine, status } =
     await examValidator().validate(req.body, {
       abortEarly: false,
     })
@@ -247,6 +261,7 @@ const updateExam = asyncHandler(async (req, res, next) => {
         id: findExam.id,
       },
       data: {
+        status,
         exam_category_id,
         exam_routine,
         exam_classes: {

@@ -6,7 +6,6 @@ const {
   commonFields,
   paginateWithSorting,
 } = require('../utils/metaData')
-const { formatDate } = require('../utils/transformData')
 
 /*
   @route    GET: /rooms

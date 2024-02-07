@@ -46,7 +46,8 @@ const studentValidator = (id) =>
         else return false
       }),
     roll: yup
-      .string()
+      .number()
+      .typeError('Roll must be number')
       .required('Roll is required')
       .test('unique', 'Roll already exist', async (value) => {
         const roll = await prisma.students.findUnique({
