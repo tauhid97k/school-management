@@ -451,3 +451,11 @@ model teacher_attendance {
   @@index([date])
   @@index([status])
 }
+
+// Photo Gallery (Website)
+model photo_gallery {
+  id         Int      @id @default(autoincrement())
+  photo      String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}

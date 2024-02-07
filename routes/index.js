@@ -22,4 +22,7 @@ router.use('/exam-categories', require('./examCategoryRoutes'))
 router.use('/exams', require('./examRoutes'))
 router.use('/grades', require('./gradingRoutes'))
 
+// Website Routes
+router.use('/photo-gallery', require('./photoGalleryRoutes'))
+
 module.exports = router

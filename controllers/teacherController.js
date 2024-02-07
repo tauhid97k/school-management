@@ -9,7 +9,6 @@ const bcrypt = require('bcrypt')
 const {
   teacherValidator,
   teacherProfileImageValidator,
-  demoValidator,
 } = require('../validators/teacherValidator')
 const dayjs = require('dayjs')
 const excludeFields = require('../utils/excludeFields')
