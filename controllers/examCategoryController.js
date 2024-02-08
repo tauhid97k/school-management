@@ -53,7 +53,7 @@ const createExamCategory = asyncHandler(async (req, res, next) => {
 /*
   @route    PUT: /exam-categories/:id
   @access   private
-  @desc     Update a exam category
+  @desc     Update an exam category
 */
 const updateExamCategory = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)

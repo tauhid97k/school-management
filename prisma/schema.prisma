@@ -76,6 +76,7 @@ model teachers {
   id                Int        @id @default(autoincrement())
   name              String
   email             String     @unique
+  designation_id    Int?
   password          String
   email_verified_at DateTime?
   date_of_birth     DateTime
@@ -84,7 +85,6 @@ model teachers {
   gender            genderType
   age               Int
   joining_date      DateTime?
-  designation       String
   phone_number      String
   address           String     @db.Text
   salary            Int
@@ -95,6 +95,8 @@ model teachers {
   is_suspended      Boolean    @default(false)
   created_at        DateTime   @default(now())
   updated_at        DateTime   @updatedAt
+
+  designation designations? @relation(fields: [designation_id], references: [id], onDelete: SetNull)
 
   user_roles          user_roles[]
   verification_tokens verification_tokens[]
@@ -226,6 +228,15 @@ model permissions {
   updated_at DateTime @updatedAt
 
   role_permissions role_permissions[]
+}
+
+// Designations
+model designations {
+  id         Int        @id @default(autoincrement())
+  title      String     @unique
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  teachers   teachers[]
 }
 
 // Room Management
@@ -450,6 +461,15 @@ model teacher_attendance {
   @@index([teacher_id])
   @@index([date])
   @@index([status])
+}
+
+// Expense Categories
+model expense_categories {
+  id            Int      @id @default(autoincrement())
+  category_name String   @unique
+  description   String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 }
 
 // Photo Gallery (Website)
