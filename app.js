@@ -47,14 +47,21 @@ app.use(limiter)
 app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(deviceInfoMiddleware)
 app.use(
   fileUpload({
     createParentPath: true,
   })
 )
-app.use(deviceInfoMiddleware)
 
 // Static file serve
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Methods', 'GET, PUT')
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin')
+  res.header('Access-Control-Allow-Credentials', 'true')
+  next()
+})
 app.use('/uploads', express.static('uploads'))
 
 // Routes

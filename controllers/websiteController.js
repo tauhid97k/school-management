@@ -48,31 +48,105 @@ const getPhotoGallery = asyncHandler(async (req, res, next) => {
 /*
   @route    POST: /photo-gallery
   @access   private
-  @desc     Add photos to gallery
+  @desc     Add photo to gallery
 */
-const addPhotosToGallery = asyncHandler(async (req, res, next) => {
+const addPhotoToGallery = asyncHandler(async (req, res, next) => {
   await photoGalleryValidator.validate(req.files, {
     abortEarly: false,
   })
 
   const { photo } = req.files
-  const uniqueFilename = `${uuid()}_${photo.name}`
+  const fileNameWithoutExt = photo.name.split('.').shift()
+  const uniqueFolderName = `${uuid()}_${fileNameWithoutExt}`
 
   // The path where the file is uploaded
-  const uploadPath = `uploads/photo-gallery/${uniqueFilename}`
+  const uploadPath = `uploads/photo-gallery/${uniqueFolderName}/${photo.name}`
+  const filePathToSave = `${uniqueFolderName}/${photo.name}`
 
   // Move the uploaded file to the correct folder
-  photo.mv(uploadPath)
+  photo.mv(uploadPath, (error) => {
+    if (error)
+      return res.status(500).json({
+        message: 'Error uploading photo',
+      })
+  })
 
-  // Save name to database
+  // Save unique file path to database
   await prisma.photo_gallery.create({
     data: {
-      photo: uniqueFilename,
+      photo: filePathToSave,
     },
   })
 
   res.json({
     message: 'Photo added to gallery',
+  })
+})
+
+/*
+  @route    PUT: /photo-gallery/:id
+  @access   private
+  @desc     Update a photo
+*/
+const updatePhotoFromGallery = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await photoGalleryValidator.validate(req.files, {
+    abortEarly: false,
+  })
+
+  await prisma.$transaction(async (tx) => {
+    // Find the photo
+    const photoToUpdate = await tx.photo_gallery.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!photoToUpdate) {
+      return res.status(404).json({
+        message: 'No photo found',
+      })
+    }
+
+    // Delete Previous Photo
+    const photoPath = `uploads/photo-gallery/${photoToUpdate.photo}`
+    await fs.unlink(photoPath)
+
+    await tx.photo_gallery.delete({
+      where: {
+        id,
+      },
+    })
+
+    // Add New Photo
+    const { photo } = req.files
+    const fileNameWithoutExt = photo.name.split('.').shift()
+    const uniqueFolderName = `${uuid()}_${fileNameWithoutExt}`
+
+    // The path where the file is uploaded
+    const uploadPath = `uploads/photo-gallery/${uniqueFolderName}/${photo.name}`
+    const filePathToSave = `${uniqueFolderName}/${photo.name}`
+
+    // Move the uploaded file to the correct folder
+    photo.mv(uploadPath, (error) => {
+      if (error)
+        return res.status(500).json({
+          message: 'Error updating photo',
+        })
+    })
+
+    // Save unique file path to database
+    await tx.photo_gallery.update({
+      where: {
+        id,
+      },
+      data: {
+        photo: filePathToSave,
+      },
+    })
+
+    res.json({ message: 'Photo updated successfully' })
   })
 })
 
@@ -114,4 +188,9 @@ const removePhoto = asyncHandler(async (req, res, next) => {
   })
 })
 
-module.exports = { getPhotoGallery, addPhotosToGallery, removePhoto }
+module.exports = {
+  getPhotoGallery,
+  addPhotoToGallery,
+  updatePhotoFromGallery,
+  removePhoto,
+}

@@ -4,8 +4,9 @@ const authMiddleware = require('../middlewares/authMiddleware')
 const websiteController = require('../controllers/websiteController')
 
 // Protected Routes
-router.get('/', authMiddleware(), websiteController.getPhotoGallery)
-router.post('/', authMiddleware(), websiteController.addPhotosToGallery)
-router.delete('/:id', authMiddleware(), websiteController.removePhoto)
+router.get('/', websiteController.getPhotoGallery)
+router.post('/', websiteController.addPhotoToGallery)
+router.put('/:id', websiteController.updatePhotoFromGallery)
+router.delete('/:id', websiteController.removePhoto)
 
 module.exports = router
