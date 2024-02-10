@@ -19,6 +19,10 @@ const expenseValidator = () =>
       }),
     title: yup.string().required('Title is required'),
     description: yup.string().optional(),
+    amount: yup
+      .number()
+      .typeError('Amount must be number')
+      .required('Amount is required'),
     invoice_no: yup.string().optional(),
     date: yup.date().required('Date is required'),
     attachment: yup.string().optional(),

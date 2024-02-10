@@ -34,8 +34,33 @@ const getAllExpenses = asyncHandler(async (req, res, next) => {
     prisma.expenses.count(),
   ])
 
+  // Format Data
+  const formatData = expenses.map(
+    ({
+      id,
+      expense_category: { category_name },
+      title,
+      description,
+      invoice_no,
+      date,
+      attachment,
+      created_at,
+      updated_at,
+    }) => ({
+      id,
+      category_name,
+      title,
+      description,
+      invoice_no,
+      date,
+      attachment: generateFileLink(`expenses/${attachment}`),
+      created_at,
+      updated_at,
+    })
+  )
+
   res.json({
-    data: expenses,
+    data: formatData,
     meta: {
       page,
       limit: take,

@@ -479,6 +479,7 @@ model expenses {
   expense_category_id Int
   title               String
   description         String?
+  amount              Float    @default(0)
   invoice_no          String?
   date                DateTime @db.Date
   attachment          String?
