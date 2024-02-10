@@ -25,7 +25,7 @@ const expenseValidator = () =>
       .required('Amount is required'),
     invoice_no: yup.string().optional(),
     date: yup.date().required('Date is required'),
-    attachment: yup.string().optional(),
+    attachment: yup.mixed().optional(),
   })
 
 const expenseAttachmentValidator = yup.object({

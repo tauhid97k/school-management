@@ -30,6 +30,9 @@ const getTeachers = asyncHandler(async (req, res, next) => {
       take,
       skip,
       orderBy,
+      include: {
+        designation: true,
+      },
     }),
     prisma.teachers.count(),
   ])

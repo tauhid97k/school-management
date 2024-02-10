@@ -11,9 +11,6 @@ const selectQueries = (obj, keys) => {
   return finalObj
 }
 
-// Pagination and sorting keys
-const commonFields = ['search', 'page', 'limit', 'sortBy', 'sortOrder']
-
 // Pagination and sorting functionalities
 const paginateWithSorting = (options) => {
   const page = Number(options.page <= 0 ? 1 : options.page || 1)
@@ -32,8 +29,11 @@ const paginateWithSorting = (options) => {
   }
 }
 
+// Pagination and sorting keys (Common)
+const commonFields = ['search', 'page', 'limit', 'sortBy', 'sortOrder']
+
 module.exports = {
   selectQueries,
-  commonFields,
   paginateWithSorting,
+  commonFields,
 }

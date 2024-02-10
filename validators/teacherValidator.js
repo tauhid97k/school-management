@@ -80,7 +80,20 @@ const teacherValidator = (id) =>
       .typeError('Age must be a number')
       .required('Age is required'),
     joining_date: yup.string().optional(),
-    designation: yup.string().required('Designation is required'),
+    designation_id: yup
+      .number()
+      .typeError('Designation id must be a number')
+      .required('Designation is required')
+      .test('exist', 'Designation does not exist', async (value) => {
+        const findDesignation = await prisma.designations.findUnique({
+          where: {
+            id: value,
+          },
+        })
+
+        if (findDesignation) return true
+        else return false
+      }),
     phone_number: yup.string().required('Phone number is required'),
     address: yup.string().required('Address is required'),
     salary: yup

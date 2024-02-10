@@ -12,6 +12,7 @@ const {
 const dayjs = require('dayjs')
 const generateFileLink = require('../utils/generateFileLink')
 const { v4: uuid } = require('uuid')
+const { formatDate } = require('../utils/transformData')
 
 /*
   @route    GET: /expenses
@@ -41,6 +42,7 @@ const getAllExpenses = asyncHandler(async (req, res, next) => {
       expense_category: { category_name },
       title,
       description,
+      amount,
       invoice_no,
       date,
       attachment,
@@ -51,9 +53,13 @@ const getAllExpenses = asyncHandler(async (req, res, next) => {
       category_name,
       title,
       description,
+      amount,
       invoice_no,
       date,
-      attachment: generateFileLink(`expenses/${attachment}`),
+      attachment:
+        attachment === 'undefined'
+          ? null
+          : generateFileLink(`expenses/${attachment}`),
       created_at,
       updated_at,
     })
@@ -89,10 +95,11 @@ const getExpense = asyncHandler(async (req, res, next) => {
     })
 
   // Correct date format & File link
-  findExpense.date = formatDate(findExpense.date_of_birth)
-  findExpense.attachment = generateFileLink(
-    `expenses/${findExpense.attachment}`
-  )
+  findExpense.date = formatDate(findExpense.date)
+  findExpense.attachment =
+    findExpense.attachment === 'undefined'
+      ? null
+      : generateFileLink(`expenses/${findExpense.attachment}`)
 
   res.json(findExpense)
 })
@@ -183,6 +190,7 @@ const updateExpense = asyncHandler(async (req, res, next) => {
       data.attachment = filePathToSave
     }
 
+    data.attachment = 'undefined'
     await tx.expenses.update({
       where: { id },
       data,
