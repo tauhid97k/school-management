@@ -22,7 +22,8 @@ router.use('/exam-categories', require('./examCategoryRoutes'))
 router.use('/exams', require('./examRoutes'))
 router.use('/grades', require('./gradingRoutes'))
 router.use('/designations', require('./designationRoutes'))
-router.use('/expense-category', require('./expenseCategoryRoutes'))
+router.use('/expense-categories', require('./expenseCategoryRoutes'))
+router.use('/expenses', require('./expenseRoutes'))
 
 // Website Routes
 router.use('/photo-gallery', require('./photoGalleryRoutes'))

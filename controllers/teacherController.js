@@ -99,15 +99,22 @@ const createTeacher = asyncHandler(async (req, res, next) => {
     })
 
     const { profile_img } = req.files
-    const uniqueFilename = `${uuid()}_${profile_img.name}`
+    const fileNameWithoutExt = profile_img.name.split('.').shift()
+    const uniqueFolderName = `${uuid()}_${fileNameWithoutExt}`
 
     // The path where the file is uploaded
-    const uploadPath = `uploads/teachers/profiles/${uniqueFilename}`
+    const uploadPath = `uploads/teachers/profiles/${uniqueFolderName}/${profile_img.name}`
+    const filePathToSave = `${uniqueFolderName}/${profile_img.name}`
 
     // Move the uploaded file to the correct folder
-    profile_img.mv(uploadPath)
+    profile_img.mv(uploadPath, (error) => {
+      if (error)
+        return res.status(500).json({
+          message: 'Error uploading photo',
+        })
+    })
 
-    data.profile_img = uniqueFilename
+    data.profile_img = filePathToSave
   }
 
   // Encrypt password
