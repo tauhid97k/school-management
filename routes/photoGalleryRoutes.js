@@ -1,12 +1,16 @@
 const express = require('express')
 const router = express.Router()
 const authMiddleware = require('../middlewares/authMiddleware')
-const websiteController = require('../controllers/websiteController')
+const photoGalleryController = require('../controllers/photoGalleryController')
 
 // Protected Routes
-router.get('/', websiteController.getPhotoGallery)
-router.post('/', websiteController.addPhotoToGallery)
-router.put('/:id', websiteController.updatePhotoFromGallery)
-router.delete('/:id', websiteController.removePhoto)
+router.get('/', authMiddleware(), photoGalleryController.getPhotoGallery)
+router.post('/', authMiddleware(), photoGalleryController.addPhotoToGallery)
+router.put(
+  '/:id',
+  authMiddleware(),
+  photoGalleryController.updatePhotoFromGallery
+)
+router.delete('/:id', authMiddleware(), photoGalleryController.removePhoto)
 
 module.exports = router

@@ -15,9 +15,13 @@ const {
 const getAllRooms = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, commonFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+  let { search } = selectedQueries
 
   const [rooms, total] = await prisma.$transaction([
     prisma.rooms.findMany({
+      where: {
+        room_number: search ? { contains: search } : {},
+      },
       take,
       skip,
       orderBy,

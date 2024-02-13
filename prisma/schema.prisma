@@ -242,7 +242,7 @@ model designations {
 // Room Management
 model rooms {
   id          Int        @id @default(autoincrement())
-  room_number Int        @unique
+  room_number String     @unique
   created_at  DateTime   @default(now())
   updated_at  DateTime   @updatedAt
   sections    sections[]
@@ -491,8 +491,9 @@ model expenses {
 
 // Photo Gallery (Website)
 model photo_gallery {
-  id         Int      @id @default(autoincrement())
-  photo      String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  photo       String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 }

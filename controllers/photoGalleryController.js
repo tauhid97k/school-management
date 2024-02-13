@@ -110,14 +110,8 @@ const updatePhotoFromGallery = asyncHandler(async (req, res, next) => {
     }
 
     // Delete Previous Photo
-    const photoPath = `uploads/photo-gallery/${photoToUpdate.photo}`
-    await fs.unlink(photoPath)
-
-    await tx.photo_gallery.delete({
-      where: {
-        id,
-      },
-    })
+    // const photoPath = generateFileLink(`photo-gallery/${photoToUpdate.photo}`)
+    // await fs.unlink(photoPath)
 
     // Add New Photo
     const { photo } = req.files
