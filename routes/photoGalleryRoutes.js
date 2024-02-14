@@ -5,6 +5,7 @@ const photoGalleryController = require('../controllers/photoGalleryController')
 
 // Protected Routes
 router.get('/', photoGalleryController.getPhotoGallery)
+router.get('/:id', photoGalleryController.getPhotoDetails)
 router.post('/', authMiddleware(), photoGalleryController.addPhotoToGallery)
 router.put(
   '/:id',

@@ -47,6 +47,32 @@ const getPhotoGallery = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /photo-gallery/:id
+  @access   private
+  @desc     Get photo details from gallery
+*/
+const getPhotoDetails = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  const findPhoto = await prisma.photo_gallery.findUnique({
+    where: {
+      id,
+    },
+  })
+
+  if (!findPhoto) {
+    return res.status(404).json({
+      message: 'No photo found',
+    })
+  }
+
+  // Format Photo
+  findPhoto.photo = generateFileLink(`photo-gallery/${findPhoto.photo}`)
+
+  res.json(findPhoto)
+})
+
+/*
   @route    POST: /photo-gallery
   @access   private
   @desc     Add photo to gallery
@@ -76,10 +102,7 @@ const addPhotoToGallery = asyncHandler(async (req, res, next) => {
 
   // Save unique file path to database
   await prisma.photo_gallery.create({
-    data: {
-      photo: filePathToSave,
-      description: data.description,
-    },
+    data,
   })
 
   res.json({
@@ -203,6 +226,7 @@ const removePhoto = asyncHandler(async (req, res, next) => {
 
 module.exports = {
   getPhotoGallery,
+  getPhotoDetails,
   addPhotoToGallery,
   updatePhotoFromGallery,
   removePhoto,

@@ -25,6 +25,9 @@ const getStudents = asyncHandler(async (req, res, next) => {
       take,
       skip,
       orderBy,
+      include: {
+        student_admission: true,
+      },
     }),
     prisma.students.count(),
   ])
