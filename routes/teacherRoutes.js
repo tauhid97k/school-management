@@ -9,7 +9,7 @@ const {
   deleteTeacher,
 } = require('../controllers/teacherController')
 
-router.get('/', authMiddleware(), getTeachers)
+router.get('/', getTeachers)
 router.get('/:id', authMiddleware(), getTeacher)
 router.post('/', createTeacher)
 router.put('/:id', authMiddleware(), updateTeacher)

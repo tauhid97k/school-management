@@ -1,6 +1,11 @@
 const yup = require('yup')
 
-const photoGalleryValidator = yup
+const photoGalleryValidator = yup.object({
+  photo: yup.string().optional(),
+  description: yup.string().optional(),
+})
+
+const photoGalleryPhotoValidator = yup
   .object({
     photo: yup
       .mixed()
@@ -19,4 +24,4 @@ const photoGalleryValidator = yup
   })
   .required('Photo is required')
 
-module.exports = { photoGalleryValidator }
+module.exports = { photoGalleryValidator, photoGalleryPhotoValidator }

@@ -1,29 +1,6 @@
 const yup = require('yup')
 const prisma = require('../utils/prisma')
 
-const teacherProfileImageValidator = yup
-  .object({
-    photo: yup
-      .mixed()
-      .test(
-        'type',
-        'Invalid file type. Only JPG, JPEG, and PNG are allowed',
-        (file) => {
-          if (!file) return true
-
-          const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
-          return allowedTypes.includes(file.mimetype)
-        }
-      )
-      .test('size', 'File size is too large; max 2mb is allowed', (file) => {
-        if (!file) return true
-
-        const maxSize = 2 * 1024 * 1024
-        return file.size <= maxSize
-      }),
-  })
-  .optional()
-
 const teacherValidator = (id) =>
   yup.object({
     name: yup.string().required('Full name is required'),
@@ -150,7 +127,25 @@ const teacherValidator = (id) =>
       .optional(),
   })
 
+const teacherProfileImageValidator = () =>
+  yup.object({
+    profile_img: yup
+      .mixed()
+      .test(
+        'type',
+        'Invalid file type. Only JPG, JPEG, and PNG are allowed',
+        (file) => {
+          const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+          return allowedTypes.includes(file.mimetype)
+        }
+      )
+      .test('size', 'File size is too large; max 2mb is allowed', (file) => {
+        const maxSize = 2 * 1024 * 1024
+        return file.size <= maxSize
+      }),
+  })
+
 module.exports = {
-  teacherProfileImageValidator,
   teacherValidator,
+  teacherProfileImageValidator,
 }

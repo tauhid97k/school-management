@@ -13,8 +13,9 @@ const {
 const dayjs = require('dayjs')
 const excludeFields = require('../utils/excludeFields')
 const { formatDate } = require('../utils/transformData')
-const { v4: uuid } = require('uuid')
+const { v4: uuidV4 } = require('uuid')
 const generateFileLink = require('../utils/generateFileLink')
+const fs = require('node:fs/promises')
 
 /*
   @route    GET: /teachers
@@ -97,26 +98,26 @@ const createTeacher = asyncHandler(async (req, res, next) => {
   let data = await teacherValidator().validate(req.body, { abortEarly: false })
 
   if (req.files) {
-    await teacherProfileImageValidator.validate(req.files, {
-      abortEarly: false,
-    })
+    const { profile_img } = await teacherProfileImageValidator().validate(
+      req.files,
+      {
+        abortEarly: false,
+      }
+    )
 
-    const { profile_img } = req.files
-    const fileNameWithoutExt = profile_img.name.split('.').shift()
-    const uniqueFolderName = `${uuid()}_${fileNameWithoutExt}`
+    // Profile Img
+    const uniqueFolder = `teacher_${uuidV4()}_${new Date() * 1000}`
+    const uploadPath = `uploads/teachers/profiles/${uniqueFolder}/${profile_img.name}`
+    const filePathToSave = `${uniqueFolder}/${profile_img.name}`
 
-    // The path where the file is uploaded
-    const uploadPath = `uploads/teachers/profiles/${uniqueFolderName}/${profile_img.name}`
-    const filePathToSave = `${uniqueFolderName}/${profile_img.name}`
-
-    // Move the uploaded file to the correct folder
     profile_img.mv(uploadPath, (error) => {
       if (error)
         return res.status(500).json({
-          message: 'Error uploading photo',
+          message: 'Error saving Profile image',
         })
     })
 
+    // Update file path (For saving to database)
     data.profile_img = filePathToSave
   }
 
@@ -160,6 +161,44 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
         message: 'No teacher found',
       })
 
+    if (req.files) {
+      const { profile_img } = await teacherProfileImageValidator().validate(
+        req.files,
+        {
+          abortEarly: false,
+        }
+      )
+
+      // Delete Previous Profile Image (If Exist)
+      if (findTeacher.profile_img) {
+        try {
+          const photoDir = `uploads/teachers/profiles/${
+            findTeacher.profile_img.split('/')[0]
+          }`
+          await fs.rm(photoDir, { recursive: true })
+        } catch (error) {
+          return res.json({
+            message: 'Error deleting previous profile image',
+          })
+        }
+      }
+
+      // New Profile Img
+      const uniqueFolder = `teacher_${uuidV4()}_${new Date() * 1000}`
+      const uploadPath = `uploads/teachers/profiles/${uniqueFolder}/${profile_img.name}`
+      const filePathToSave = `${uniqueFolder}/${profile_img.name}`
+
+      profile_img.mv(uploadPath, (error) => {
+        if (error)
+          return res.status(500).json({
+            message: 'Error saving Profile image',
+          })
+      })
+
+      // Update file path (For saving to database)
+      data.profile_img = filePathToSave
+    }
+
     // Encrypt password
     data.password = await bcrypt.hash(data.password, 12)
 
@@ -195,6 +234,20 @@ const deleteTeacher = asyncHandler(async (req, res, next) => {
       return res.status(404).json({
         message: 'No teacher found',
       })
+
+    // Delete Profile Image
+    if (findTeacher.profile_img) {
+      try {
+        const photoDir = `uploads/teachers/profiles/${
+          findTeacher.profile_img.split('/')[0]
+        }`
+        await fs.rm(photoDir, { recursive: true })
+      } catch (error) {
+        return res.json({
+          message: 'Error deleting profile image',
+        })
+      }
+    }
 
     await tx.teachers.delete({
       where: { id },

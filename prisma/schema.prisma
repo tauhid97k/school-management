@@ -104,13 +104,24 @@ model teachers {
   attendance          teacher_attendance[]
 }
 
+// Students Admission 
+model student_admissions {
+  id             Int      @id @default(autoincrement())
+  admission_no   String   @unique
+  admission_date DateTime
+  class_id       Int
+  roll           Int
+
+  class classes @relation(fields: [class_id], references: [id], onDelete: Cascade)
+
+  students     students[]
+  exam_results exam_results[]
+}
+
 // Student
 model students {
   id                Int           @id @default(autoincrement())
-  admission_no      Int           @unique
-  admission_date    DateTime
-  class_id          Int
-  roll              Int           @unique
+  admission_id      Int
   name              String
   email             String        @unique
   password          String
@@ -129,12 +140,11 @@ model students {
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
 
-  class classes @relation(fields: [class_id], references: [id])
+  student_admission student_admissions @relation(fields: [admission_id], references: [id], onDelete: Cascade)
 
   user_roles          user_roles[]
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
-  exam_results        exam_results[]
 }
 
 // Auth Token
@@ -307,10 +317,10 @@ model classes {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  sections        sections[]
-  students        students[]
-  subject_classes subject_classes[]
-  exam_classes    exam_classes[]
+  sections           sections[]
+  subject_classes    subject_classes[]
+  exam_classes       exam_classes[]
+  student_admissions student_admissions[]
 }
 
 // Section Management
@@ -419,19 +429,19 @@ model grades {
 model exam_results {
   id           Int      @id @default(autoincrement())
   exam_id      Int
-  student_roll Int
+  admission_id Int
   subject_id   Int
   subject_mark Float
   grade        String?
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 
-  exam    exams    @relation(fields: [exam_id], references: [id], onDelete: Cascade)
-  student students @relation(fields: [student_roll], references: [roll], onDelete: Cascade)
-  subject subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+  exam              exams              @relation(fields: [exam_id], references: [id], onDelete: Cascade)
+  student_admission student_admissions @relation(fields: [admission_id], references: [id], onDelete: Cascade)
+  subject           subjects           @relation(fields: [subject_id], references: [id], onDelete: Cascade)
 
   @@index([exam_id])
-  @@index([student_roll])
+  @@index([admission_id])
   @@index([subject_id])
 }
 

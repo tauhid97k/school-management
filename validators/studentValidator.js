@@ -8,7 +8,7 @@ const studentValidator = (id) =>
       .typeError('Admission No must be number')
       .required('Admission no is required')
       .test('unique', 'Admission number already exist', async (value) => {
-        const admission_no = await prisma.students.findUnique({
+        const admission_no = await prisma.student_admissions.findUnique({
           where: {
             admission_no: value,
           },
@@ -50,27 +50,8 @@ const studentValidator = (id) =>
       .typeError('Roll must be number')
       .required('Roll is required')
       .test('unique', 'Roll already exist', async (value) => {
-        const roll = await prisma.students.findUnique({
-          where: {
-            roll: value,
-          },
-        })
-
-        if (roll && !id) {
-          return false
-        }
-
-        if (roll && id) {
-          if (roll.id === id) {
-            return true
-          } else {
-            return false
-          }
-        }
-
-        if (!roll) {
-          return true
-        }
+        // Check if class_id and role combine is unique or not.
+        // If unique then don't let create new, if not allow creation
       }),
     name: yup.string().required('Full name is required'),
     email: yup

@@ -1,8 +1,6 @@
 module.exports = (filePath) => {
-  const baseUrl = process.env.DOMAIN_NAME
+  const domain = process.env.DOMAIN_NAME || 'http://localhost:5000'
 
-  // Generate the direct link to the original file
-  const fileUrl = `${baseUrl}/uploads/${filePath}`
-
-  return fileUrl
+  // Construct the full file URL
+  return `${domain}/uploads/${filePath}`
 }

@@ -37,7 +37,7 @@ const limiter = rateLimit({
 // Middlewares
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
   })
 )
@@ -54,15 +54,19 @@ app.use(
   })
 )
 
-// Static file serve
-app.use('/uploads', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*')
-  res.header('Access-Control-Allow-Methods', 'GET, PUT')
-  res.header('Cross-Origin-Resource-Policy', 'cross-origin')
-  res.header('Access-Control-Allow-Credentials', 'true')
-  next()
-})
-app.use('/uploads', express.static('uploads'))
+// Static file upload/serve middleware
+app.use(
+  '/uploads',
+  (req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*')
+    res.header('Access-Control-Expose-Headers', 'Content-Disposition')
+    res.header('Cross-Origin-Resource-Policy', 'cross-origin')
+    res.header('Content-Disposition', 'attachment')
+
+    next()
+  },
+  express.static('uploads')
+)
 
 // Routes
 app.get('/', (req, res) =>

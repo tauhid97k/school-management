@@ -1,14 +1,17 @@
 const prisma = require('../utils/prisma')
 const asyncHandler = require('express-async-handler')
-const { photoGalleryValidator } = require('../validators/photoGalleryValidator')
+const {
+  photoGalleryValidator,
+  photoGalleryPhotoValidator,
+} = require('../validators/photoGalleryValidator')
 const {
   selectQueries,
   commonFields,
   paginateWithSorting,
 } = require('../utils/metaData')
-const { v4: uuid } = require('uuid')
+const { v4: uuidV4 } = require('uuid')
 const generateFileLink = require('../utils/generateFileLink')
-const fs = require('fs/promises')
+const fs = require('node:fs/promises')
 
 /*
   @route    GET: /photo-gallery
@@ -28,11 +31,9 @@ const getPhotoGallery = asyncHandler(async (req, res, next) => {
     prisma.photo_gallery.count(),
   ])
 
-  const formatPhotos = photos.map(({ id, photo, created_at, updated_at }) => ({
-    id,
-    photo: generateFileLink(`photo-gallery/${photo}`),
-    created_at,
-    updated_at,
+  const formatPhotos = photos.map((data) => ({
+    ...data,
+    photo: generateFileLink(`photo-gallery/${data.photo}`),
   }))
 
   res.json({
@@ -51,30 +52,33 @@ const getPhotoGallery = asyncHandler(async (req, res, next) => {
   @desc     Add photo to gallery
 */
 const addPhotoToGallery = asyncHandler(async (req, res, next) => {
-  await photoGalleryValidator.validate(req.files, {
+  const data = await photoGalleryValidator.validate(req.body, {
+    abortEarly: false,
+  })
+  const { photo } = await photoGalleryPhotoValidator.validate(req.files, {
     abortEarly: false,
   })
 
-  const { photo } = req.files
-  const fileNameWithoutExt = photo.name.split('.').shift()
-  const uniqueFolderName = `${uuid()}_${fileNameWithoutExt}`
+  // Photo
+  const uniqueFolder = `gallery_${uuidV4()}_${new Date() * 1000}`
+  const uploadPath = `uploads/photo-gallery/${uniqueFolder}/${photo.name}`
+  const filePathToSave = `${uniqueFolder}/${photo.name}`
 
-  // The path where the file is uploaded
-  const uploadPath = `uploads/photo-gallery/${uniqueFolderName}/${photo.name}`
-  const filePathToSave = `${uniqueFolderName}/${photo.name}`
-
-  // Move the uploaded file to the correct folder
   photo.mv(uploadPath, (error) => {
     if (error)
       return res.status(500).json({
-        message: 'Error uploading photo',
+        message: 'Error saving photo',
       })
   })
+
+  // Save file path to database
+  data.photo = filePathToSave
 
   // Save unique file path to database
   await prisma.photo_gallery.create({
     data: {
       photo: filePathToSave,
+      description: data.description,
     },
   })
 
@@ -91,7 +95,10 @@ const addPhotoToGallery = asyncHandler(async (req, res, next) => {
 const updatePhotoFromGallery = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
-  await photoGalleryValidator.validate(req.files, {
+  const data = await photoGalleryValidator.validate(req.body, {
+    abortEarly: false,
+  })
+  const { photo } = await photoGalleryPhotoValidator.validate(req.files, {
     abortEarly: false,
   })
 
@@ -110,34 +117,38 @@ const updatePhotoFromGallery = asyncHandler(async (req, res, next) => {
     }
 
     // Delete Previous Photo
-    // const photoPath = generateFileLink(`photo-gallery/${photoToUpdate.photo}`)
-    // await fs.unlink(photoPath)
+    try {
+      const photoDir = `uploads/photo-gallery/${
+        photoToUpdate.photo.split('/')[0]
+      }`
+      await fs.rm(photoDir, { recursive: true })
+    } catch (error) {
+      return res.json({
+        message: 'Error deleting previous photo',
+      })
+    }
 
     // Add New Photo
-    const { photo } = req.files
-    const fileNameWithoutExt = photo.name.split('.').shift()
-    const uniqueFolderName = `${uuid()}_${fileNameWithoutExt}`
+    const uniqueFolder = `gallery_${uuidV4()}_${new Date() * 1000}`
+    const uploadPath = `uploads/photo-gallery/${uniqueFolder}/${photo.name}`
+    const filePathToSave = `${uniqueFolder}/${photo.name}`
 
-    // The path where the file is uploaded
-    const uploadPath = `uploads/photo-gallery/${uniqueFolderName}/${photo.name}`
-    const filePathToSave = `${uniqueFolderName}/${photo.name}`
-
-    // Move the uploaded file to the correct folder
     photo.mv(uploadPath, (error) => {
       if (error)
         return res.status(500).json({
-          message: 'Error updating photo',
+          message: 'Error saving photo',
         })
     })
 
-    // Save unique file path to database
+    // Update generated path
+    data.photo = filePathToSave
+
+    // Save to database
     await tx.photo_gallery.update({
       where: {
         id,
       },
-      data: {
-        photo: filePathToSave,
-      },
+      data,
     })
 
     res.json({ message: 'Photo updated successfully' })
@@ -166,9 +177,17 @@ const removePhoto = asyncHandler(async (req, res, next) => {
       })
     }
 
-    // Photo path
-    const photoPath = `uploads/photo-gallery/${photoToDelete.photo}`
-    await fs.unlink(photoPath)
+    // Delete Photo
+    try {
+      const photoDir = `uploads/photo-gallery/${
+        photoToDelete.photo.split('/')[0]
+      }`
+      await fs.rm(photoDir, { recursive: true })
+    } catch (error) {
+      return res.json({
+        message: 'Error deleting photo',
+      })
+    }
 
     await tx.photo_gallery.delete({
       where: {
