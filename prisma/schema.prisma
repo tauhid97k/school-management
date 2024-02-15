@@ -103,26 +103,15 @@ model teachers {
   attendance          teacher_attendance[]
 }
 
-// Students Admission 
-model student_admissions {
-  id             Int      @id @default(autoincrement())
-  admission_no   String   @unique
-  admission_date DateTime
-  class_id       Int
-  roll           Int
-
-  class classes @relation(fields: [class_id], references: [id], onDelete: Cascade)
-
-  students     students[]
-  exam_results exam_results[]
-}
-
 // Student
 model students {
-  id                Int           @id @default(autoincrement())
-  admission_id      Int
+  id                Int        @id @default(autoincrement())
+  admission_no      String     @unique
+  admission_date    DateTime
+  class_id          Int
+  roll              String
   name              String
-  email             String        @unique
+  email             String     @unique
   password          String
   email_verified_at DateTime?
   date_of_birth     DateTime
@@ -133,18 +122,22 @@ model students {
   phone_number      String?
   address           String
   profile_img       String?
-  guardians         Json?         @db.Json
-  status            studentStatus @default(REGULAR)
-  is_suspended      Boolean       @default(false)
-  created_at        DateTime      @default(now())
-  updated_at        DateTime      @updatedAt
+  guardians         Json?      @db.Json
+  is_suspended      Boolean    @default(false)
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
 
-  student_admission student_admissions @relation(fields: [admission_id], references: [id], onDelete: Cascade)
+  class classes @relation(fields: [class_id], references: [id], onDelete: Cascade)
 
   user_roles          user_roles[]
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
   class_attendance    class_attendance[]
+  exam_results        exam_results[]
+
+  @@index([roll])
+  @@index([class_id])
+  @@index([phone_number])
 }
 
 // Auth Token
@@ -317,11 +310,11 @@ model classes {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  sections           sections[]
-  subject_classes    subject_classes[]
-  exam_classes       exam_classes[]
-  student_admissions student_admissions[]
-  class_attendance   class_attendance[]
+  sections         sections[]
+  subject_classes  subject_classes[]
+  exam_classes     exam_classes[]
+  studens          students[]
+  class_attendance class_attendance[]
 }
 
 // Section Management
@@ -430,19 +423,19 @@ model grades {
 model exam_results {
   id           Int      @id @default(autoincrement())
   exam_id      Int
-  admission_id Int
+  student_id   Int
   subject_id   Int
   subject_mark Float
   grade        String?
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 
-  exam              exams              @relation(fields: [exam_id], references: [id], onDelete: Cascade)
-  student_admission student_admissions @relation(fields: [admission_id], references: [id], onDelete: Cascade)
-  subject           subjects           @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+  exam    exams    @relation(fields: [exam_id], references: [id], onDelete: Cascade)
+  student students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  subject subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
 
   @@index([exam_id])
-  @@index([admission_id])
+  @@index([student_id])
   @@index([subject_id])
 }
 

@@ -4,11 +4,10 @@ const prisma = require('../utils/prisma')
 const studentValidator = (id) =>
   yup.object({
     admission_no: yup
-      .number()
-      .typeError('Admission No must be number')
+      .string()
       .required('Admission no is required')
       .test('unique', 'Admission number already exist', async (value) => {
-        const admission_no = await prisma.student_admissions.findUnique({
+        const admission_no = await prisma.students.findUnique({
           where: {
             admission_no: value,
           },
@@ -46,12 +45,31 @@ const studentValidator = (id) =>
         else return false
       }),
     roll: yup
-      .number()
-      .typeError('Roll must be number')
+      .string()
       .required('Roll is required')
-      .test('unique', 'Roll already exist', async (value) => {
-        // Check if class_id and role combine is unique or not.
-        // If unique then don't let create new, if not allow creation
+      .test('unique', 'Roll already exist', async (value, ctx) => {
+        const classId = ctx.parent.class_id
+        const roll = await prisma.students.findFirst({
+          where: {
+            AND: [{ roll: value }, { class_id: classId }],
+          },
+        })
+
+        if (roll && !id) {
+          return false
+        }
+
+        if (roll && id) {
+          if (roll.id === id) {
+            return true
+          } else {
+            return false
+          }
+        }
+
+        if (!roll) {
+          return true
+        }
       }),
     name: yup.string().required('Full name is required'),
     email: yup
@@ -119,7 +137,36 @@ const studentValidator = (id) =>
           guardian_occupation: yup.string().optional(),
         })
       )
+      .transform((originalValue) => {
+        try {
+          return JSON.parse(originalValue)
+        } catch (error) {
+          throw new yup.ValidationError(
+            'JSON parsing failed!',
+            originalValue,
+            'education'
+          )
+        }
+      })
       .optional(),
   })
 
-module.exports = { studentValidator }
+const studentProfileImageValidator = () =>
+  yup.object({
+    profile_img: yup
+      .mixed()
+      .test(
+        'type',
+        'Invalid file type. Only JPG, JPEG, and PNG are allowed',
+        (file) => {
+          const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+          return allowedTypes.includes(file.mimetype)
+        }
+      )
+      .test('size', 'File size is too large; max 2mb is allowed', (file) => {
+        const maxSize = 2 * 1024 * 1024
+        return file.size <= maxSize
+      }),
+  })
+
+module.exports = { studentValidator, studentProfileImageValidator }

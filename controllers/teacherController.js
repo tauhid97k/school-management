@@ -253,7 +253,7 @@ const deleteTeacher = asyncHandler(async (req, res, next) => {
       where: { id },
     })
 
-    res.json({ message: 'Teacher data removed' })
+    res.json({ message: 'Teacher deleted' })
   })
 })
 
