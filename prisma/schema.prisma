@@ -24,12 +24,11 @@ enum studentStatus {
   IRREGULAR
 }
 
-enum attendanceType {
+enum attendanceStatus {
   PRESENT
-  ABSENCE
+  ABSENT
   LATE
   VACATION
-  UNKNOWN
 }
 
 enum exam_status {
@@ -145,6 +144,7 @@ model students {
   user_roles          user_roles[]
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
+  class_attendance    class_attendance[]
 }
 
 // Auth Token
@@ -321,6 +321,7 @@ model classes {
   subject_classes    subject_classes[]
   exam_classes       exam_classes[]
   student_admissions student_admissions[]
+  class_attendance   class_attendance[]
 }
 
 // Section Management
@@ -458,17 +459,36 @@ model exam_results_publish {
 
 // Teacher Attendance
 model teacher_attendance {
-  id         Int            @id @default(autoincrement())
+  id         Int              @id @default(autoincrement())
   teacher_id Int
-  date       DateTime       @default(now()) @db.Date
-  status     attendanceType
+  date       DateTime         @db.Date
+  status     attendanceStatus
   note       String?
-  created_at DateTime       @default(now())
-  updated_at DateTime       @updatedAt
+  created_at DateTime         @default(now())
+  updated_at DateTime         @updatedAt
 
   teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 
   @@index([teacher_id])
+  @@index([date])
+  @@index([status])
+}
+
+// Teacher Attendance
+model class_attendance {
+  id         Int              @id @default(autoincrement())
+  class_id   Int
+  student_id Int
+  date       DateTime         @db.Date
+  status     attendanceStatus
+  note       String?
+  created_at DateTime         @default(now())
+  updated_at DateTime         @updatedAt
+
+  class   classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  student students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@index([class_id, student_id])
   @@index([date])
   @@index([status])
 }

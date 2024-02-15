@@ -1,9 +1,71 @@
 const asyncHandler = require('express-async-handler')
 const prisma = require('../utils/prisma')
-const dayjs = require('dayjs')
 const {
   teachersAttendanceValidator,
 } = require('../validators/attendanceValidator')
+const {
+  selectQueries,
+  attendanceFields,
+  paginateWithSorting,
+} = require('../utils/metaData')
+const dayjs = require('dayjs')
+const { formatDate } = require('../utils/transformData')
+
+/*
+  @route    POST: /attendance/teachers
+  @access   private
+  @desc     Get All teachers for attendance
+*/
+const getTeachersForAttendance = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, attendanceFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  let { date } = selectedQueries
+  date = new Date(date).toISOString()
+
+  const [teachers, total] = await prisma.$transaction([
+    prisma.teachers.findMany({
+      take,
+      skip,
+      orderBy,
+      select: {
+        id: true,
+        name: true,
+        designation: true,
+        attendance: {
+          where: {
+            date,
+          },
+        },
+      },
+    }),
+    prisma.teachers.count(),
+  ])
+
+  const formatTeachers = teachers.map(
+    ({ id, name, designation, attendance }) => ({
+      id,
+      name,
+      designation: designation.title,
+      attendance: attendance.length
+        ? {
+            teacher_id: attendance.at(0).teacher_id,
+            status: attendance.at(0).status,
+            date: formatDate(attendance.at(0).date),
+          }
+        : null,
+    })
+  )
+
+  res.json({
+    data: formatTeachers,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
 
 /*
   @route    POST: /attendance/teachers/:id
@@ -15,27 +77,13 @@ const teacherAttendance = asyncHandler(async (req, res, next) => {
     abortEarly: false,
   })
 
-  const id = data.teacher_id
+  const id = Number(data.teacher_id)
+  data.date = new Date(data.date).toISOString()
 
   await prisma.$transaction(async (tx) => {
-    const findTeacher = await tx.teachers.findUnique({
-      where: {
-        id,
-      },
-    })
-
-    if (!findTeacher) {
-      return res.status(404).json({
-        message: 'No teacher found',
-      })
-    }
-
-    // Get the current date in ISO 8601 format
-    const currentDate = dayjs().toISOString()
-
     const existAttendance = await tx.teacher_attendance.findFirst({
       where: {
-        AND: [{ teacher_id: id }, { date: currentDate }],
+        AND: [{ teacher_id: id }, { date: data.date }],
       },
     })
 
@@ -53,14 +101,9 @@ const teacherAttendance = asyncHandler(async (req, res, next) => {
       })
     } else {
       // Create new attendance (If not exist)
-      const r = await tx.teacher_attendance.create({
-        data: {
-          teacher_id: findTeacher.id,
-          ...data,
-        },
+      await tx.teacher_attendance.create({
+        data,
       })
-
-      console.log(r.date)
 
       res.json({
         message: 'Done',
@@ -70,5 +113,6 @@ const teacherAttendance = asyncHandler(async (req, res, next) => {
 })
 
 module.exports = {
+  getTeachersForAttendance,
   teacherAttendance,
 }

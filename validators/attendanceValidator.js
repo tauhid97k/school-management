@@ -19,7 +19,8 @@ const teachersAttendanceValidator = yup.object({
   status: yup
     .string()
     .required('Attendance status is required')
-    .oneOf(['PRESENT', 'ABSENCE', 'LATE', 'VACATION', 'UNKNOWN']),
+    .oneOf(['PRESENT', 'ABSENT', 'LATE', 'VACATION']),
+  date: yup.date().required(),
   note: yup.string().optional(),
 })
 
