@@ -68,11 +68,39 @@ const getTeachersForAttendance = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /attendance/teachers/:id
+  @access   private
+  @desc     Get a teacher's attendance details 
+*/
+const getTeacherAttendanceDetails = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  const findTeacherAttendance = await prisma.teacher_attendance.findMany({
+    where: {
+      teacher_id: id,
+    },
+  })
+
+  if (!findTeacherAttendance)
+    return res.status(404).json({
+      message: 'No teacher found',
+    })
+
+  const formatData = findTeacherAttendance.map(({ status, date }) => ({
+    title: status,
+    start: dayjs(date).format('YYYY, M, D'),
+    end: dayjs(date).format('YYYY, M, D'),
+  }))
+
+  res.json(formatData)
+})
+
+/*
   @route    POST: /attendance/teachers/:id
   @access   private
   @desc     Attendance for a teacher
 */
-const teacherAttendance = asyncHandler(async (req, res, next) => {
+const createTeacherAttendance = asyncHandler(async (req, res, next) => {
   const data = await teachersAttendanceValidator.validate(req.body, {
     abortEarly: false,
   })
@@ -114,5 +142,6 @@ const teacherAttendance = asyncHandler(async (req, res, next) => {
 
 module.exports = {
   getTeachersForAttendance,
-  teacherAttendance,
+  getTeacherAttendanceDetails,
+  createTeacherAttendance,
 }

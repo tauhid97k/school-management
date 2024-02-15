@@ -9,10 +9,15 @@ router.get(
   authMiddleware(),
   attendanceController.getTeachersForAttendance
 )
+router.get(
+  '/teachers/:id',
+  authMiddleware(),
+  attendanceController.getTeacherAttendanceDetails
+)
 router.post(
   '/teachers',
   authMiddleware(),
-  attendanceController.teacherAttendance
+  attendanceController.createTeacherAttendance
 )
 
 module.exports = router

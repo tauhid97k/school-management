@@ -24,11 +24,11 @@ enum studentStatus {
   IRREGULAR
 }
 
-enum attendanceStatus {
+enum attendanceType {
   PRESENT
   ABSENT
   LATE
-  VACATION
+  LEAVE
 }
 
 enum exam_status {
@@ -459,13 +459,13 @@ model exam_results_publish {
 
 // Teacher Attendance
 model teacher_attendance {
-  id         Int              @id @default(autoincrement())
+  id         Int            @id @default(autoincrement())
   teacher_id Int
-  date       DateTime         @db.Date
-  status     attendanceStatus
+  date       DateTime       @db.Date
+  status     attendanceType
   note       String?
-  created_at DateTime         @default(now())
-  updated_at DateTime         @updatedAt
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
 
   teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 
@@ -476,14 +476,14 @@ model teacher_attendance {
 
 // Teacher Attendance
 model class_attendance {
-  id         Int              @id @default(autoincrement())
+  id         Int            @id @default(autoincrement())
   class_id   Int
   student_id Int
-  date       DateTime         @db.Date
-  status     attendanceStatus
+  date       DateTime       @db.Date
+  status     attendanceType
   note       String?
-  created_at DateTime         @default(now())
-  updated_at DateTime         @updatedAt
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
 
   class   classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
   student students @relation(fields: [student_id], references: [id], onDelete: Cascade)
