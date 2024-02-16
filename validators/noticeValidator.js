@@ -1,67 +1,37 @@
 const yup = require('yup')
-const prisma = require('../utils/prisma')
 
-const noticeValidator = yup.object({
-  title: yup.string().required('title is required'),
-  description: yup.string().required('description is required'),
-  recipient_type: yup
-    .string()
-    .required('Recipient type is required')
-    .oneOf(['ALL', 'TEACHERS', 'CLASSES']),
-  recipient_ids: yup
-    .array(yup.number().typeError('Only number is allowed'))
-    .when('recipient_type', {
-      is: (values) => ['TEACHERS', 'CLASSES'].includes(values),
-      then: (schema) =>
-        schema
-          .required(`Recipient Id's are required`)
-          .min(1)
-          .test('exist', 'One or more id is invalid', async (values, ctx) => {
-            const noticeType = ctx.parent.recipient_type
-            let checkIds
+const noticeValidator = () =>
+  yup.object({
+    title: yup.string().required('Notice title is required'),
+    description: yup.string().optional(),
+    type: yup
+      .string()
+      .required('Notice type is required')
+      .oneOf(['ALL', 'TEACHERS', 'CLASSES']),
+    attachment: yup.string().optional(),
+  })
 
-            if (noticeType === 'TEACHERS') {
-              checkIds = await prisma.teachers.findMany({
-                where: {
-                  id: {
-                    in: values,
-                  },
-                },
-              })
-            } else if (noticeType === 'CLASSES') {
-              checkIds = await prisma.classes.findMany({
-                where: {
-                  id: {
-                    in: values,
-                  },
-                },
-              })
-            }
+const noticeAttachmentValidator = () =>
+  yup.object({
+    attachment: yup
+      .mixed()
+      .test(
+        'type',
+        'Invalid file type. Only image or pdf is allowed',
+        (file) => {
+          const allowedTypes = [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'application/pdf',
+          ]
+          return allowedTypes.includes(file.mimetype)
+        }
+      )
+      .test('size', 'File size is too large; max 10mb is allowed', (file) => {
+        const maxSize = 10 * 1024 * 1024
+        return file.size <= maxSize
+      }),
+  })
 
-            if (checkIds.length === values.length) return true
-            else return false
-          }),
-      otherwise: (schema) => schema.optional(),
-    }),
-})
-
-const classNoticeValidator = yup.object({
-  title: yup.string().required('title is required'),
-  description: yup.string().required('description is required'),
-  class_id: yup
-    .number()
-    .typeError('Class id must be a number')
-    .required('Class id is required')
-    .test('exist', 'No class found with this id', async (value) => {
-      const findClass = await prisma.classes.findUnique({
-        where: {
-          id: value,
-        },
-      })
-
-      if (findClass) return true
-      else return false
-    }),
-})
-
-module.exports = { noticeValidator, classNoticeValidator }
+module.exports = { noticeValidator, noticeAttachmentValidator }

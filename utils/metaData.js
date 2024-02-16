@@ -35,9 +35,13 @@ const commonFields = ['search', 'page', 'limit', 'sortBy', 'sortOrder']
 // Attendance Fields
 const attendanceFields = ['date', 'page', 'limit', 'sortBy', 'sortOrder']
 
+// Noticeboard Fields
+const noticeFields = ['type', 'page', 'limit', 'sortBy', 'sortOrder']
+
 module.exports = {
   selectQueries,
   paginateWithSorting,
   commonFields,
   attendanceFields,
+  noticeFields,
 }

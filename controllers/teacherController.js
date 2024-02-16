@@ -38,10 +38,6 @@ const getTeachers = asyncHandler(async (req, res, next) => {
     prisma.teachers.count(),
   ])
 
-  teachers.profile_img = generateFileLink(
-    `teachers/profiles/${teachers.profile_img}`
-  )
-
   const formatTeachers = teachers.map((teacher) => ({
     ...teacher,
     profile_img: generateFileLink(`teachers/profiles/${teacher.profile_img}`),

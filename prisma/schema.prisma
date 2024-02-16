@@ -43,6 +43,12 @@ enum exam_result_status {
   UNPUBLISHED
 }
 
+enum noticeType {
+  ALL
+  TEACHERS
+  CLASSES
+}
+
 // Super Admin
 model super_admins {
   id         Int      @id @default(autoincrement())
@@ -510,6 +516,19 @@ model expenses {
   updated_at          DateTime @updatedAt
 
   expense_category expense_categories @relation(fields: [expense_category_id], references: [id], onDelete: Cascade)
+}
+
+// Notices
+model notices {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  type        noticeType
+  attachment  String?
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  @@index([type])
 }
 
 // Photo Gallery (Website)
