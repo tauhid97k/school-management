@@ -358,7 +358,8 @@ model exams {
   created_at       DateTime    @default(now())
   updated_at       DateTime    @updatedAt
 
-  exam_category        exam_categories        @relation(fields: [exam_category_id], references: [id])
+  exam_category exam_categories @relation(fields: [exam_category_id], references: [id])
+
   exam_classes         exam_classes[]
   exam_sections        exam_sections[]
   exam_routines        exam_routines[]

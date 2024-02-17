@@ -23,6 +23,10 @@ const loginValidator = yup.object({
       const role = ctx.parent.role
       let email
 
+      if (!role) {
+        throw new yup.ValidationError('Role is required', role, 'role')
+      }
+
       // Check School Admin
       if (role === 'admin') {
         email = await prisma.admins.findUnique({

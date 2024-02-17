@@ -4,12 +4,13 @@ const getAuthUser = require('../utils/getAuthUser')
 
 const authMiddleware = (requiredPermission) => {
   return async (req, res, next) => {
+    // Check if token attached
     const authHeader = req.headers.authorization || req.headers.Authorization
-
     if (!authHeader?.startsWith('Bearer ')) {
       return res.status(401).json({ message: 'Unauthorized' })
     }
 
+    // Verify Token
     const token = authHeader.split(' ')[1]
 
     jwt.verify(

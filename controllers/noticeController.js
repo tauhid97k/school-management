@@ -194,6 +194,11 @@ const updateNotice = asyncHandler(async (req, res, next) => {
   res.json({ message: 'Notice updated successfully' })
 })
 
+/*
+  @route    DELETE: /notices/:id
+  @access   private
+  @desc     Delete a notice
+*/
 const deleteNotice = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 

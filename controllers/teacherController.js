@@ -16,6 +16,7 @@ const { formatDate } = require('../utils/transformData')
 const { v4: uuidV4 } = require('uuid')
 const generateFileLink = require('../utils/generateFileLink')
 const fs = require('node:fs/promises')
+const assignRole = require('../utils/assignRole')
 
 /*
   @route    GET: /teachers
@@ -93,43 +94,47 @@ const getTeacher = asyncHandler(async (req, res, next) => {
 const createTeacher = asyncHandler(async (req, res, next) => {
   let data = await teacherValidator().validate(req.body, { abortEarly: false })
 
-  if (req.files) {
-    const { profile_img } = await teacherProfileImageValidator().validate(
-      req.files,
-      {
-        abortEarly: false,
-      }
-    )
+  await prisma.$transaction(async (tx) => {
+    if (req.files) {
+      const { profile_img } = await teacherProfileImageValidator().validate(
+        req.files,
+        {
+          abortEarly: false,
+        }
+      )
 
-    // Profile Img
-    const uniqueFolder = `teacher_${uuidV4()}_${new Date() * 1000}`
-    const uploadPath = `uploads/teachers/profiles/${uniqueFolder}/${profile_img.name}`
-    const filePathToSave = `${uniqueFolder}/${profile_img.name}`
+      // Profile Img
+      const uniqueFolder = `teacher_${uuidV4()}_${new Date() * 1000}`
+      const uploadPath = `uploads/teachers/profiles/${uniqueFolder}/${profile_img.name}`
+      const filePathToSave = `${uniqueFolder}/${profile_img.name}`
 
-    profile_img.mv(uploadPath, (error) => {
-      if (error)
-        return res.status(500).json({
-          message: 'Error saving Profile image',
-        })
+      profile_img.mv(uploadPath, (error) => {
+        if (error)
+          return res.status(500).json({
+            message: 'Error saving Profile image',
+          })
+      })
+
+      // Update file path (For saving to database)
+      data.profile_img = filePathToSave
+    }
+
+    // Encrypt password
+    data.password = await bcrypt.hash(data.password, 12)
+
+    // Correct date format
+    data.date_of_birth = dayjs(data.date_of_birth).toISOString()
+    data.joining_date = dayjs(data.joining_date).toISOString()
+
+    const teacher = await tx.teachers.create({
+      data,
     })
 
-    // Update file path (For saving to database)
-    data.profile_img = filePathToSave
-  }
+    await assignRole(teacher.id, 'teacher', tx)
 
-  // Encrypt password
-  data.password = await bcrypt.hash(data.password, 12)
-
-  // Correct date format
-  data.date_of_birth = dayjs(data.date_of_birth).toISOString()
-  data.joining_date = dayjs(data.joining_date).toISOString()
-
-  await prisma.teachers.create({
-    data,
-  })
-
-  res.json({
-    message: 'Teacher added',
+    res.json({
+      message: 'Teacher added',
+    })
   })
 })
 
@@ -206,9 +211,9 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
       where: { id },
       data,
     })
-  })
 
-  res.json({ message: 'Teacher updated successfully' })
+    res.json({ message: 'Teacher updated successfully' })
+  })
 })
 
 /*

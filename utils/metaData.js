@@ -32,11 +32,24 @@ const paginateWithSorting = (options) => {
 // Pagination and sorting keys (Common)
 const commonFields = ['search', 'page', 'limit', 'sortBy', 'sortOrder']
 
+const studentsFields = [
+  'class_id',
+  'gender',
+  'search',
+  'page',
+  'limit',
+  'sortBy',
+  'sortOrder',
+]
+
 // Attendance Fields
 const attendanceFields = ['date', 'page', 'limit', 'sortBy', 'sortOrder']
 
 // Noticeboard Fields
 const noticeFields = ['type', 'page', 'limit', 'sortBy', 'sortOrder']
+
+// Exam Result Fields
+const examResultFields = ['class_id', 'section_id', 'exam_id', 'student_roll']
 
 module.exports = {
   selectQueries,
@@ -44,4 +57,5 @@ module.exports = {
   commonFields,
   attendanceFields,
   noticeFields,
+  examResultFields,
 }
