@@ -1,10 +1,7 @@
 const asyncHandler = require('express-async-handler')
 const prisma = require('../utils/prisma')
 const { selectQueries, examResultFields } = require('../utils/metaData')
-const {
-  examResultSubjectsValidator,
-  examResultValidator,
-} = require('../validators/examResultValidator')
+const { examResultValidator } = require('../validators/examResultValidator')
 
 /*
   @route    GET: /exam-results/subjects
@@ -12,12 +9,15 @@ const {
   @desc     Get subjects for result of a student
 */
 const getExamSubjectsForResults = asyncHandler(async (req, res, next) => {
-  const { class_id, exam_id } = await examResultSubjectsValidator.validate(
-    req.query,
-    {
-      abortEarly: false,
-    }
-  )
+  const selectedQueries = selectQueries(req.query, examResultFields)
+
+  const { class_id, exam_id } = selectedQueries
+
+  if (!class_id) {
+    return res.status(400).json({
+      message: 'Class id is required',
+    })
+  }
 
   await prisma.$transaction(async (tx) => {
     let response = {
@@ -75,27 +75,77 @@ const getExamSubjectsForResults = asyncHandler(async (req, res, next) => {
     })
 
     // Get Subjects (Routine here as these subjects are selected for the exam)
-    const getSubjects = await tx.exam_routines.findMany({
-      where: {
-        exam_id: Number(exam_id),
-      },
-      include: {
-        subject: true,
-      },
-    })
-
-    response.subjects = getSubjects.map(
-      ({ full_mark, subject: { id, name, code } }) => ({
-        name,
-        code,
-        full_mark,
+    if (exam_id) {
+      const getSubjects = await tx.exam_routines.findMany({
+        where: {
+          exam_id: Number(exam_id),
+        },
+        include: {
+          subject: true,
+        },
       })
-    )
+
+      response.subjects = getSubjects.map(
+        ({ full_mark, subject: { id, name, code } }) => ({
+          id,
+          name,
+          code,
+          full_mark,
+        })
+      )
+    }
 
     res.json(response)
   })
 })
 
+/*
+  @route    POST: /exam-results
+  @access   private
+  @desc     Create exam result
+*/
+const createExamResult = asyncHandler(async (req, res, next) => {
+  const data = await examResultValidator().validate(req.body, {
+    abortEarly: false,
+  })
+
+  await prisma.exam_results.create({
+    data,
+  })
+
+  res.json({
+    message: 'Subject mark added',
+  })
+})
+
+/*
+  @route    PUT: /exam-results
+  @access   private
+  @desc     Update exam result
+*/
+const updateExamResult = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  const data = await examResultValidator().validate(req.body, {
+    abortEarly: false,
+  })
+
+  await prisma.$transaction(async (tx) => {
+    await tx.exam_results.update({
+      where: {
+        id,
+      },
+      data,
+    })
+
+    res.json({
+      message: 'Subject mark added or updated',
+    })
+  })
+})
+
 module.exports = {
   getExamSubjectsForResults,
+  createExamResult,
+  updateExamResult,
 }

@@ -39,8 +39,8 @@ enum exam_status {
 }
 
 enum exam_result_status {
+  PENDING
   PUBLISHED
-  UNPUBLISHED
 }
 
 enum noticeType {
@@ -276,7 +276,6 @@ model subjects {
   subject_groups  subject_groups[]
   subject_classes subject_classes[]
   exam_routines   exam_routines[]
-  exam_results    exam_results[]
 }
 
 // Subject Groups
@@ -321,6 +320,7 @@ model classes {
   exam_classes     exam_classes[]
   studens          students[]
   class_attendance class_attendance[]
+  exam_results     exam_results[]
 }
 
 // Section Management
@@ -428,29 +428,28 @@ model grades {
 
 // Exam Results
 model exam_results {
-  id           Int      @id @default(autoincrement())
-  exam_id      Int
-  student_id   Int
-  subject_id   Int
-  subject_mark Float
-  grade        String?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  class_id       Int
+  exam_id        Int
+  student_id     Int
+  subjects_marks Json
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
+  class   classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
   exam    exams    @relation(fields: [exam_id], references: [id], onDelete: Cascade)
   student students @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  subject subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
 
+  @@index([class_id])
   @@index([exam_id])
   @@index([student_id])
-  @@index([subject_id])
 }
 
 // Exam results publish
 model exam_results_publish {
   id         Int                @id @default(autoincrement())
   exam_id    Int                @unique
-  status     exam_result_status @default(UNPUBLISHED)
+  status     exam_result_status @default(PENDING)
   created_at DateTime           @default(now())
   updated_at DateTime           @updatedAt
 

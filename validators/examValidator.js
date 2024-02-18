@@ -20,6 +20,7 @@ const examValidator = () =>
     classes: yup
       .array(yup.number().typeError('Class must be an id'))
       .required('At least one class is required')
+      .min(1, 'At least one class is required')
       .test('exist', 'One or more classes are invalid', async (values) => {
         const checkClasses = await prisma.classes.findMany({
           where: {
@@ -35,6 +36,8 @@ const examValidator = () =>
     sections: yup
       .array(yup.number().typeError('Section must be an id'))
       .test('exist', 'One or more sections are invalid', async (values) => {
+        if (!values || !values?.length) return true
+
         const checkSections = await prisma.sections.findMany({
           where: {
             id: {
@@ -114,7 +117,10 @@ const examValidator = () =>
       )
       .required('Exam routine is required')
       .min(1, 'Exam routine is required'),
-    status: yup.string().optional().oneOf(['ACTIVE', 'CANCELLED']),
   })
 
-module.exports = { examValidator }
+const examStatusUpdateValidator = yup.object({
+  status: yup.string().optional().oneOf(['ACTIVE', 'CANCELLED']),
+})
+
+module.exports = { examValidator, examStatusUpdateValidator }

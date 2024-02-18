@@ -7,6 +7,7 @@ const {
   getExam,
   createExam,
   updateExam,
+  updateExamStatus,
   deleteExam,
 } = require('../controllers/examController')
 
@@ -16,6 +17,7 @@ router.get('/', authMiddleware(), getAllExams)
 router.get('/:id', authMiddleware(), getExam)
 router.post('/', authMiddleware(), createExam)
 router.put('/:id', authMiddleware(), updateExam)
+router.patch('/:id/status', authMiddleware(), updateExamStatus)
 router.delete('/:id', authMiddleware(), deleteExam)
 
 module.exports = router

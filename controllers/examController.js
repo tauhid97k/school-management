@@ -5,7 +5,10 @@ const {
   commonFields,
   paginateWithSorting,
 } = require('../utils/metaData')
-const { examValidator } = require('../validators/examValidator')
+const {
+  examValidator,
+  examStatusUpdateValidator,
+} = require('../validators/examValidator')
 
 /*
   @route    GET: /exams/class-sections
@@ -214,7 +217,7 @@ const createExam = asyncHandler(async (req, res, next) => {
 const updateExam = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
-  const { exam_category_id, classes, sections, exam_routine, status } =
+  const { exam_category_id, classes, sections, exam_routine } =
     await examValidator().validate(req.body, {
       abortEarly: false,
     })
@@ -261,8 +264,6 @@ const updateExam = asyncHandler(async (req, res, next) => {
         id: findExam.id,
       },
       data: {
-        status,
-        exam_category_id,
         exam_routine,
         exam_classes: {
           createMany: {
@@ -285,6 +286,51 @@ const updateExam = asyncHandler(async (req, res, next) => {
     })
 
     res.json({ message: 'Exam updated successfully' })
+  })
+})
+
+/*
+  @route    PATCH: /exams/:id/status
+  @access   private
+  @desc     Update exam status
+*/
+const updateExamStatus = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  const { status } = await examStatusUpdateValidator.validate(req.body, {
+    abortEarly: false,
+  })
+
+  await prisma.$transaction(async (tx) => {
+    const findExam = await tx.exams.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findExam)
+      return res.status(404).json({
+        message: 'No exam found',
+      })
+
+    if (findExam.status === 'ACTIVE') {
+      return res.status(400).json({
+        message: 'Cannot change status for ongoing exam',
+      })
+    }
+
+    await tx.exams.update({
+      where: {
+        id: findExam.id,
+      },
+      data: {
+        status,
+      },
+    })
+
+    res.json({
+      message: 'Status updated',
+    })
   })
 })
 
@@ -322,5 +368,6 @@ module.exports = {
   getExam,
   createExam,
   updateExam,
+  updateExamStatus,
   deleteExam,
 }
