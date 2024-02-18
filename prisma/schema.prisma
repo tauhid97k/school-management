@@ -107,6 +107,8 @@ model teachers {
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
   attendance          teacher_attendance[]
+  teacher_classes     teacher_classes[]
+  teacher_sections    teacher_sections[]
 }
 
 // Student
@@ -321,6 +323,7 @@ model classes {
   studens          students[]
   class_attendance class_attendance[]
   exam_results     exam_results[]
+  teacher_classes  teacher_classes[]
 }
 
 // Section Management
@@ -332,13 +335,45 @@ model sections {
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 
-  class         classes         @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  room          rooms?          @relation(fields: [room_id], references: [id])
-  exam_sections exam_sections[]
+  class            classes            @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  room             rooms?             @relation(fields: [room_id], references: [id])
+  exam_sections    exam_sections[]
+  teacher_classes  teacher_classes[]
+  teacher_sections teacher_sections[]
 
   @@index([section_name])
   @@index([class_id])
   @@index([room_id])
+}
+
+// Teacher classes 
+model teacher_classes {
+  id         Int  @id @default(autoincrement())
+  class_id   Int
+  section_id Int?
+  teacher_id Int
+
+  class   classes   @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  section sections? @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  teacher teachers  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@index([class_id])
+  @@index([teacher_id])
+}
+
+// Teacher sections
+model teacher_sections {
+  id         Int      @id @default(autoincrement())
+  teacher_id Int
+  section_id Int?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  teacher teachers  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  section sections? @relation(fields: [section_id], references: [id], onDelete: Cascade)
+
+  @@index([teacher_id])
+  @@index([section_id])
 }
 
 // Exam Categories

@@ -217,6 +217,13 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    DELETE: /teachers/:id/classes
+  @access   private
+  @desc     Assign classes or sections to a teacher
+*/
+const assignTeacherClasses = asyncHandler(async (req, res, next) => {})
+
+/*
   @route    DELETE: /teachers/:id
   @access   private
   @desc     delete a teachers

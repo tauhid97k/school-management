@@ -21,6 +21,13 @@ const getStudentsForAttendance = asyncHandler(async (req, res, next) => {
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   let { date } = selectedQueries
+
+  if (!date) {
+    return res.status(400).json({
+      message: 'Date is required',
+    })
+  }
+
   date = new Date(date).toISOString()
 
   const id = Number(req.params.id)
@@ -36,6 +43,7 @@ const getStudentsForAttendance = asyncHandler(async (req, res, next) => {
       select: {
         id: true,
         name: true,
+        roll: true,
         class_id: true,
         class_attendance: {
           where: {
@@ -48,9 +56,10 @@ const getStudentsForAttendance = asyncHandler(async (req, res, next) => {
   ])
 
   const formatStudents = students.map(
-    ({ id, name, class_id, class_attendance }) => ({
+    ({ id, name, roll, class_id, class_attendance }) => ({
       id,
       name,
+      roll,
       class_id,
       attendance: class_attendance.length
         ? {
@@ -110,7 +119,7 @@ const createStudentAttendance = asyncHandler(async (req, res, next) => {
     abortEarly: false,
   })
 
-  const id = Number(data.teacher_id)
+  const id = Number(data.student_id)
   data.date = new Date(data.date).toISOString()
 
   await prisma.$transaction(async (tx) => {
