@@ -264,7 +264,7 @@ const updateExam = asyncHandler(async (req, res, next) => {
         id: findExam.id,
       },
       data: {
-        exam_routine,
+        exam_category_id,
         exam_classes: {
           createMany: {
             data: formatClasses,

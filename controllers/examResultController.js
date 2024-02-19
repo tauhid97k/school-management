@@ -1,6 +1,10 @@
 const asyncHandler = require('express-async-handler')
 const prisma = require('../utils/prisma')
-const { selectQueries, examResultFields } = require('../utils/metaData')
+const {
+  selectQueries,
+  examResultFields,
+  paginateWithSorting,
+} = require('../utils/metaData')
 const { examResultValidator } = require('../validators/examResultValidator')
 
 /*
@@ -100,6 +104,117 @@ const getExamSubjectsForResults = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /exam-results
+  @access   private
+  @desc     Get exam results
+*/
+const getExamResults = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, examResultFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+  let { class_id, exam_id } = selectedQueries
+
+  let response = {
+    exams: [],
+    results: [],
+  }
+
+  if (class_id) {
+    const findExams = await prisma.exams.findMany({
+      include: {
+        exam_classes: {
+          where: {
+            class_id: Number(class_id),
+          },
+          include: {
+            exam: {
+              include: {
+                exam_category: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    response.exams = findExams.flatMap(({ exam_classes }) =>
+      exam_classes.map(
+        ({
+          exam: {
+            id,
+            exam_category: { exam_name },
+          },
+        }) => ({
+          id,
+          exam_name,
+        })
+      )
+    )
+  }
+
+  const [results, total] = await prisma.$transaction([
+    prisma.exam_results.findMany({
+      where: {
+        AND: [
+          class_id ? { class_id: Number(class_id) } : {},
+          exam_id ? { exam_id: Number(exam_id) } : {},
+        ],
+      },
+      select: {
+        id: true,
+        class_id: true,
+        exam_id: true,
+        student_id: true,
+        class: true,
+        student: {
+          select: {
+            id: true,
+            name: true,
+            roll: true,
+          },
+        },
+      },
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.exam_results.count({
+      where: {
+        AND: [
+          class_id ? { class_id: Number(class_id) } : {},
+          exam_id ? { exam_id: Number(exam_id) } : {},
+        ],
+      },
+    }),
+  ])
+
+  const formatResults = results.map(
+    ({
+      id,
+      class: { class_name },
+      student: { roll, name },
+      subjects_marks,
+    }) => ({
+      id,
+      class_name,
+      student_name: name,
+      student_roll: roll,
+      subjects_marks,
+    })
+  )
+
+  response.results = formatResults
+
+  res.json({
+    data: response,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
   @route    POST: /exam-results
   @access   private
   @desc     Create exam result
@@ -146,6 +261,7 @@ const updateExamResult = asyncHandler(async (req, res, next) => {
 
 module.exports = {
   getExamSubjectsForResults,
+  getExamResults,
   createExamResult,
   updateExamResult,
 }

@@ -49,7 +49,16 @@ const attendanceFields = ['date', 'page', 'limit', 'sortBy', 'sortOrder']
 const noticeFields = ['type', 'page', 'limit', 'sortBy', 'sortOrder']
 
 // Exam Result Fields
-const examResultFields = ['class_id', 'section_id', 'exam_id', 'student_roll']
+const examResultFields = [
+  'class_id',
+  'section_id',
+  'exam_id',
+  'student_roll',
+  'page',
+  'limit',
+  'sortBy',
+  'sortOrder',
+]
 
 module.exports = {
   selectQueries,
