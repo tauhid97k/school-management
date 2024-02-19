@@ -189,9 +189,9 @@ const updateNotice = asyncHandler(async (req, res, next) => {
       where: { id },
       data,
     })
-  })
 
-  res.json({ message: 'Notice updated successfully' })
+    res.json({ message: 'Notice updated successfully' })
+  })
 })
 
 /*

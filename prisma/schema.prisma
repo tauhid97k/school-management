@@ -49,6 +49,13 @@ enum noticeType {
   CLASSES
 }
 
+enum assignmentStatus {
+  ACTIVE
+  DRAFT
+  CANCELLED
+  CONCLUDED
+}
+
 // Super Admin
 model super_admins {
   id         Int      @id @default(autoincrement())
@@ -109,6 +116,7 @@ model teachers {
   attendance          teacher_attendance[]
   teacher_classes     teacher_classes[]
   teacher_sections    teacher_sections[]
+  teacher_assignments teacher_assignments[]
 }
 
 // Student
@@ -317,13 +325,14 @@ model classes {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  sections         sections[]
-  subject_classes  subject_classes[]
-  exam_classes     exam_classes[]
-  studens          students[]
-  class_attendance class_attendance[]
-  exam_results     exam_results[]
-  teacher_classes  teacher_classes[]
+  sections            sections[]
+  subject_classes     subject_classes[]
+  exam_classes        exam_classes[]
+  studens             students[]
+  class_attendance    class_attendance[]
+  exam_results        exam_results[]
+  teacher_classes     teacher_classes[]
+  teacher_assignments teacher_assignments[]
 }
 
 // Section Management
@@ -335,11 +344,12 @@ model sections {
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 
-  class            classes            @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  room             rooms?             @relation(fields: [room_id], references: [id])
-  exam_sections    exam_sections[]
-  teacher_classes  teacher_classes[]
-  teacher_sections teacher_sections[]
+  class               classes               @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  room                rooms?                @relation(fields: [room_id], references: [id])
+  exam_sections       exam_sections[]
+  teacher_classes     teacher_classes[]
+  teacher_sections    teacher_sections[]
+  teacher_assignments teacher_assignments[]
 
   @@index([section_name])
   @@index([class_id])
@@ -508,25 +518,6 @@ model teacher_attendance {
   @@index([status])
 }
 
-// Teacher Attendance
-model class_attendance {
-  id         Int            @id @default(autoincrement())
-  class_id   Int
-  student_id Int
-  date       DateTime       @db.Date
-  status     attendanceType
-  note       String?
-  created_at DateTime       @default(now())
-  updated_at DateTime       @updatedAt
-
-  class   classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  student students @relation(fields: [student_id], references: [id], onDelete: Cascade)
-
-  @@index([class_id, student_id])
-  @@index([date])
-  @@index([status])
-}
-
 // Expense Categories
 model expense_categories {
   id            Int        @id @default(autoincrement())
@@ -564,6 +555,51 @@ model notices {
   updated_at  DateTime   @updatedAt
 
   @@index([type])
+}
+
+// Class Attendance (Students)
+model class_attendance {
+  id         Int            @id @default(autoincrement())
+  class_id   Int
+  student_id Int
+  date       DateTime       @db.Date
+  status     attendanceType
+  note       String?
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+
+  class   classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  student students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@index([class_id, student_id])
+  @@index([date])
+  @@index([status])
+}
+
+// Teacher assignment (For students)
+model teacher_assignments {
+  id              Int              @id @default(autoincrement())
+  class_id        Int
+  section_id      Int?
+  teacher_id      Int
+  subject_id      Int
+  title           String
+  description     String?
+  attachment      String?
+  assignment_time DateTime
+  submission_time DateTime
+  status          assignmentStatus
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+
+  class   classes   @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  section sections? @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  teacher teachers  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@index([class_id])
+  @@index([section_id])
+  @@index([teacher_id])
+  @@index([status])
 }
 
 // Photo Gallery (Website)

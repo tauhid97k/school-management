@@ -60,6 +60,16 @@ const examResultFields = [
   'sortOrder',
 ]
 
+// Teacher Assignments Fields
+const assignmentFields = [
+  'class_id',
+  'section_id',
+  'page',
+  'limit',
+  'sortBy',
+  'sortOrder',
+]
+
 module.exports = {
   selectQueries,
   paginateWithSorting,
@@ -67,4 +77,5 @@ module.exports = {
   attendanceFields,
   noticeFields,
   examResultFields,
+  assignmentFields,
 }
