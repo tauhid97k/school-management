@@ -6,6 +6,7 @@ const {
   paginateWithSorting,
 } = require('../utils/metaData')
 const { examResultValidator } = require('../validators/examResultValidator')
+const generateFileLink = require('../utils/generateFileLink')
 
 /*
   @route    GET: /exam-results/subjects
@@ -215,6 +216,72 @@ const getExamResults = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /exam-results/:id
+  @access   private
+  @desc     Get an exam result details
+*/
+const getExamResultDetails = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findResult = await tx.exam_results.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findResult)
+      return res.status(404).json({
+        message: 'No result found',
+      })
+
+    const result = await tx.exam_results.findUnique({
+      where: {
+        id: findResult.id,
+      },
+      include: {
+        class: true,
+        exam: {
+          include: {
+            exam_category: true,
+            exam_routines: {
+              orderBy: {
+                start_time: 'asc',
+              },
+            },
+          },
+        },
+        student: {
+          select: {
+            id: true,
+            profile_img: true,
+            name: true,
+            roll: true,
+          },
+        },
+      },
+    })
+
+    const formatResult = {
+      id: result.id,
+      exam_name: result.exam.exam_category.exam_name,
+      exam_date: result.exam.exam_routines.at(0).start_time,
+      profile_img: generateFileLink(
+        `students/profiles/${result.student.profile_img}`
+      ),
+      class_name: result.class.class_name,
+      student_name: result.student.name,
+      student_roll: result.student.roll,
+      subjects_marks: result.subjects_marks,
+      created_at: result.created_at,
+      updated_at: result.updated_at,
+    }
+
+    res.json(formatResult)
+  })
+})
+
+/*
   @route    POST: /exam-results
   @access   private
   @desc     Create exam result
@@ -262,6 +329,7 @@ const updateExamResult = asyncHandler(async (req, res, next) => {
 module.exports = {
   getExamSubjectsForResults,
   getExamResults,
+  getExamResultDetails,
   createExamResult,
   updateExamResult,
 }
