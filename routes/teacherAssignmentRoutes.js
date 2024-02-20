@@ -3,6 +3,7 @@ const router = express.Router()
 const authMiddleware = require('../middlewares/authMiddleware')
 const {
   getAssignments,
+  getAssignment,
   getClassSectionsForAssignment,
   createAssignment,
   updateAssignment,
@@ -16,6 +17,7 @@ router.get(
   authMiddleware(),
   getClassSectionsForAssignment
 )
+router.get('/:id', authMiddleware(), getAssignment)
 router.post('/', authMiddleware(), createAssignment)
 router.put('/:id', authMiddleware(), updateAssignment)
 router.delete('/:id', authMiddleware(), deleteAssignment)

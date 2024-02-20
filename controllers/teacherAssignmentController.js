@@ -12,6 +12,7 @@ const {
 const dayjs = require('dayjs')
 const { v4: uuidV4 } = require('uuid')
 const fs = require('node:fs/promises')
+const generateFileLink = require('../utils/generateFileLink')
 
 /*
   @route    GET: /teacher-assignments/classes/:id/sections
@@ -65,6 +66,7 @@ const getAssignments = asyncHandler(async (req, res, next) => {
         title: true,
         assignment_time: true,
         submission_time: true,
+        status: true,
         created_at: true,
         updated_at: true,
         class: {
@@ -111,6 +113,7 @@ const getAssignments = asyncHandler(async (req, res, next) => {
       class: { class_name },
       section,
       teacher: { name, designation },
+      status,
       created_at,
       updated_at,
     }) => ({
@@ -122,6 +125,7 @@ const getAssignments = asyncHandler(async (req, res, next) => {
       assignment_title: title,
       assignment_time,
       submission_time,
+      status,
       created_at,
       updated_at,
     })
@@ -134,6 +138,80 @@ const getAssignments = asyncHandler(async (req, res, next) => {
       limit: take,
       total,
     },
+  })
+})
+
+/*
+  @route    GET: /teacher-assignments/:id
+  @access   private
+  @desc     Get a single assignment
+*/
+const getAssignment = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findAssignment = await tx.teacher_assignments.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        title: true,
+        assignment_time: true,
+        submission_time: true,
+        description: true,
+        attachment: true,
+        created_at: true,
+        updated_at: true,
+        class: {
+          select: {
+            id: true,
+            class_name: true,
+          },
+        },
+        section: {
+          select: {
+            id: true,
+            section_name: true,
+          },
+        },
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+            designation: true,
+          },
+        },
+      },
+    })
+
+    if (!findAssignment) {
+      return res.status(404).json({ message: 'No assignment found' })
+    }
+
+    const formatAssignment = {
+      id: findAssignment.id,
+      class_name: findAssignment.class.class_name,
+      section_name: findAssignment.section.section_name
+        ? findAssignment.section.section_name
+        : null,
+      teacher_name: findAssignment.teacher.name,
+      teacher_designation: findAssignment.teacher.designation.title,
+      assignment_title: findAssignment.title,
+      assignment_description: findAssignment.description,
+      assignment_attachment: findAssignment.attachment
+        ? generateFileLink(
+            `uploads/teachers/assignments/${findAssignment.attachment}`
+          )
+        : null,
+      assignment_time: findAssignment.assignment_time,
+      submission_time: findAssignment.submission_time,
+      status: findAssignment.status,
+      created_at: findAssignment.created_at,
+      updated_at: findAssignment.updated_at,
+    }
+
+    res.json(formatAssignment)
   })
 })
 
@@ -309,6 +387,7 @@ const deleteAssignment = asyncHandler(async (req, res, next) => {
 module.exports = {
   getClassSectionsForAssignment,
   getAssignments,
+  getAssignment,
   createAssignment,
   updateAssignment,
   deleteAssignment,
