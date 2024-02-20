@@ -28,6 +28,7 @@ router.use('/expense-categories', require('./expenseCategoryRoutes'))
 router.use('/expenses', require('./expenseRoutes'))
 router.use('/salary', require('./salaryRoutes'))
 router.use('/teacher-assignments', require('./teacherAssignmentRoutes'))
+router.use('/homeworks', require('./studentHomeworkRoutes'))
 
 // Website Routes
 router.use('/photo-gallery', require('./photoGalleryRoutes'))

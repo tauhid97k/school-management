@@ -56,6 +56,13 @@ enum assignmentStatus {
   CONCLUDED
 }
 
+enum homeworkStatus {
+  PENDING
+  REVISION
+  ACCEPTED
+  REJECTED
+}
+
 // Super Admin
 model super_admins {
   id         Int      @id @default(autoincrement())
@@ -150,6 +157,7 @@ model students {
   personal_tokens     personal_tokens[]
   class_attendance    class_attendance[]
   exam_results        exam_results[]
+  student_homework    student_homeworks[]
 
   @@index([roll])
   @@index([class_id])
@@ -278,14 +286,15 @@ model groups {
 
 // Subject 
 model subjects {
-  id              Int               @id @default(autoincrement())
-  name            String
-  code            String            @unique
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @updatedAt
-  subject_groups  subject_groups[]
-  subject_classes subject_classes[]
-  exam_routines   exam_routines[]
+  id                  Int                   @id @default(autoincrement())
+  name                String
+  code                String                @unique
+  created_at          DateTime              @default(now())
+  updated_at          DateTime              @updatedAt
+  subject_groups      subject_groups[]
+  subject_classes     subject_classes[]
+  exam_routines       exam_routines[]
+  teacher_assignments teacher_assignments[]
 }
 
 // Subject Groups
@@ -576,7 +585,7 @@ model class_attendance {
   @@index([status])
 }
 
-// Teacher assignment (For students)
+// Teacher assignments (For students)
 model teacher_assignments {
   id              Int              @id @default(autoincrement())
   class_id        Int
@@ -592,13 +601,34 @@ model teacher_assignments {
   created_at      DateTime         @default(now())
   updated_at      DateTime         @updatedAt
 
-  class   classes   @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  section sections? @relation(fields: [section_id], references: [id], onDelete: Cascade)
-  teacher teachers  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  class            classes             @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  section          sections?           @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  teacher          teachers            @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  subject          subjects            @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+  student_homework student_homeworks[]
 
   @@index([class_id])
   @@index([section_id])
   @@index([teacher_id])
+  @@index([status])
+}
+
+// Students Homework
+model student_homeworks {
+  id            Int            @id @default(autoincrement())
+  student_id    Int
+  assignment_id Int
+  description   String?
+  attachment    String?
+  status        homeworkStatus @default(PENDING)
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+
+  student    students            @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  assignment teacher_assignments @relation(fields: [assignment_id], references: [id], onDelete: Cascade)
+
+  @@index([assignment_id])
+  @@index([student_id])
   @@index([status])
 }
 

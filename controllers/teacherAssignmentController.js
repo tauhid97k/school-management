@@ -7,12 +7,12 @@ const {
 } = require('../utils/metaData')
 const {
   teacherAssignmentValidator,
-  assignmentAttachmentValidator,
 } = require('../validators/teacherAssignmentValidator')
 const dayjs = require('dayjs')
 const { v4: uuidV4 } = require('uuid')
 const fs = require('node:fs/promises')
 const generateFileLink = require('../utils/generateFileLink')
+const { attachmentValidator } = require('../validators/attachmentValidator')
 
 /*
   @route    GET: /teacher-assignments/classes/:id/sections
@@ -175,6 +175,12 @@ const getAssignment = asyncHandler(async (req, res, next) => {
             section_name: true,
           },
         },
+        subject: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         teacher: {
           select: {
             id: true,
@@ -191,18 +197,18 @@ const getAssignment = asyncHandler(async (req, res, next) => {
 
     const formatAssignment = {
       id: findAssignment.id,
+      class_id: findAssignment.class.id,
       class_name: findAssignment.class.class_name,
-      section_name: findAssignment.section.section_name
-        ? findAssignment.section.section_name
-        : null,
+      section_id: findAssignment.section.id,
+      section_name: findAssignment.section.section_name,
+      subject_id: findAssignment.subject.id,
+      subject_name: findAssignment.subject.name,
       teacher_name: findAssignment.teacher.name,
       teacher_designation: findAssignment.teacher.designation.title,
       assignment_title: findAssignment.title,
       assignment_description: findAssignment.description,
       assignment_attachment: findAssignment.attachment
-        ? generateFileLink(
-            `uploads/teachers/assignments/${findAssignment.attachment}`
-          )
+        ? generateFileLink(`teachers/assignments/${findAssignment.attachment}`)
         : null,
       assignment_time: findAssignment.assignment_time,
       submission_time: findAssignment.submission_time,
@@ -227,12 +233,9 @@ const createAssignment = asyncHandler(async (req, res, next) => {
 
   await prisma.$transaction(async (tx) => {
     if (req.files) {
-      const { attachment } = await assignmentAttachmentValidator().validate(
-        req.files,
-        {
-          abortEarly: false,
-        }
-      )
+      const { attachment } = await attachmentValidator().validate(req.files, {
+        abortEarly: false,
+      })
 
       // Attachment
       const uniqueFolder = `assignment_${uuidV4()}_${new Date() * 1000}`
@@ -290,12 +293,9 @@ const updateAssignment = asyncHandler(async (req, res, next) => {
     }
 
     if (req.files) {
-      const { attachment } = await assignmentAttachmentValidator().validate(
-        req.files,
-        {
-          abortEarly: false,
-        }
-      )
+      const { attachment } = await attachmentValidator().validate(req.files, {
+        abortEarly: false,
+      })
 
       // Delete Previous attachment (If Exist)
       if (findAssignment.attachment) {
