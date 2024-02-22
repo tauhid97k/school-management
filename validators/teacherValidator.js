@@ -140,6 +140,17 @@ const teacherValidator = (id) =>
         if (checkClasses.length === values.length) return true
         else return false
       })
+      .transform((originalValue) => {
+        try {
+          return JSON.parse(originalValue)
+        } catch (error) {
+          throw new yup.ValidationError(
+            'JSON parsing failed!',
+            originalValue,
+            'classes'
+          )
+        }
+      })
       .min(1, 'At least one class is required'),
     sections: yup
       .array(yup.number().typeError('Section must be an id'))
@@ -157,6 +168,17 @@ const teacherValidator = (id) =>
         if (checkSections.length === values.length) return true
         else return false
       })
+      .transform((originalValue) => {
+        try {
+          return JSON.parse(originalValue)
+        } catch (error) {
+          throw new yup.ValidationError(
+            'JSON parsing failed!',
+            originalValue,
+            'sections'
+          )
+        }
+      })
       .optional(),
     subjects: yup
       .array(yup.number().typeError('Subject must be an id'))
@@ -172,6 +194,17 @@ const teacherValidator = (id) =>
 
         if (checkSubjects.length === values.length) return true
         else return false
+      })
+      .transform((originalValue) => {
+        try {
+          return JSON.parse(originalValue)
+        } catch (error) {
+          throw new yup.ValidationError(
+            'JSON parsing failed!',
+            originalValue,
+            'subjects'
+          )
+        }
       })
       .min(1, 'At least one class is required'),
   })

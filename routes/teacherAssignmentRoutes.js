@@ -4,7 +4,8 @@ const authMiddleware = require('../middlewares/authMiddleware')
 const {
   getAssignments,
   getAssignment,
-  getClassSectionsForAssignment,
+  getSubmittedAssignments,
+  approveSubmittedAssignments,
   createAssignment,
   updateAssignment,
   deleteAssignment,
@@ -12,12 +13,18 @@ const {
 
 // Protected Routes
 router.get('/', authMiddleware(), getAssignments)
-router.get(
-  '/classes/:id/sections',
-  authMiddleware(),
-  getClassSectionsForAssignment
-)
 router.get('/:id', authMiddleware(), getAssignment)
+router.get('/teacher/:id/submitted', authMiddleware(), getSubmittedAssignments)
+router.get(
+  '/teacher/:teacherId/submitted/:homeworkId',
+  authMiddleware(),
+  getSubmittedAssignments
+)
+router.put(
+  '/submitted/:id/approval',
+  authMiddleware(),
+  approveSubmittedAssignments
+)
 router.post('/', authMiddleware(), createAssignment)
 router.put('/:id', authMiddleware(), updateAssignment)
 router.delete('/:id', authMiddleware(), deleteAssignment)

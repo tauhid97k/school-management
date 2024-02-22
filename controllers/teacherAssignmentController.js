@@ -7,41 +7,13 @@ const {
 } = require('../utils/metaData')
 const {
   teacherAssignmentValidator,
+  teacherAssignmentApprovalValidation,
 } = require('../validators/teacherAssignmentValidator')
 const dayjs = require('dayjs')
 const { v4: uuidV4 } = require('uuid')
 const fs = require('node:fs/promises')
 const generateFileLink = require('../utils/generateFileLink')
 const { attachmentValidator } = require('../validators/attachmentValidator')
-
-/*
-  @route    GET: /teacher-assignments/classes/:id/sections
-  @access   private
-  @desc     Get sections of a class
-*/
-const getClassSectionsForAssignment = asyncHandler(async (req, res, next) => {
-  const id = Number(req.params.id)
-
-  await prisma.$transaction(async (tx) => {
-    const findClass = await tx.classes.findUnique({
-      where: {
-        id,
-      },
-    })
-
-    if (!findClass) {
-      return res.status(404).json({ message: 'No class found' })
-    }
-
-    const sections = await tx.sections.findMany({
-      where: {
-        class_id: id,
-      },
-    })
-
-    res.json(sections)
-  })
-})
 
 /*
   @route    GET: /teacher-assignments
@@ -222,6 +194,206 @@ const getAssignment = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /teacher-assignments/teacher/:id/submitted
+  @access   private
+  @desc     Get submitted assignments
+*/
+const getSubmittedAssignments = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, assignmentFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  let { class_id, section_id } = selectedQueries
+  class_id = class_id ? Number(class_id) : null
+  section_id = section_id ? Number(section_id) : null
+
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const submittedAssignments = await tx.student_homeworks.findMany({
+      where: {
+        assignment: {
+          teacher_id: id,
+          ...(section_id && { section_id }),
+          ...(class_id && !section_id && { class_id }),
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        created_at: true,
+        student: {
+          select: {
+            name: true,
+            roll: true,
+          },
+        },
+        assignment: {
+          select: {
+            title: true,
+            class: {
+              select: {
+                class_name: true,
+              },
+            },
+            section: {
+              select: {
+                section_name: true,
+              },
+            },
+            subject: {
+              select: {
+                name: true,
+                code: true,
+              },
+            },
+          },
+        },
+      },
+      take,
+      skip,
+      orderBy,
+    })
+
+    // Format Data
+    const formatData = submittedAssignments.map(
+      ({ id, status, created_at, assignment }) => ({
+        id,
+        status,
+        submission_time: created_at,
+        class_name: assignment.class.class_name,
+        section_name: assignment.section.section_name,
+        subject_name: assignment.subject.name,
+        subject_code: assignment.subject.code,
+      })
+    )
+
+    res.json({
+      data: formatData,
+      meta: {
+        page,
+        limit: take,
+        total,
+      },
+    })
+  })
+})
+
+/*
+  @route    GET: /teacher-assignments/teacher/:teacherId/submitted/:homeworkId
+  @access   private
+  @desc     Get submitted assignments
+*/
+const getSubmittedAssignmentDetails = asyncHandler(async (req, res, next) => {
+  const teacherId = Number(req.params.teacherId)
+  const homeworkId = Number(req.params.homeworkId)
+
+  const homeworkDetails = await prisma.student_homeworks.findFirst({
+    where: {
+      AND: [
+        {
+          assignment: {
+            teacher_id: teacherId,
+          },
+        },
+        { assignment_id: homeworkId },
+      ],
+    },
+    select: {
+      id: true,
+      status: true,
+      description: true,
+      attachment: true,
+      created_at: true,
+      updated_at: true,
+      assignment: {
+        select: {
+          title: true,
+          assignment_time: true,
+          subject: {
+            select: {
+              name: true,
+              code: true,
+            },
+          },
+          teacher: {
+            select: {
+              name: true,
+              designation: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!homeworkDetails) {
+    return res.json({
+      message: 'Homework details not found',
+    })
+  }
+
+  // Format Data
+  const formatData = {
+    id: homeworkDetails.id,
+    status: homeworkDetails.status,
+    subject_name: homeworkDetails.assignment.subject.name,
+    description: homeworkDetails.description,
+    attachment: homeworkDetails.attachment
+      ? generateFileLink(`students/homeworks/${homeworkDetails.attachment}`)
+      : null,
+    submitted_date: homeworkDetails.created_at,
+    homework_title: homeworkDetails.assignment.title,
+    homework_date: homeworkDetails.assignment.assignment_time,
+    teacher_name: homeworkDetails.assignment.teacher.name,
+    teacher_designation: homeworkDetails.assignment.teacher.designation,
+  }
+
+  res.json(formatData)
+})
+
+/*
+  @route    GET: /teacher-assignments/submitted/:id/approval
+  @access   private
+  @desc     Get submitted assignments
+*/
+const approveSubmittedAssignments = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.homeworkId)
+  const { status } = await teacherAssignmentApprovalValidation.validate(
+    req.body,
+    {
+      abortEarly: false,
+    }
+  )
+
+  await prisma.$transaction(async (tx) => {
+    const findHomework = await tx.student_homeworks.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findHomework) {
+      return res.status(404).json({
+        message: 'Homework not found',
+      })
+    }
+
+    await tx.student_homeworks.update({
+      where: {
+        id,
+      },
+      data: {
+        status,
+      },
+    })
+
+    res.json({
+      message: 'Status updated',
+    })
+  })
+})
+
+/*
   @route    POST: /teacher-assignments
   @access   private
   @desc     Create a new assignment
@@ -385,9 +557,11 @@ const deleteAssignment = asyncHandler(async (req, res, next) => {
 })
 
 module.exports = {
-  getClassSectionsForAssignment,
   getAssignments,
   getAssignment,
+  getSubmittedAssignments,
+  getSubmittedAssignmentDetails,
+  approveSubmittedAssignments,
   createAssignment,
   updateAssignment,
   deleteAssignment,

@@ -72,4 +72,14 @@ const teacherAssignmentValidator = () =>
       .oneOf(['ACTIVE', 'DRAFT', 'CANCELLED', 'CONCLUDED']),
   })
 
-module.exports = { teacherAssignmentValidator }
+const teacherAssignmentApprovalValidation = yup.object({
+  status: yup
+    .string()
+    .required('Approval status is required')
+    .oneOf(['REVISION', 'ACCEPTED', 'REJECTED']),
+})
+
+module.exports = {
+  teacherAssignmentValidator,
+  teacherAssignmentApprovalValidation,
+}

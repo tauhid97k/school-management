@@ -64,6 +64,7 @@ const getStudent = asyncHandler(async (req, res, next) => {
     },
     include: {
       class: true,
+      group: true,
     },
   })
 
@@ -86,6 +87,7 @@ const getStudent = asyncHandler(async (req, res, next) => {
   const formatStudent = {
     ...dataWithExcludeFields,
     class_name: findStudent.class.class_name,
+    group_name: findStudent.group.group_name,
   }
 
   // Remove the original "class" property

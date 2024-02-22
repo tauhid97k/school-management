@@ -60,7 +60,11 @@ const studentValidator = (id) =>
       }),
     section_id: yup
       .number()
-      .typeError('Section id must be a number')
+      .typeError('Section id must be a number backend')
+      .transform((originalValue) => {
+        return originalValue || undefined
+      })
+      .optional()
       .test('exist', 'Section id does not exist', async (value) => {
         if (!value) return true
 
@@ -72,8 +76,7 @@ const studentValidator = (id) =>
 
         if (findSection) return true
         else return false
-      })
-      .optional(),
+      }),
     roll: yup
       .string()
       .required('Roll is required')
