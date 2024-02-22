@@ -30,6 +30,20 @@ const studentValidator = (id) =>
         }
       }),
     admission_date: yup.string().required('Date of admission is required'),
+    group_id: yup
+      .number()
+      .typeError('Group id must be a number')
+      .required('Group id is required')
+      .test('exist', 'Group id does not exist', async (value) => {
+        const findGroup = await prisma.groups.findUnique({
+          where: {
+            id: value,
+          },
+        })
+
+        if (findGroup) return true
+        else return false
+      }),
     class_id: yup
       .number()
       .typeError('Class id must be a number')
@@ -44,6 +58,22 @@ const studentValidator = (id) =>
         if (class_id) return true
         else return false
       }),
+    section_id: yup
+      .number()
+      .typeError('Section id must be a number')
+      .test('exist', 'Section id does not exist', async (value) => {
+        if (!value) return true
+
+        const findSection = await prisma.sections.findUnique({
+          where: {
+            id: value,
+          },
+        })
+
+        if (findSection) return true
+        else return false
+      })
+      .optional(),
     roll: yup
       .string()
       .required('Roll is required')

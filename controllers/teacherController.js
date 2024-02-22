@@ -19,6 +19,40 @@ const fs = require('node:fs/promises')
 const assignRole = require('../utils/assignRole')
 
 /*
+  @route    GET: /teachers/:id/classes
+  @access   private
+  @desc     Get only assigned classes for a teacher
+*/
+const getClassesForTeacher = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findTeacher = await tx.teachers.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findTeacher) {
+      return res.status(404).json({ message: 'No teacher found' })
+    }
+
+    // Get Classes for this teacher
+    const classes = await tx.classes.findMany({
+      select: {
+        teacher_classes: {
+          where: {
+            teacher_id: findTeacher.id,
+          },
+        },
+      },
+    })
+
+    res.json(classes)
+  })
+})
+
+/*
   @route    GET: /teachers
   @access   private
   @desc     Get all teachers
@@ -94,6 +128,11 @@ const getTeacher = asyncHandler(async (req, res, next) => {
 const createTeacher = asyncHandler(async (req, res, next) => {
   let data = await teacherValidator().validate(req.body, { abortEarly: false })
 
+  // Format Classes, Sections (If exist) & Subjects for database
+  const formatClasses = data.classes.map((class_id) => ({ class_id }))
+  const formatSections = data.sections.map((section_id) => ({ section_id }))
+  const formatSubjects = data.subjects.map((subject_id) => ({ subject_id }))
+
   await prisma.$transaction(async (tx) => {
     if (req.files) {
       const { profile_img } = await teacherProfileImageValidator().validate(
@@ -127,7 +166,42 @@ const createTeacher = asyncHandler(async (req, res, next) => {
     data.joining_date = dayjs(data.joining_date).toISOString()
 
     const teacher = await tx.teachers.create({
-      data,
+      data: {
+        name: data.name,
+        email: data.email,
+        designation_id: data.designation_id,
+        password: data.password,
+        date_of_birth: data.date_of_birth,
+        blood_group: data.blood_group,
+        religion: data.religion,
+        gender: data.gender,
+        age: data.age,
+        joining_date: data.joining_date,
+        phone_number: data.phone_number,
+        address: data.address,
+        salary: data.salary,
+        profile_img: data.profile_img,
+        cover_letter: data.cover_letter,
+        education: data.education,
+        experience: data.experience,
+        teacher_classes: {
+          createMany: {
+            data: formatClasses,
+          },
+        },
+        ...(formatSections.length > 0 && {
+          teacher_sections: {
+            createMany: {
+              data: formatSections,
+            },
+          },
+        }),
+        teacher_subjects: {
+          createMany: {
+            data: formatSubjects,
+          },
+        },
+      },
     })
 
     await assignRole(teacher.id, 'teacher', tx)
@@ -150,6 +224,11 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
     abortEarly: false,
   })
 
+  // Format Classes, Sections (If exist) & Subjects for database
+  const formatClasses = data.classes.map((class_id) => ({ class_id }))
+  const formatSections = data.sections.map((section_id) => ({ section_id }))
+  const formatSubjects = data.subjects.map((subject_id) => ({ subject_id }))
+
   await prisma.$transaction(async (tx) => {
     const findTeacher = await tx.teachers.findUnique({
       where: {
@@ -161,6 +240,27 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
       return res.status(404).json({
         message: 'No teacher found',
       })
+
+    // Delete Previous records (Classes)
+    await tx.teacher_classes.deleteMany({
+      where: {
+        id,
+      },
+    })
+
+    // Delete Previous records (Sections)
+    await tx.teacher_sections.deleteMany({
+      where: {
+        id,
+      },
+    })
+
+    // Delete Previous records (Subjects)
+    await tx.teacher_subjects.deleteMany({
+      where: {
+        id,
+      },
+    })
 
     if (req.files) {
       const { profile_img } = await teacherProfileImageValidator().validate(
@@ -209,19 +309,47 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
 
     await tx.teachers.update({
       where: { id },
-      data,
+      data: {
+        name: data.name,
+        email: data.email,
+        designation_id: data.designation_id,
+        password: data.password,
+        date_of_birth: data.date_of_birth,
+        blood_group: data.blood_group,
+        religion: data.religion,
+        gender: data.gender,
+        age: data.age,
+        joining_date: data.joining_date,
+        phone_number: data.phone_number,
+        address: data.address,
+        salary: data.salary,
+        profile_img: data.profile_img,
+        cover_letter: data.cover_letter,
+        education: data.education,
+        experience: data.experience,
+        teacher_classes: {
+          createMany: {
+            data: formatClasses,
+          },
+        },
+        ...(formatSections.length > 0 && {
+          teacher_sections: {
+            createMany: {
+              data: formatSections,
+            },
+          },
+        }),
+        teacher_subjects: {
+          createMany: {
+            data: formatSubjects,
+          },
+        },
+      },
     })
 
     res.json({ message: 'Teacher updated successfully' })
   })
 })
-
-/*
-  @route    DELETE: /teachers/:id/classes
-  @access   private
-  @desc     Assign classes or sections to a teacher
-*/
-const assignTeacherClasses = asyncHandler(async (req, res, next) => {})
 
 /*
   @route    DELETE: /teachers/:id
@@ -266,6 +394,7 @@ const deleteTeacher = asyncHandler(async (req, res, next) => {
 })
 
 module.exports = {
+  getClassesForTeacher,
   getTeachers,
   getTeacher,
   createTeacher,

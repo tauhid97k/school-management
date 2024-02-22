@@ -1,7 +1,7 @@
 const prisma = require('../utils/prisma')
 
 // Create admin and user role
-const roles = [{ name: 'admin' }, { name: 'user' }]
+const roles = [{ name: 'admin' }, { name: 'teacher' }, { name: 'student' }]
 
 // Create a few permissions
 const permissions = [

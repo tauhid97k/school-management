@@ -413,6 +413,9 @@ const addHomework = asyncHandler(async (req, res, next) => {
 */
 const updateHomework = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
+  const userRole = req.user.role
+  const userId = req.user.id
+
   const data = await studentHomeworkValidator().validate(req.body, {
     abortEarly: false,
   })
@@ -426,8 +429,13 @@ const updateHomework = asyncHandler(async (req, res, next) => {
       return res.status(404).json({ message: 'Homework not found' })
     }
 
+    // Check role
+    if (!userRole && userRole !== 'student') {
+      return res.status(403).json({ message: 'You are not authorized' })
+    }
+
     // Check student
-    if (!findHomework.student_id === req.user.id) {
+    if (!findHomework.student_id === userId) {
       return res.status(403).json({ message: 'You are not authorized' })
     }
 
@@ -456,7 +464,7 @@ const updateHomework = asyncHandler(async (req, res, next) => {
       }
 
       // New Attachment
-      const uniqueFolder = `notice_${uuidV4()}_${new Date() * 1000}`
+      const uniqueFolder = `homework_${uuidV4()}_${new Date() * 1000}`
       const uploadPath = `uploads/students/homeworks/${uniqueFolder}/${attachment.name}`
       const filePathToSave = `${uniqueFolder}/${attachment.name}`
 

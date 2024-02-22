@@ -32,6 +32,35 @@ const getAllClasses = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /classes/:id/sections
+  @access   private
+  @desc     Get all sections of a class
+*/
+const getClassSections = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findClass = await tx.classes.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findClass) {
+      return res.status(404).json({ message: 'No class found' })
+    }
+
+    const sections = await tx.sections.findMany({
+      where: {
+        class_id: id,
+      },
+    })
+
+    res.json(sections)
+  })
+})
+
+/*
   @route    GET: /classes/:id
   @access   private
   @desc     Get a class details
@@ -124,6 +153,7 @@ const deleteClass = asyncHandler(async (req, res, next) => {
 
 module.exports = {
   getAllClasses,
+  getClassSections,
   getClass,
   createClass,
   updateClass,

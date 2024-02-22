@@ -44,9 +44,15 @@ enum exam_result_status {
 }
 
 enum noticeType {
+  DRAFT
   ALL
   TEACHERS
   CLASSES
+}
+
+enum teacherNoticeStatus {
+  DRAFT
+  PUBLISHED
 }
 
 enum assignmentStatus {
@@ -117,13 +123,15 @@ model teachers {
 
   designation designations? @relation(fields: [designation_id], references: [id], onDelete: SetNull)
 
-  user_roles          user_roles[]
-  verification_tokens verification_tokens[]
-  personal_tokens     personal_tokens[]
-  attendance          teacher_attendance[]
-  teacher_classes     teacher_classes[]
-  teacher_sections    teacher_sections[]
-  teacher_assignments teacher_assignments[]
+  user_roles              user_roles[]
+  verification_tokens     verification_tokens[]
+  personal_tokens         personal_tokens[]
+  attendance              teacher_attendance[]
+  teacher_classes         teacher_classes[]
+  teacher_sections        teacher_sections[]
+  teacher_assignments     teacher_assignments[]
+  teacher_notice_sections teacher_notice_sections[]
+  teacher_subjects        teacher_subjects[]
 }
 
 // Student
@@ -131,7 +139,9 @@ model students {
   id                Int        @id @default(autoincrement())
   admission_no      String     @unique
   admission_date    DateTime
+  group_id          Int
   class_id          Int
+  section_id        Int?
   roll              String
   name              String
   email             String     @unique
@@ -150,7 +160,9 @@ model students {
   created_at        DateTime   @default(now())
   updated_at        DateTime   @updatedAt
 
-  class classes @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  class   classes   @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  section sections? @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  group   groups    @relation(fields: [group_id], references: [id], onDelete: Cascade)
 
   user_roles          user_roles[]
   verification_tokens verification_tokens[]
@@ -282,6 +294,7 @@ model groups {
   created_at     DateTime         @default(now())
   updated_at     DateTime         @updatedAt
   subject_groups subject_groups[]
+  students       students[]
 }
 
 // Subject 
@@ -295,6 +308,7 @@ model subjects {
   subject_classes     subject_classes[]
   exam_routines       exam_routines[]
   teacher_assignments teacher_assignments[]
+  teacher_subjects    teacher_subjects[]
 }
 
 // Subject Groups
@@ -353,12 +367,13 @@ model sections {
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 
-  class               classes               @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  room                rooms?                @relation(fields: [room_id], references: [id])
-  exam_sections       exam_sections[]
-  teacher_classes     teacher_classes[]
-  teacher_sections    teacher_sections[]
-  teacher_assignments teacher_assignments[]
+  class                   classes                   @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  room                    rooms?                    @relation(fields: [room_id], references: [id])
+  exam_sections           exam_sections[]
+  teacher_sections        teacher_sections[]
+  teacher_assignments     teacher_assignments[]
+  students                students[]
+  teacher_notice_sections teacher_notice_sections[]
 
   @@index([section_name])
   @@index([class_id])
@@ -367,14 +382,14 @@ model sections {
 
 // Teacher classes 
 model teacher_classes {
-  id         Int  @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   class_id   Int
-  section_id Int?
   teacher_id Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  class   classes   @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  section sections? @relation(fields: [section_id], references: [id], onDelete: Cascade)
-  teacher teachers  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  class   classes  @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 
   @@index([class_id])
   @@index([teacher_id])
@@ -383,17 +398,34 @@ model teacher_classes {
 // Teacher sections
 model teacher_sections {
   id         Int      @id @default(autoincrement())
-  teacher_id Int
   section_id Int?
+  teacher_id Int
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  teacher teachers  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   section sections? @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  teacher teachers  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 
-  @@index([teacher_id])
   @@index([section_id])
+  @@index([teacher_id])
 }
+
+// Teacher subjects
+model teacher_subjects {
+  id         Int      @id @default(autoincrement())
+  subject_id Int
+  teacher_id Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  subject subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+  teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@index([subject_id])
+  @@index([teacher_id])
+}
+
+// Student Classes
 
 // Exam Categories
 model exam_categories {
@@ -553,7 +585,7 @@ model expenses {
   expense_category expense_categories @relation(fields: [expense_category_id], references: [id], onDelete: Cascade)
 }
 
-// Notices
+// Notices (Official)
 model notices {
   id          Int        @id @default(autoincrement())
   title       String
@@ -564,6 +596,33 @@ model notices {
   updated_at  DateTime   @updatedAt
 
   @@index([type])
+}
+
+// Teacher Notices (To the classes)
+model teacher_notices {
+  id          Int                 @id @default(autoincrement())
+  class_id    Int
+  title       String
+  status      teacherNoticeStatus
+  description String?
+  attachment  String?
+  created_at  DateTime            @default(now())
+  updated_at  DateTime            @updatedAt
+}
+
+// Teacher Notices (To the sections) 
+model teacher_notice_sections {
+  id         Int      @id @default(autoincrement())
+  section_id Int
+  teacher_id Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  section sections @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@index([section_id])
+  @@index([teacher_id])
 }
 
 // Class Attendance (Students)

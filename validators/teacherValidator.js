@@ -125,6 +125,55 @@ const teacherValidator = (id) =>
         }
       })
       .optional(),
+    classes: yup
+      .array(yup.number().typeError('Class must be an id'))
+      .required('At least one class is required')
+      .test('exist', 'One or more classes are invalid', async (values) => {
+        const checkClasses = await prisma.classes.findMany({
+          where: {
+            id: {
+              in: values,
+            },
+          },
+        })
+
+        if (checkClasses.length === values.length) return true
+        else return false
+      })
+      .min(1, 'At least one class is required'),
+    sections: yup
+      .array(yup.number().typeError('Section must be an id'))
+      .test('exist', 'One or more sections are invalid', async (values) => {
+        if (!values || !values.length) return true
+
+        const checkSections = await prisma.sections.findMany({
+          where: {
+            id: {
+              in: values,
+            },
+          },
+        })
+
+        if (checkSections.length === values.length) return true
+        else return false
+      })
+      .optional(),
+    subjects: yup
+      .array(yup.number().typeError('Subject must be an id'))
+      .required('At least one subject is required')
+      .test('exist', 'One or more subjects are invalid', async (values) => {
+        const checkSubjects = await prisma.subjects.findMany({
+          where: {
+            id: {
+              in: values,
+            },
+          },
+        })
+
+        if (checkSubjects.length === values.length) return true
+        else return false
+      })
+      .min(1, 'At least one class is required'),
   })
 
 const teacherProfileImageValidator = () =>

@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const authMiddleware = require('../middlewares/authMiddleware')
 const {
+  getClassesForTeacher,
   getTeachers,
   getTeacher,
   createTeacher,
@@ -9,6 +10,7 @@ const {
   deleteTeacher,
 } = require('../controllers/teacherController')
 
+router.get('/:id/classes', getClassesForTeacher)
 router.get('/', getTeachers)
 router.get('/:id', authMiddleware(), getTeacher)
 router.post('/', createTeacher)
