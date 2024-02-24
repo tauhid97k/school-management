@@ -679,6 +679,7 @@ model student_homeworks {
   assignment_id Int
   description   String?
   attachment    String?
+  comment       String?
   status        homeworkStatus @default(PENDING)
   created_at    DateTime       @default(now())
   updated_at    DateTime       @updatedAt

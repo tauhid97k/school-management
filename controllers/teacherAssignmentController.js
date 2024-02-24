@@ -310,6 +310,23 @@ const getSubmittedAssignmentDetails = asyncHandler(async (req, res, next) => {
       status: true,
       description: true,
       attachment: true,
+      student: {
+        select: {
+          name: true,
+          roll: true,
+          profile_img: true,
+          class: {
+            select: {
+              class_name: true,
+            },
+          },
+          section: {
+            select: {
+              section_name: true,
+            },
+          },
+        },
+      },
       created_at: true,
       updated_at: true,
       assignment: {
@@ -343,6 +360,15 @@ const getSubmittedAssignmentDetails = asyncHandler(async (req, res, next) => {
   const formatData = {
     id: homeworkDetails.id,
     status: homeworkDetails.status,
+    student_name: homeworkDetails.student.name,
+    student_roll: homeworkDetails.student.roll,
+    profile_img: homeworkDetails.student.profile_img
+      ? generateFileLink(
+          `students/profiles/${homeworkDetails.student.profile_img}`
+        )
+      : null,
+    class_name: homeworkDetails.student.class.class_name,
+    section_name: homeworkDetails.student.section.section_name,
     subject_name: homeworkDetails.assignment.subject.name,
     description: homeworkDetails.description,
     attachment: homeworkDetails.attachment
@@ -365,12 +391,10 @@ const getSubmittedAssignmentDetails = asyncHandler(async (req, res, next) => {
 */
 const approveSubmittedAssignments = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.homeworkId)
-  const { status } = await teacherAssignmentApprovalValidation.validate(
-    req.body,
-    {
+  const { status, comment } =
+    await teacherAssignmentApprovalValidation.validate(req.body, {
       abortEarly: false,
-    }
-  )
+    })
 
   await prisma.$transaction(async (tx) => {
     const findHomework = await tx.student_homeworks.findUnique({
@@ -391,6 +415,7 @@ const approveSubmittedAssignments = asyncHandler(async (req, res, next) => {
       },
       data: {
         status,
+        comment,
       },
     })
 

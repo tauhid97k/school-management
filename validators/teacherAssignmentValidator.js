@@ -75,6 +75,7 @@ const teacherAssignmentValidator = () =>
   })
 
 const teacherAssignmentApprovalValidation = yup.object({
+  comment: yup.string().optional(),
   status: yup
     .string()
     .required('Approval status is required')
