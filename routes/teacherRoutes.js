@@ -3,6 +3,7 @@ const router = express.Router()
 const authMiddleware = require('../middlewares/authMiddleware')
 const {
   getClassesForTeacher,
+  getSubjectsForTeacher,
   getTeachers,
   getTeacher,
   createTeacher,
@@ -11,6 +12,7 @@ const {
 } = require('../controllers/teacherController')
 
 router.get('/:id/classes', getClassesForTeacher)
+router.get('/:id/subjects', getSubjectsForTeacher)
 router.get('/', getTeachers)
 router.get('/:id', authMiddleware(), getTeacher)
 router.post('/', createTeacher)

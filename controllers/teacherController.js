@@ -39,9 +39,9 @@ const getClassesForTeacher = asyncHandler(async (req, res, next) => {
 
     // Get Classes for this teacher
     const classes = await tx.classes.findMany({
-      select: {
+      where: {
         teacher_classes: {
-          where: {
+          some: {
             teacher_id: findTeacher.id,
           },
         },
@@ -49,6 +49,40 @@ const getClassesForTeacher = asyncHandler(async (req, res, next) => {
     })
 
     res.json(classes)
+  })
+})
+
+/*
+  @route    GET: /teachers/:id/subjects
+  @access   private
+  @desc     Get only assigned subjects for a teacher
+*/
+const getSubjectsForTeacher = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findTeacher = await tx.teachers.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findTeacher) {
+      return res.status(404).json({ message: 'No teacher found' })
+    }
+
+    // Get Subjects for this teacher
+    const subjects = await tx.subjects.findMany({
+      where: {
+        teacher_subjects: {
+          some: {
+            teacher_id: findTeacher.id,
+          },
+        },
+      },
+    })
+
+    res.json(subjects)
   })
 })
 
@@ -395,6 +429,7 @@ const deleteTeacher = asyncHandler(async (req, res, next) => {
 
 module.exports = {
   getClassesForTeacher,
+  getSubjectsForTeacher,
   getTeachers,
   getTeacher,
   createTeacher,

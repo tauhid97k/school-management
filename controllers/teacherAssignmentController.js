@@ -129,6 +129,7 @@ const getAssignment = asyncHandler(async (req, res, next) => {
       select: {
         id: true,
         title: true,
+        status: true,
         assignment_time: true,
         submission_time: true,
         description: true,
@@ -169,6 +170,7 @@ const getAssignment = asyncHandler(async (req, res, next) => {
 
     const formatAssignment = {
       id: findAssignment.id,
+      status: findAssignment.status,
       class_id: findAssignment.class.id,
       class_name: findAssignment.class.class_name,
       section_id: findAssignment.section.id,
@@ -182,8 +184,12 @@ const getAssignment = asyncHandler(async (req, res, next) => {
       assignment_attachment: findAssignment.attachment
         ? generateFileLink(`teachers/assignments/${findAssignment.attachment}`)
         : null,
-      assignment_time: findAssignment.assignment_time,
-      submission_time: findAssignment.submission_time,
+      assignment_time: dayjs(findAssignment.assignment_time).format(
+        'MM/DD/YYYY hh:mm A'
+      ),
+      submission_time: dayjs(findAssignment.submission_time).format(
+        'MM/DD/YYYY hh:mm A'
+      ),
       status: findAssignment.status,
       created_at: findAssignment.created_at,
       updated_at: findAssignment.updated_at,
@@ -208,8 +214,8 @@ const getSubmittedAssignments = asyncHandler(async (req, res, next) => {
 
   const id = Number(req.params.id)
 
-  await prisma.$transaction(async (tx) => {
-    const submittedAssignments = await tx.student_homeworks.findMany({
+  const [submittedAssignments, total] = await prisma.$transaction([
+    prisma.student_homeworks.findMany({
       where: {
         assignment: {
           teacher_id: id,
@@ -252,51 +258,52 @@ const getSubmittedAssignments = asyncHandler(async (req, res, next) => {
       take,
       skip,
       orderBy,
-    })
-
-    // Format Data
-    const formatData = submittedAssignments.map(
-      ({ id, status, created_at, assignment }) => ({
-        id,
-        status,
-        submission_time: created_at,
-        class_name: assignment.class.class_name,
-        section_name: assignment.section.section_name,
-        subject_name: assignment.subject.name,
-        subject_code: assignment.subject.code,
-      })
-    )
-
-    res.json({
-      data: formatData,
-      meta: {
-        page,
-        limit: take,
-        total,
+    }),
+    prisma.student_homeworks.count({
+      where: {
+        assignment: {
+          teacher_id: id,
+          ...(section_id && { section_id }),
+          ...(class_id && !section_id && { class_id }),
+        },
       },
+    }),
+  ])
+
+  // Format Data
+  const formatData = submittedAssignments.map(
+    ({ id, status, created_at, assignment }) => ({
+      id,
+      status,
+      submission_time: created_at,
+      class_name: assignment.class.class_name,
+      section_name: assignment.section.section_name,
+      subject_name: assignment.subject.name,
+      subject_code: assignment.subject.code,
     })
+  )
+
+  res.json({
+    data: formatData,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
   })
 })
 
 /*
-  @route    GET: /teacher-assignments/teacher/:teacherId/submitted/:homeworkId
+  @route    GET: /teacher-assignments/submitted/:homeworkId
   @access   private
   @desc     Get submitted assignments
 */
 const getSubmittedAssignmentDetails = asyncHandler(async (req, res, next) => {
-  const teacherId = Number(req.params.teacherId)
-  const homeworkId = Number(req.params.homeworkId)
+  const id = Number(req.params.id)
 
   const homeworkDetails = await prisma.student_homeworks.findFirst({
     where: {
-      AND: [
-        {
-          assignment: {
-            teacher_id: teacherId,
-          },
-        },
-        { assignment_id: homeworkId },
-      ],
+      id,
     },
     select: {
       id: true,
@@ -453,7 +460,9 @@ const updateAssignment = asyncHandler(async (req, res, next) => {
 
   await prisma.$transaction(async (tx) => {
     const findAssignment = await tx.teacher_assignments.findUnique({
-      id,
+      where: {
+        id,
+      },
     })
 
     if (!findAssignment) {
@@ -512,6 +521,10 @@ const updateAssignment = asyncHandler(async (req, res, next) => {
         teacher_id: req.user.id,
       },
     })
+
+    res.json({
+      message: 'Assignment updated',
+    })
   })
 })
 /*
@@ -533,6 +546,10 @@ const deleteAssignment = asyncHandler(async (req, res, next) => {
       return res.status(404).json({
         message: 'No assignment found',
       })
+
+    if (!findAssignment.teacher_id === req.user.id) {
+      return res.status(403).json({ message: 'You are not authorized' })
+    }
 
     // Delete Attachment (If Exist)
     if (findAssignment.attachment) {

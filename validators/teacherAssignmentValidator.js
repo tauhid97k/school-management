@@ -52,6 +52,7 @@ const teacherAssignmentValidator = () =>
     attachment: yup.string().optional(),
     assignment_time: yup
       .date()
+      .typeError('Assignment time must be a valid date time')
       .required('Assignment time is required')
       .test('time', 'Assignment time must be in the future', (value) => {
         const currentDate = new Date()
@@ -60,6 +61,7 @@ const teacherAssignmentValidator = () =>
       }),
     submission_time: yup
       .date()
+      .typeError('Submission time must be a valid date time')
       .required('Submission time is required')
       .test('time', 'Assignment time must be in the future', (value) => {
         const currentDate = new Date()

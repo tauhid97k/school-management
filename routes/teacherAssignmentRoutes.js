@@ -5,6 +5,7 @@ const {
   getAssignments,
   getAssignment,
   getSubmittedAssignments,
+  getSubmittedAssignmentDetails,
   approveSubmittedAssignments,
   createAssignment,
   updateAssignment,
@@ -15,11 +16,7 @@ const {
 router.get('/', authMiddleware(), getAssignments)
 router.get('/:id', authMiddleware(), getAssignment)
 router.get('/teacher/:id/submitted', authMiddleware(), getSubmittedAssignments)
-router.get(
-  '/teacher/:teacherId/submitted/:homeworkId',
-  authMiddleware(),
-  getSubmittedAssignments
-)
+router.get('/submitted/:id', authMiddleware(), getSubmittedAssignmentDetails)
 router.put(
   '/submitted/:id/approval',
   authMiddleware(),
