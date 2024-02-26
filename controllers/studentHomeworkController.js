@@ -142,6 +142,7 @@ const getSubmittedHomeworks = asyncHandler(async (req, res, next) => {
       select: {
         id: true,
         status: true,
+        comment: true,
         created_at: true,
         updated_at: true,
         assignment: {
@@ -179,6 +180,7 @@ const getSubmittedHomeworks = asyncHandler(async (req, res, next) => {
     ({
       id,
       status,
+      comment,
       assignment: {
         id: assignment_id,
         title,
@@ -191,6 +193,7 @@ const getSubmittedHomeworks = asyncHandler(async (req, res, next) => {
       assignment_id,
       subject_name,
       status,
+      comment,
       homework_title: title,
       homework_date: assignment_time,
       teacher_name: name,
@@ -224,6 +227,7 @@ const getSubmittedHomeworkDetails = asyncHandler(async (req, res, next) => {
     select: {
       id: true,
       status: true,
+      comment: true,
       description: true,
       attachment: true,
       created_at: true,
@@ -258,6 +262,7 @@ const getSubmittedHomeworkDetails = asyncHandler(async (req, res, next) => {
   const formatData = {
     id: homeworkDetails.id,
     status: homeworkDetails.status,
+    comment: homeworkDetails.comment,
     subject_name: homeworkDetails.assignment.subject.name,
     description: homeworkDetails.description,
     attachment: homeworkDetails.attachment

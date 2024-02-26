@@ -79,4 +79,12 @@ const examResultValidator = (id) =>
       .required('At least one subject mark is required'),
   })
 
-module.exports = { examResultValidator }
+const examResultPublishValidator = () =>
+  yup.object({
+    status: yup
+      .string()
+      .required('Status is required')
+      .oneOf(['PENDING', 'REVALUATING', 'PUBLISHED']),
+  })
+
+module.exports = { examResultValidator, examResultPublishValidator }

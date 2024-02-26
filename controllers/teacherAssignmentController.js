@@ -310,6 +310,7 @@ const getSubmittedAssignmentDetails = asyncHandler(async (req, res, next) => {
       status: true,
       description: true,
       attachment: true,
+      comment: true,
       student: {
         select: {
           name: true,
@@ -360,6 +361,7 @@ const getSubmittedAssignmentDetails = asyncHandler(async (req, res, next) => {
   const formatData = {
     id: homeworkDetails.id,
     status: homeworkDetails.status,
+    comment: homeworkDetails.comment,
     student_name: homeworkDetails.student.name,
     student_roll: homeworkDetails.student.roll,
     profile_img: homeworkDetails.student.profile_img
@@ -390,7 +392,7 @@ const getSubmittedAssignmentDetails = asyncHandler(async (req, res, next) => {
   @desc     Get submitted assignments
 */
 const approveSubmittedAssignments = asyncHandler(async (req, res, next) => {
-  const id = Number(req.params.homeworkId)
+  const id = Number(req.params.id)
   const { status, comment } =
     await teacherAssignmentApprovalValidation.validate(req.body, {
       abortEarly: false,

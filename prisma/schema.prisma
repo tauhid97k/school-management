@@ -40,6 +40,7 @@ enum exam_status {
 
 enum exam_result_status {
   PENDING
+  REVALUATING
   PUBLISHED
 }
 
@@ -446,11 +447,11 @@ model exams {
 
   exam_category exam_categories @relation(fields: [exam_category_id], references: [id])
 
-  exam_classes         exam_classes[]
-  exam_sections        exam_sections[]
-  exam_routines        exam_routines[]
-  exam_results         exam_results[]
-  exam_results_publish exam_results_publish[]
+  exam_classes            exam_classes[]
+  exam_sections           exam_sections[]
+  exam_routines           exam_routines[]
+  exam_results            exam_results[]
+  exam_results_publishing exam_results_publishing[]
 }
 
 // Exam Classes
@@ -532,7 +533,7 @@ model exam_results {
 }
 
 // Exam results publish
-model exam_results_publish {
+model exam_results_publishing {
   id         Int                @id @default(autoincrement())
   exam_id    Int                @unique
   status     exam_result_status @default(PENDING)

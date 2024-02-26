@@ -4,8 +4,12 @@ const {
   selectQueries,
   examResultFields,
   paginateWithSorting,
+  commonFields,
 } = require('../utils/metaData')
-const { examResultValidator } = require('../validators/examResultValidator')
+const {
+  examResultValidator,
+  examResultPublishValidator,
+} = require('../validators/examResultValidator')
 const generateFileLink = require('../utils/generateFileLink')
 
 /*
@@ -301,7 +305,7 @@ const createExamResult = asyncHandler(async (req, res, next) => {
 })
 
 /*
-  @route    PUT: /exam-results
+  @route    PUT: /exam-results/:id
   @access   private
   @desc     Update exam result
 */
@@ -326,10 +330,118 @@ const updateExamResult = asyncHandler(async (req, res, next) => {
   })
 })
 
+/*
+  @route    PUT: /exam-results/publishing
+  @access   private
+  @desc     Get Publishable exam results
+*/
+const getExamResultPublishing = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, commonFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+  const getResultPublishingList = await prisma.exam_results_publishing.findMany(
+    {
+      select: {
+        id: true,
+        status: true,
+        created_at: true,
+        updated_at: true,
+        exam: {
+          select: {
+            exam_category: {
+              select: {
+                exam_name: true,
+              },
+            },
+            exam_routines: {
+              orderBy: {
+                start_time: 'asc',
+              },
+            },
+          },
+        },
+      },
+      take,
+      skip,
+      orderBy,
+    }
+  )
+
+  const formatData = getResultPublishingList.map(
+    ({
+      id,
+      status,
+      created_at,
+      updated_at,
+      exam: {
+        exam_category: { exam_name },
+        exam_routines,
+      },
+    }) => ({
+      id,
+      status,
+      exam_name,
+      exam_date: exam_routines.at(0).start_time,
+      created_at,
+      updated_at,
+    })
+  )
+
+  res.json({
+    data: formatData,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
+  @route    PUT: /exam-results/publishing/:id
+  @access   private
+  @desc     Publish and exam result
+*/
+const publishExamResult = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  const { status } = await examResultPublishValidator().validate(req.body, {
+    abortEarly: false,
+  })
+
+  await prisma.$transaction(async (tx) => {
+    const findPublishable = await tx.exam_results_publishing.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findPublishable) {
+      return res.status(404).json({
+        message: 'Publishable result not found',
+      })
+    }
+
+    tx.exam_results_publishing.update({
+      where: {
+        id: findPublishable.id,
+      },
+      data: {
+        status,
+      },
+    })
+
+    res.json({
+      message: 'Result Publish Updated',
+    })
+  })
+})
+
 module.exports = {
   getExamSubjectsForResults,
   getExamResults,
   getExamResultDetails,
   createExamResult,
   updateExamResult,
+  getExamResultPublishing,
+  publishExamResult,
 }
