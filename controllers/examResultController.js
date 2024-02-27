@@ -268,11 +268,13 @@ const getExamResultDetails = asyncHandler(async (req, res, next) => {
 
     const formatResult = {
       id: result.id,
+      exam_id: result.exam.id,
       exam_name: result.exam.exam_category.exam_name,
       exam_date: result.exam.exam_routines.at(0).start_time,
       profile_img: generateFileLink(
         `students/profiles/${result.student.profile_img}`
       ),
+      class_id: result.class.id,
       class_name: result.class.class_name,
       student_name: result.student.name,
       student_roll: result.student.roll,
