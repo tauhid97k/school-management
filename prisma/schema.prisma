@@ -76,6 +76,16 @@ enum paymentStatus {
   DUE
 }
 
+enum weekDay {
+  SATURDAY
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+}
+
 // Super Admin
 model super_admins {
   id         Int      @id @default(autoincrement())
@@ -649,6 +659,7 @@ model class_routines {
   id         Int      @id @default(autoincrement())
   class_id   Int
   section_id Int?
+  week_day   weekDay
   routines   Json
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -658,6 +669,7 @@ model class_routines {
 
   @@index([class_id])
   @@index([section_id])
+  @@index([week_day])
 }
 
 // Class Attendance (Students)

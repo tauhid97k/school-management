@@ -73,6 +73,17 @@ const assignmentFields = [
   'sortOrder',
 ]
 
+// Class Routine Fields
+const classRoutineFields = [
+  'week_day',
+  'class_id',
+  'section_id',
+  'page',
+  'limit',
+  'sortBy',
+  'sortOrder',
+]
+
 module.exports = {
   selectQueries,
   paginateWithSorting,
@@ -82,4 +93,5 @@ module.exports = {
   teacherNoticeFields,
   examResultFields,
   assignmentFields,
+  classRoutineFields,
 }

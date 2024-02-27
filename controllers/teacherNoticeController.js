@@ -14,7 +14,7 @@ const {
 } = require('../validators/teacherNoticeValidator')
 
 /*
-  @route    GET: /teacher-notices/:teacherId
+  @route    GET: /teacher-notices/teacher/:teacherId
   @access   private
   @desc     GET All Notices
 */
@@ -44,6 +44,21 @@ const getAllTeacherNotices = asyncHandler(async (req, res, next) => {
         teacher_id: teacherId,
         ...(status && { status }),
       },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        class: {
+          select: {
+            class_name: true,
+          },
+        },
+        section: {
+          select: {
+            section_name: true,
+          },
+        },
+      },
       take,
       skip,
       orderBy,
@@ -51,10 +66,21 @@ const getAllTeacherNotices = asyncHandler(async (req, res, next) => {
     prisma.teacher_notices.count(),
   ])
 
-  const formatNotices = notices.map((notice) => ({
-    ...notice,
-    attachment: generateFileLink(`teachers/notices/${notice.attachment}`),
-  }))
+  const formatNotices = notices.map(
+    ({
+      id,
+      title,
+      status,
+      section: { section_name },
+      class: { class_name },
+    }) => ({
+      id,
+      title,
+      status,
+      class_name,
+      section_name,
+    })
+  )
 
   res.json({
     data: formatNotices,
@@ -67,15 +93,34 @@ const getAllTeacherNotices = asyncHandler(async (req, res, next) => {
 })
 
 /*
-  @route    GET: /teacher-notices/:noticeId
+  @route    GET: /teacher-notices/:id
   @access   private
   @desc     GET Notice details
 */
 const getTeacherNotice = asyncHandler(async (req, res, next) => {
-  const noticeId = Number(req.params.noticeId)
+  const id = Number(req.params.id)
   const findNotice = await prisma.teacher_notices.findUnique({
     where: {
-      id: noticeId,
+      id,
+    },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      description: true,
+      attachment: true,
+      class: {
+        select: {
+          id: true,
+          class_name: true,
+        },
+      },
+      section: {
+        select: {
+          id: true,
+          section_name: true,
+        },
+      },
     },
   })
 
@@ -84,11 +129,21 @@ const getTeacherNotice = asyncHandler(async (req, res, next) => {
       message: 'No notice found',
     })
 
-  findNotice.attachment = generateFileLink(
-    `teachers/notices/${findNotice.attachment}`
-  )
+  const formatData = {
+    id: findNotice.id,
+    title: findNotice.title,
+    status: findNotice.status,
+    description: findNotice.description,
+    attachment: findNotice.attachment
+      ? generateFileLink(`teachers/notices/${findNotice.attachment}`)
+      : null,
+    class_id: findNotice.class.id,
+    class_name: findNotice.class.class_name,
+    section_id: findNotice.section.id,
+    section_name: findNotice.section.section_name,
+  }
 
-  res.json(findNotice)
+  res.json(formatData)
 })
 
 /*
@@ -132,13 +187,18 @@ const createTeacherNotice = asyncHandler(async (req, res, next) => {
 })
 
 /*
-  @route    PUT: /teacher-notices/:teacherId/:noticeId
+  @route    PUT: /teacher-notices/:id
   @access   private
   @desc     Update a notice
 */
 const updateTeacherNotice = asyncHandler(async (req, res, next) => {
-  const teacherId = Number(req.params.id)
-  const noticeId = Number(req.params.id)
+  const id = Number(req.params.id)
+
+  const data = await teacherNoticeValidator(id).validate(req.body, {
+    abortEarly: false,
+  })
+
+  const teacherId = data.teacher_id
 
   if (teacherId !== req.user.id) {
     return res.status(403).json({
@@ -146,14 +206,10 @@ const updateTeacherNotice = asyncHandler(async (req, res, next) => {
     })
   }
 
-  const data = await teacherNoticeValidator(id).validate(req.body, {
-    abortEarly: false,
-  })
-
   await prisma.$transaction(async (tx) => {
     const findNotice = await tx.teacher_notices.findUnique({
       where: {
-        id: noticeId,
+        id,
       },
     })
 
@@ -198,7 +254,7 @@ const updateTeacherNotice = asyncHandler(async (req, res, next) => {
     }
 
     await tx.teacher_notices.update({
-      where: { id: noticeId },
+      where: { id },
       data,
     })
 
@@ -207,24 +263,17 @@ const updateTeacherNotice = asyncHandler(async (req, res, next) => {
 })
 
 /*
-  @route    DELETE: /teacher-notices/:teacherId/:noticeId
+  @route    DELETE: /teacher-notices/:id
   @access   private
   @desc     Delete a notice
 */
 const deleteTeacherNotice = asyncHandler(async (req, res, next) => {
-  const teacherId = Number(req.params.id)
-  const noticeId = Number(req.params.id)
-
-  if (teacherId !== req.user.id) {
-    return res.status(403).json({
-      message: 'You are not authorized',
-    })
-  }
+  const id = Number(req.params.id)
 
   await prisma.$transaction(async (tx) => {
     const findNotice = await tx.teacher_notices.findUnique({
       where: {
-        id: noticeId,
+        id,
       },
     })
 
@@ -232,6 +281,12 @@ const deleteTeacherNotice = asyncHandler(async (req, res, next) => {
       return res.status(404).json({
         message: 'No notice found',
       })
+
+    if (findNotice.teacher_id !== req.user.id) {
+      return res.status(403).json({
+        message: 'You are not authorized',
+      })
+    }
 
     // Delete Attachment (If Exist)
     if (findNotice.attachment) {
@@ -248,7 +303,7 @@ const deleteTeacherNotice = asyncHandler(async (req, res, next) => {
     }
 
     await tx.teacher_notices.delete({
-      where: { id: noticeId },
+      where: { id },
     })
 
     res.json({ message: 'Notice deleted' })

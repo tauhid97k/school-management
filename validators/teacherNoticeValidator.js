@@ -1,4 +1,5 @@
 const yup = require('yup')
+const prisma = require('../utils/prisma')
 
 const teacherNoticeValidator = () =>
   yup.object({

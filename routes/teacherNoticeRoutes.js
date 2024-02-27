@@ -10,10 +10,10 @@ const {
 } = require('../controllers/teacherNoticeController')
 
 // Protected Routes
-router.get('/:teacherId', getAllTeacherNotices)
-router.get('/:noticeId', getTeacherNotice)
+router.get('/teacher/:teacherId', getAllTeacherNotices)
+router.get('/:id', getTeacherNotice)
 router.post('/', authMiddleware(), createTeacherNotice)
-router.put('/:teacherId/:noticeId', authMiddleware(), updateTeacherNotice)
-router.delete('/:teacherId/:noticeId', authMiddleware(), deleteTeacherNotice)
+router.put('/:id', authMiddleware(), updateTeacherNotice)
+router.delete('/:id', authMiddleware(), deleteTeacherNotice)
 
 module.exports = router
