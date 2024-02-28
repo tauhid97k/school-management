@@ -61,6 +61,58 @@ const getClassSections = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /classes/:id/subjects
+  @access   private
+  @desc     Get all subjects of a class
+*/
+const getClassSubjects = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findClass = await tx.classes.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findClass) {
+      return res.status(404).json({ message: 'No class found' })
+    }
+
+    const subjects = await tx.subject_classes.findMany({
+      where: {
+        class_id: id,
+      },
+      include: {
+        class: {
+          select: {
+            id: true,
+            class_name: true,
+          },
+        },
+        subject: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+      },
+    })
+
+    const formatData = subjects.map(({ id, subject, class: getClass }) => ({
+      id,
+      subject_id: subject.id,
+      subject_name: subject.name,
+      class_id: getClass.id,
+      class_name: getClass.class_name,
+    }))
+
+    res.json(formatData)
+  })
+})
+
+/*
   @route    GET: /classes/:id
   @access   private
   @desc     Get a class details
@@ -154,6 +206,7 @@ const deleteClass = asyncHandler(async (req, res, next) => {
 module.exports = {
   getAllClasses,
   getClassSections,
+  getClassSubjects,
   getClass,
   createClass,
   updateClass,

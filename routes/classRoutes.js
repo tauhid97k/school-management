@@ -4,6 +4,7 @@ const authMiddleware = require('../middlewares/authMiddleware')
 const {
   getAllClasses,
   getClassSections,
+  getClassSubjects,
   getClass,
   createClass,
   updateClass,
@@ -13,6 +14,7 @@ const {
 // Protected Routes
 router.get('/', authMiddleware(), getAllClasses)
 router.get('/:id/sections', authMiddleware(), getClassSections)
+router.get('/:id/subjects', authMiddleware(), getClassSubjects)
 router.get('/:id', authMiddleware(), getClass)
 router.post('/', authMiddleware(), createClass)
 router.put('/:id', authMiddleware(), updateClass)

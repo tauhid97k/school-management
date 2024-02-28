@@ -12,14 +12,14 @@ const {
 
 // Protected Routes
 router.get('/student/:id', authMiddleware(), getStudentHomeworks)
+router.get('/:id', authMiddleware(), getHomework)
+router.post('/', authMiddleware(), addHomework)
 router.get('/student/:id/submitted', authMiddleware(), getSubmittedHomeworks)
 router.get(
   '/student/:studentId/submitted/:homeworkId',
   authMiddleware(),
   getSubmittedHomeworkDetails
 )
-router.get('/:id', authMiddleware(), getHomework)
-router.post('/', authMiddleware(), addHomework)
-router.put('/student/:id', authMiddleware(), updateHomework)
+router.put('/:id', authMiddleware(), updateHomework)
 
 module.exports = router

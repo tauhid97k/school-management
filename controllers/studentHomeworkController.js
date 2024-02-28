@@ -412,7 +412,7 @@ const addHomework = asyncHandler(async (req, res, next) => {
 })
 
 /*
-  @route    PUT: /homeworks/student/:id
+  @route    PUT: /homeworks/submitted/:id
   @access   private
   @desc     Update a homework
 */
@@ -427,7 +427,9 @@ const updateHomework = asyncHandler(async (req, res, next) => {
 
   await prisma.$transaction(async (tx) => {
     const findHomework = await tx.student_homeworks.findUnique({
-      id,
+      where: {
+        id,
+      },
     })
 
     if (!findHomework) {
