@@ -21,7 +21,7 @@ const { attachmentValidator } = require('../validators/attachmentValidator')
   @desc     Get Teacher Applications
 */
 const getTeacherApplications = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, noticeFields)
+  const selectedQueries = selectQueries(req.query, applicationFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const id = Number(req.params.id)
@@ -291,7 +291,7 @@ const deleteTeacherApplication = asyncHandler(async (req, res, next) => {
   @desc     Get Student Applications
 */
 const getStudentApplications = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, noticeFields)
+  const selectedQueries = selectQueries(req.query, applicationFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const id = Number(req.params.id)
