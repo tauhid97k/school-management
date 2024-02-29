@@ -184,12 +184,8 @@ const getAssignment = asyncHandler(async (req, res, next) => {
       assignment_attachment: findAssignment.attachment
         ? generateFileLink(`teachers/assignments/${findAssignment.attachment}`)
         : null,
-      assignment_time: dayjs(findAssignment.assignment_time).format(
-        'MM/DD/YYYY hh:mm A'
-      ),
-      submission_time: dayjs(findAssignment.submission_time).format(
-        'MM/DD/YYYY hh:mm A'
-      ),
+      assignment_time: findAssignment.assignment_time,
+      submission_time: findAssignment.submission_time,
       status: findAssignment.status,
       created_at: findAssignment.created_at,
       updated_at: findAssignment.updated_at,

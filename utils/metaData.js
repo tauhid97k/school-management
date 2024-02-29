@@ -84,6 +84,8 @@ const classRoutineFields = [
   'sortOrder',
 ]
 
+const applicationFields = ['date', 'page', 'limit', 'sortBy', 'sortOrder']
+
 module.exports = {
   selectQueries,
   paginateWithSorting,
@@ -94,4 +96,5 @@ module.exports = {
   examResultFields,
   assignmentFields,
   classRoutineFields,
+  applicationFields,
 }

@@ -31,6 +31,7 @@ router.use('/salary', require('./salaryRoutes'))
 router.use('/teacher-assignments', require('./teacherAssignmentRoutes'))
 router.use('/teacher-notices', require('./teacherNoticeRoutes'))
 router.use('/homeworks', require('./studentHomeworkRoutes'))
+router.use('/applications', require('./applicationRoutes'))
 
 // Website Routes
 router.use('/photo-gallery', require('./photoGalleryRoutes'))

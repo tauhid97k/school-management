@@ -140,15 +140,16 @@ model teachers {
 
   designation designations? @relation(fields: [designation_id], references: [id], onDelete: SetNull)
 
-  user_roles          user_roles[]
-  verification_tokens verification_tokens[]
-  personal_tokens     personal_tokens[]
-  attendance          teacher_attendance[]
-  teacher_classes     teacher_classes[]
-  teacher_sections    teacher_sections[]
-  teacher_assignments teacher_assignments[]
-  teacher_subjects    teacher_subjects[]
-  teacher_notices     teacher_notices[]
+  user_roles           user_roles[]
+  verification_tokens  verification_tokens[]
+  personal_tokens      personal_tokens[]
+  attendance           teacher_attendance[]
+  teacher_classes      teacher_classes[]
+  teacher_sections     teacher_sections[]
+  teacher_assignments  teacher_assignments[]
+  teacher_subjects     teacher_subjects[]
+  teacher_notices      teacher_notices[]
+  teacher_applications teacher_applications[]
 }
 
 // Student
@@ -181,12 +182,13 @@ model students {
   section sections? @relation(fields: [section_id], references: [id], onDelete: Cascade)
   group   groups    @relation(fields: [group_id], references: [id], onDelete: Cascade)
 
-  user_roles          user_roles[]
-  verification_tokens verification_tokens[]
-  personal_tokens     personal_tokens[]
-  class_attendance    class_attendance[]
-  exam_results        exam_results[]
-  student_homework    student_homeworks[]
+  user_roles           user_roles[]
+  verification_tokens  verification_tokens[]
+  personal_tokens      personal_tokens[]
+  class_attendance     class_attendance[]
+  exam_results         exam_results[]
+  student_homework     student_homeworks[]
+  student_applications student_applications[]
 
   @@index([roll])
   @@index([class_id])
@@ -755,6 +757,42 @@ model student_homeworks {
   @@index([assignment_id])
   @@index([student_id])
   @@index([status])
+}
+
+// Teacher Applications
+model teacher_applications {
+  id          Int      @id @default(autoincrement())
+  teacher_id  Int
+  subject     String
+  description String
+  date        DateTime
+  comment     String?
+  attachment  String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  teacher teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@index([teacher_id])
+  @@index([date])
+}
+
+// Student Applications
+model student_applications {
+  id          Int      @id @default(autoincrement())
+  student_id  Int
+  subject     String
+  description String
+  date        DateTime
+  comment     String?
+  attachment  String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  student students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@index([student_id])
+  @@index([date])
 }
 
 // Photo Gallery (Website)

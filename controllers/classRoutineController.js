@@ -90,11 +90,13 @@ const getClassRoutine = asyncHandler(async (req, res, next) => {
         updated_at: true,
         class: {
           select: {
+            id: true,
             class_name: true,
           },
         },
         section: {
           select: {
+            id: true,
             section_name: true,
           },
         },
@@ -124,7 +126,9 @@ const getClassRoutine = asyncHandler(async (req, res, next) => {
     const formatData = {
       id: classRoutine.id,
       week_day: classRoutine.week_day,
+      class_id: classRoutine.class.id,
       class_name: classRoutine.class.class_name,
+      section_id: classRoutine.section.id,
       section_name: classRoutine.section.section_name,
       routines: classRoutine.routines.map(
         ({ id, subject, start_time, end_time }) => ({
@@ -201,7 +205,14 @@ const updateClassRoutine = asyncHandler(async (req, res, next) => {
         message: 'No class routine found',
       })
 
-    await prisma.class_routines.update({
+    // Delete Previous Routines
+    await tx.routines.deleteMany({
+      where: {
+        class_routine_id: classRoutine.id,
+      },
+    })
+
+    await tx.class_routines.update({
       where: {
         id,
       },
