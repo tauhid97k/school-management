@@ -21,6 +21,9 @@ const { attachmentValidator } = require('../validators/attachmentValidator')
   @desc     Get Teacher Applications
 */
 const getTeacherApplications = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, noticeFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
   const id = Number(req.params.id)
 
   await prisma.$transaction(async (tx) => {
@@ -40,6 +43,15 @@ const getTeacherApplications = asyncHandler(async (req, res, next) => {
       where: {
         teacher_id: findTeacher.id,
       },
+      take,
+      skip,
+      orderBy,
+    })
+
+    const total = await tx.teacher_applications.count({
+      where: {
+        teacher_id: findTeacher.id,
+      },
     })
 
     const formatData = teacherApplications.map(
@@ -53,7 +65,14 @@ const getTeacherApplications = asyncHandler(async (req, res, next) => {
       })
     )
 
-    res.json(formatData)
+    res.json({
+      data: formatData,
+      meta: {
+        page,
+        limit: take,
+        total,
+      },
+    })
   })
 })
 
@@ -272,6 +291,9 @@ const deleteTeacherApplication = asyncHandler(async (req, res, next) => {
   @desc     Get Student Applications
 */
 const getStudentApplications = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, noticeFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
   const id = Number(req.params.id)
 
   await prisma.$transaction(async (tx) => {
@@ -291,6 +313,15 @@ const getStudentApplications = asyncHandler(async (req, res, next) => {
       where: {
         student_id: findStudent.id,
       },
+      take,
+      skip,
+      orderBy,
+    })
+
+    const total = await tx.student_applications.count({
+      where: {
+        student_id: findStudent.id,
+      },
     })
 
     const formatData = studentApplications.map(
@@ -304,7 +335,14 @@ const getStudentApplications = asyncHandler(async (req, res, next) => {
       })
     )
 
-    res.json(formatData)
+    res.json({
+      data: formatData,
+      meta: {
+        page,
+        limit: take,
+        total,
+      },
+    })
   })
 })
 
