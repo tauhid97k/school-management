@@ -5,10 +5,6 @@ const {
   classRoutineFields,
   paginateWithSorting,
 } = require('../utils/metaData')
-const {
-  examValidator,
-  examStatusUpdateValidator,
-} = require('../validators/examValidator')
 const { classRoutineValidator } = require('../validators/classRoutineValidator')
 
 /*
@@ -102,6 +98,20 @@ const getClassRoutine = asyncHandler(async (req, res, next) => {
             section_name: true,
           },
         },
+        routines: {
+          include: {
+            subject: {
+              select: {
+                id: true,
+                name: true,
+                code: true,
+              },
+            },
+          },
+          orderBy: {
+            start_time: 'asc',
+          },
+        },
       },
     })
 
@@ -116,6 +126,16 @@ const getClassRoutine = asyncHandler(async (req, res, next) => {
       week_day: classRoutine.week_day,
       class_name: classRoutine.class.class_name,
       section_name: classRoutine.section.section_name,
+      routines: classRoutine.routines.map(
+        ({ id, subject, start_time, end_time }) => ({
+          id,
+          subject_id: subject.id,
+          subject_name: subject.name,
+          subject_code: subject.code,
+          start_time,
+          end_time,
+        })
+      ),
       created_at: classRoutine.created_at,
       updated_at: classRoutine.updated_at,
     }
@@ -134,11 +154,27 @@ const createClassRoutine = asyncHandler(async (req, res, next) => {
     abortEarly: false,
   })
 
-  await prisma.class_routines.create({
-    data,
-  })
+  await prisma.$transaction(async (tx) => {
+    const routineIdentity = await tx.class_routines.create({
+      data: {
+        class_id: data.class_id,
+        section_id: data.section_id,
+        week_day: data.week_day,
+      },
+    })
 
-  res.status(201).json({ message: 'Class routine created' })
+    // Format Routine
+    const formattedRoutines = data.routines.map((routine) => ({
+      ...routine,
+      class_routine_id: routineIdentity.id,
+    }))
+
+    await tx.routines.createMany({
+      data: formattedRoutines,
+    })
+
+    res.status(201).json({ message: 'Class routine created' })
+  })
 })
 
 /*
@@ -169,7 +205,16 @@ const updateClassRoutine = asyncHandler(async (req, res, next) => {
       where: {
         id,
       },
-      data,
+      data: {
+        class_id: data.class_id,
+        section_id: data.section_id,
+        week_day: data.week_day,
+        routines: {
+          createMany: {
+            data: data.routines,
+          },
+        },
+      },
     })
 
     res.json({ message: 'Class routine updated' })
