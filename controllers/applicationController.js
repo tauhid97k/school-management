@@ -1,9 +1,9 @@
 const asyncHandler = require('express-async-handler')
 const prisma = require('../utils/prisma')
 const {
-  applicationValidator,
   teacherApplicationValidator,
   studentApplicationValidator,
+  applicationResponseValidator,
 } = require('../validators/applicationValidator')
 const {
   selectQueries,
@@ -14,6 +14,197 @@ const { v4: uuidV4 } = require('uuid')
 const fs = require('node:fs/promises')
 const generateFileLink = require('../utils/generateFileLink')
 const { attachmentValidator } = require('../validators/attachmentValidator')
+const { formatDate } = require('../utils/transformData')
+
+/*
+  @route    GET: /applications/teachers
+  @access   private
+  @desc     Get Teachers Applications
+*/
+const getTeachersApplicationsForAdmin = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, applicationFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const [teachersApplications, total] = await prisma.$transaction([
+    prisma.teacher_applications.findMany({
+      take,
+      skip,
+      orderBy,
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+            designation: true,
+          },
+        },
+      },
+    }),
+    prisma.teacher_applications.count(),
+  ])
+
+  const formatData = teachersApplications.map(
+    ({ id, subject, teacher, date, created_at, updated_at }) => ({
+      id,
+      subject,
+      date,
+      teacher_id: teacher.id,
+      teacher_name: teacher.name,
+      teacher_designation: teacher.designation,
+      created_at,
+      updated_at,
+    })
+  )
+
+  res.json({
+    data: formatData,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
+  @route    PUT: /applications/teachers/application/:id/response
+  @access   private
+  @desc     Response to teacher Applications
+*/
+const responseToTeacherApplication = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const { response } = await applicationResponseValidator().validate(req.body, {
+    abortEarly: false,
+  })
+
+  await prisma.$transaction(async (tx) => {
+    const findApplication = await tx.teacher_applications.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findApplication) {
+      return res.json({
+        message: 'Application not found',
+      })
+    }
+
+    await tx.teacher_applications.update({
+      where: {
+        id: findApplication.id,
+      },
+      data: {
+        comment: response,
+      },
+    })
+
+    res.json({
+      message: 'Response has been sent',
+    })
+  })
+})
+
+/*
+  @route    GET: /applications/students
+  @access   private
+  @desc     Get Teachers Applications
+*/
+const getStudentsApplicationsForAdmin = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, applicationFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const [studentApplications, total] = await prisma.$transaction([
+    prisma.student_applications.findMany({
+      take,
+      skip,
+      orderBy,
+      include: {
+        student: {
+          select: {
+            id: true,
+            name: true,
+            roll: true,
+            profile_img: true,
+            class: {
+              select: {
+                class_name: true,
+              },
+            },
+            section: {
+              select: {
+                section_name: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.student_applications.count(),
+  ])
+
+  const formatData = studentApplications.map(
+    ({ id, subject, date, student, created_at, updated_at }) => ({
+      id,
+      subject,
+      date,
+      student_name: student.name,
+      student_roll: student.roll,
+      class_name: student.class.class_name,
+      section_name: student.section.section_name,
+      created_at,
+      updated_at,
+    })
+  )
+
+  res.json({
+    data: formatData,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
+  @route    PUT: /applications/students/application/:id/response
+  @access   private
+  @desc     Response to student Applications
+*/
+const responseToStudentApplication = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const { response } = await applicationResponseValidator().validate(req.body, {
+    abortEarly: false,
+  })
+
+  await prisma.$transaction(async (tx) => {
+    const findApplication = await tx.student_applications.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findApplication) {
+      return res.json({
+        message: 'Application not found',
+      })
+    }
+
+    await tx.student_applications.update({
+      where: {
+        id: findApplication.id,
+      },
+      data: {
+        comment: response,
+      },
+    })
+
+    res.json({
+      message: 'Response has been sent',
+    })
+  })
+})
 
 /*
   @route    GET: /applications/teachers/:id
@@ -59,7 +250,7 @@ const getTeacherApplications = asyncHandler(async (req, res, next) => {
         id,
         subject,
         date,
-        response: comment ? 'Yes' : 'No',
+        response: comment ? 'Yes' : 'Pending',
         created_at,
         updated_at,
       })
@@ -115,7 +306,7 @@ const getTeacherApplicationDetails = asyncHandler(async (req, res, next) => {
       id: findApplication.id,
       subject: findApplication.subject,
       description: findApplication.description,
-      date: findApplication.date,
+      date: formatDate(findApplication.date),
       attachment: generateFileLink(
         `teachers/applications/${findApplication.attachment}`
       ),
@@ -125,6 +316,7 @@ const getTeacherApplicationDetails = asyncHandler(async (req, res, next) => {
       profile_img: generateFileLink(
         `teachers/profiles/${findApplication.teacher.profile_img}`
       ),
+      response: findApplication.comment ? findApplication.comment : 'Pending',
       created_at: findApplication.created_at,
       updated_at: findApplication.updated_at,
     }
@@ -365,6 +557,7 @@ const getStudentApplicationDetails = asyncHandler(async (req, res, next) => {
             id: true,
             name: true,
             roll: true,
+            profile_img: true,
             class: {
               select: {
                 class_name: true,
@@ -375,7 +568,6 @@ const getStudentApplicationDetails = asyncHandler(async (req, res, next) => {
                 section_name: true,
               },
             },
-            profile_img: true,
           },
         },
       },
@@ -391,7 +583,7 @@ const getStudentApplicationDetails = asyncHandler(async (req, res, next) => {
       id: findApplication.id,
       subject: findApplication.subject,
       description: findApplication.description,
-      date: findApplication.date,
+      date: formatDate(findApplication.date),
       attachment: generateFileLink(
         `students/applications/${findApplication.attachment}`
       ),
@@ -400,8 +592,9 @@ const getStudentApplicationDetails = asyncHandler(async (req, res, next) => {
       student_class: findApplication.student.class.class_name,
       student_section: findApplication.student.section.section_name,
       profile_img: generateFileLink(
-        `students/profiles/${findApplication.teacher.profile_img}`
+        `students/profiles/${findApplication.student.profile_img}`
       ),
+      response: findApplication.comment ? findApplication.comment : 'PENDING',
       created_at: findApplication.created_at,
       updated_at: findApplication.updated_at,
     }
@@ -563,6 +756,10 @@ const deleteStudentApplication = asyncHandler(async (req, res, next) => {
 })
 
 module.exports = {
+  getTeachersApplicationsForAdmin,
+  getStudentsApplicationsForAdmin,
+  responseToTeacherApplication,
+  responseToStudentApplication,
   getTeacherApplications,
   getTeacherApplicationDetails,
   createTeacherApplication,

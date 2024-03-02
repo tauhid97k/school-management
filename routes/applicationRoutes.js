@@ -2,6 +2,10 @@ const express = require('express')
 const router = express.Router()
 const authMiddleware = require('../middlewares/authMiddleware')
 const {
+  getTeachersApplicationsForAdmin,
+  getStudentsApplicationsForAdmin,
+  responseToTeacherApplication,
+  responseToStudentApplication,
   getTeacherApplications,
   getTeacherApplicationDetails,
   createTeacherApplication,
@@ -15,6 +19,21 @@ const {
 } = require('../controllers/applicationController')
 
 // Protected Routes
+// Admin Application Control
+router.get('/teachers', authMiddleware(), getTeachersApplicationsForAdmin)
+router.put(
+  '/teachers/application/:id/response',
+  authMiddleware(),
+  responseToTeacherApplication
+)
+router.get('/students', authMiddleware(), getStudentsApplicationsForAdmin)
+router.put(
+  '/students/application/:id/response',
+  authMiddleware(),
+  responseToStudentApplication
+)
+
+// Teacher Applications
 router.get('/teachers/:id', authMiddleware(), getTeacherApplications)
 router.get(
   '/teachers/application/:id',

@@ -28,16 +28,16 @@ const studentApplicationValidator = () =>
   yup.object({
     student_id: yup
       .number()
-      .typeError('Teacher id must be a number')
-      .required('Teacher is required')
-      .test('exist', 'Teacher does not exist', async (value) => {
-        const findTeacher = await prisma.teachers.findUnique({
+      .typeError('Student id must be a number')
+      .required('Student is required')
+      .test('exist', 'Student does not exist', async (value) => {
+        const findStudent = await prisma.students.findUnique({
           where: {
             id: value,
           },
         })
 
-        if (findTeacher) return true
+        if (findStudent) return true
         else return false
       }),
     subject: yup.string().required('Subject is required'),
@@ -47,4 +47,13 @@ const studentApplicationValidator = () =>
     attachment: yup.string().optional(),
   })
 
-module.exports = { teacherApplicationValidator, studentApplicationValidator }
+const applicationResponseValidator = () =>
+  yup.object({
+    response: yup.string().required('Response is required'),
+  })
+
+module.exports = {
+  teacherApplicationValidator,
+  studentApplicationValidator,
+  applicationResponseValidator,
+}
