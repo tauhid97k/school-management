@@ -236,10 +236,144 @@ const deleteNotice = asyncHandler(async (req, res, next) => {
   })
 })
 
+/*
+  @route    GET: /notices/all
+  @access   private
+  @desc     Get notices for all
+*/
+const getNoticesForAll = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, noticeFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const [notices, total] = await prisma.$transaction([
+    prisma.notices.findMany({
+      where: {
+        type: 'ALL',
+      },
+      select: {
+        id: true,
+        title: true,
+        created_at: true,
+        updated_at: true,
+      },
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.notices.count({
+      where: {
+        type: 'ALL',
+      },
+    }),
+  ])
+
+  res.json({
+    data: notices,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
+  @route    GET: /notices/teachers
+  @access   private
+  @desc     GET All Notice for teachers
+*/
+const getAllNoticeForTeachers = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, noticeFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const [notices, total] = await prisma.$transaction([
+    prisma.notices.findMany({
+      where: {
+        NOT: {
+          type: 'DRAFT',
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        created_at: true,
+        updated_at: true,
+      },
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.notices.count({
+      where: {
+        NOT: {
+          type: 'DRAFT',
+        },
+      },
+    }),
+  ])
+
+  res.json({
+    data: notices,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
+  @route    GET: /notices/classes
+  @access   private
+  @desc     GET All Notice for classes
+*/
+const getAllNoticeForClasses = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, noticeFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const [notices, total] = await prisma.$transaction([
+    prisma.notices.findMany({
+      where: {
+        NOT: {
+          AND: [{ type: 'DRAFT' }, { type: 'TEACHERS' }],
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        created_at: true,
+        updated_at: true,
+      },
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.notices.count({
+      where: {
+        NOT: {
+          AND: [{ type: 'DRAFT' }, { type: 'TEACHERS' }],
+        },
+      },
+    }),
+  ])
+
+  res.json({
+    data: notices,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
 module.exports = {
   getAllNotice,
   getNotice,
   createNotice,
   updateNotice,
   deleteNotice,
+  getNoticesForAll,
+  getAllNoticeForTeachers,
+  getAllNoticeForClasses,
 }
