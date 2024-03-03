@@ -6,36 +6,24 @@ const roles = [{ name: 'admin' }, { name: 'teacher' }, { name: 'student' }]
 // Create a few permissions
 const permissions = [
   {
-    name: 'view_users',
-    group: 'users',
+    name: 'teachers_access',
+    group: 'teachers',
   },
   {
-    name: 'create_users',
-    group: 'users',
+    name: 'create_teacher',
+    group: 'teachers',
   },
   {
-    name: 'update_users',
-    group: 'users',
+    name: 'edit_teacher',
+    group: 'teachers',
   },
   {
-    name: 'delete_users',
-    group: 'users',
+    name: 'update_teacher',
+    group: 'teachers',
   },
   {
-    name: 'view_posts',
-    group: 'posts',
-  },
-  {
-    name: 'create_posts',
-    group: 'posts',
-  },
-  {
-    name: 'update_posts',
-    group: 'posts',
-  },
-  {
-    name: 'delete_posts',
-    group: 'posts',
+    name: 'delete_teacher',
+    group: 'teachers',
   },
 ]
 

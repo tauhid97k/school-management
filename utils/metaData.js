@@ -84,7 +84,19 @@ const classRoutineFields = [
   'sortOrder',
 ]
 
+// Application Fields
 const applicationFields = ['date', 'page', 'limit', 'sortBy', 'sortOrder']
+
+// Salary Fields
+const salaryFields = [
+  'user_type',
+  'user_id',
+  'status',
+  'page',
+  'limit',
+  'sortBy',
+  'sortOrder',
+]
 
 module.exports = {
   selectQueries,
@@ -97,4 +109,5 @@ module.exports = {
   assignmentFields,
   classRoutineFields,
   applicationFields,
+  salaryFields,
 }

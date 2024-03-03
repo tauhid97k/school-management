@@ -33,13 +33,14 @@ const rolePermissionsValidator = yup.object({
 })
 
 const updateRolePermissionsValidator = yup.object({
-  role: yup
-    .string()
+  role_id: yup
+    .number()
+    .typeError('Class id must be a number')
     .required('Role is required')
     .test('exist', 'Role does not exist', async (value) => {
       const role = await prisma.roles.findUnique({
         where: {
-          name: value,
+          id: value,
         },
       })
 

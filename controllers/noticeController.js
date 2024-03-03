@@ -335,7 +335,7 @@ const getAllNoticeForClasses = asyncHandler(async (req, res, next) => {
     prisma.notices.findMany({
       where: {
         NOT: {
-          AND: [{ type: 'DRAFT' }, { type: 'TEACHERS' }],
+          OR: [{ type: 'DRAFT' }, { type: 'TEACHERS' }],
         },
       },
       select: {
@@ -351,7 +351,7 @@ const getAllNoticeForClasses = asyncHandler(async (req, res, next) => {
     prisma.notices.count({
       where: {
         NOT: {
-          AND: [{ type: 'DRAFT' }, { type: 'TEACHERS' }],
+          OR: [{ type: 'DRAFT' }, { type: 'TEACHERS' }],
         },
       },
     }),
