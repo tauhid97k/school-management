@@ -59,6 +59,7 @@ app.use(
   '/uploads',
   (req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*')
+    res.header('Access-Control-Allow-Credentials', true)
     res.header('Access-Control-Expose-Headers', 'Content-Disposition')
     res.header('Cross-Origin-Resource-Policy', 'cross-origin')
     res.header('Content-Disposition', 'attachment')
