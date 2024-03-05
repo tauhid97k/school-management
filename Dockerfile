@@ -6,7 +6,6 @@ WORKDIR /app
 COPY . .
 
 RUN npm i
-RUN npm install
 RUN npx prisma generate
 
 RUN npx prisma db push
