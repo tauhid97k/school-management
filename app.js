@@ -37,7 +37,7 @@ const limiter = rateLimit({
 // Middlewares
 app.use(
   cors({
-    origin: [*],
+    origin: '*',
     credentials: true,
   })
 )
