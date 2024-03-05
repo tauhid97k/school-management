@@ -21,9 +21,7 @@ const assignRole = asyncHandler(async (userId, roleName, tx) => {
       },
     })
     return
-  }
-
-  if (role.name === 'teacher') {
+  } else if (role.name === 'teacher') {
     await tx.user_roles.upsert({
       where: {
         teacher_id: userId,
@@ -37,15 +35,26 @@ const assignRole = asyncHandler(async (userId, roleName, tx) => {
       },
     })
     return
-  }
-
-  if (role.name === 'student') {
+  } else if (role.name === 'student') {
     await tx.user_roles.upsert({
       where: {
         student_id: userId,
       },
       create: {
         student_id: userId,
+        role_id: role.id,
+      },
+      update: {
+        role_id: role.id,
+      },
+    })
+  } else {
+    await tx.user_roles.upsert({
+      where: {
+        staff_id: userId,
+      },
+      create: {
+        staff_id: userId,
         role_id: role.id,
       },
       update: {

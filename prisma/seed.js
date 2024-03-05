@@ -7,23 +7,15 @@ const roles = [{ name: 'admin' }, { name: 'teacher' }, { name: 'student' }]
 const permissions = [
   {
     name: 'teachers_access',
-    group: 'teachers',
+    group: 'routes',
   },
   {
-    name: 'create_teacher',
-    group: 'teachers',
+    name: 'students_access',
+    group: 'routes',
   },
   {
-    name: 'edit_teacher',
-    group: 'teachers',
-  },
-  {
-    name: 'update_teacher',
-    group: 'teachers',
-  },
-  {
-    name: 'delete_teacher',
-    group: 'teachers',
+    name: 'administrator_access',
+    group: 'routes',
   },
 ]
 

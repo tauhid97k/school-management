@@ -70,10 +70,9 @@ enum homeworkStatus {
   REJECTED
 }
 
-enum paymentStatus {
+enum PaymentStatus {
   PAID
   UNPAID
-  DUE
 }
 
 enum weekDay {
@@ -103,16 +102,50 @@ model admins {
   email             String    @unique
   password          String
   profile_img       String?
-  joining_date      DateTime?
+  designation       String
   email_verified_at DateTime?
   is_suspended      Boolean   @default(false)
-  school            String
+  school_name       String    @unique
+  school_address    String
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
 
   user_roles          user_roles[]
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
+  salaries            salaries[]
+}
+
+// School Staffs
+model staffs {
+  id                Int        @id @default(autoincrement())
+  name              String
+  email             String     @unique
+  designation_id    Int?
+  password          String
+  email_verified_at DateTime?
+  date_of_birth     DateTime
+  blood_group       Json
+  religion          String
+  gender            genderType
+  age               Int
+  joining_date      DateTime?
+  phone_number      String
+  address           String
+  salary            Int
+  profile_img       String?
+  cover_letter      String?    @db.Text
+  education         Json?      @db.Json
+  experience        Json?      @db.Json
+  is_suspended      Boolean    @default(false)
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+
+  designation         designations?         @relation(fields: [designation_id], references: [id], onDelete: SetNull)
+  personal_tokens     personal_tokens[]
+  verification_tokens verification_tokens[]
+  user_roles          user_roles?
+  salaries            salaries[]
 }
 
 // Teacher
@@ -152,6 +185,7 @@ model teachers {
   teacher_subjects     teacher_subjects[]
   teacher_notices      teacher_notices[]
   teacher_applications teacher_applications[]
+  salaries             salaries[]
 }
 
 // Student
@@ -203,6 +237,7 @@ model personal_tokens {
   admin_id      Int?
   teacher_id    Int?
   student_id    Int?
+  staff_id      Int?
   user_device   String?
   refresh_token String
   created_at    DateTime @default(now())
@@ -211,6 +246,7 @@ model personal_tokens {
   reachers teachers? @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   admins   admins?   @relation(fields: [admin_id], references: [id], onDelete: Cascade)
   ttudents students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  staffs   staffs?   @relation(fields: [staff_id], references: [id], onDelete: Cascade)
 
   @@index([admin_id])
   @@index([teacher_id])
@@ -224,6 +260,7 @@ model verification_tokens {
   admin_id    Int?
   teacher_id  Int?
   student_id  Int?
+  staff_id    Int?
   code        Int
   token       String
   verify_type VerifyType
@@ -233,6 +270,7 @@ model verification_tokens {
   reachers teachers? @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   admins   admins?   @relation(fields: [admin_id], references: [id], onDelete: Cascade)
   ttudents students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  staffs   staffs?   @relation(fields: [staff_id], references: [id], onDelete: Cascade)
 
   @@index([admin_id])
   @@index([teacher_id])
@@ -246,12 +284,14 @@ model user_roles {
   admin_id   Int? @unique
   teacher_id Int? @unique
   student_id Int? @unique
+  staff_id   Int? @unique
   role_id    Int
 
   reachers teachers? @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   roles    roles     @relation(fields: [role_id], references: [id])
   admins   admins?   @relation(fields: [admin_id], references: [id], onDelete: Cascade)
   ttudents students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  staffs   staffs?   @relation(fields: [staff_id], references: [id], onDelete: Cascade)
 
   @@index([role_id])
 }
@@ -297,6 +337,7 @@ model designations {
   created_at DateTime   @default(now())
   updated_at DateTime   @updatedAt
   teachers   teachers[]
+  staffs     staffs[]
 }
 
 // Room Management
@@ -608,6 +649,33 @@ model expenses {
   updated_at          DateTime @updatedAt
 
   expense_category expense_categories @relation(fields: [expense_category_id], references: [id], onDelete: Cascade)
+}
+
+// Salaries
+model salaries {
+  id             Int           @id @default(autoincrement())
+  user_type      String
+  teacher_id     Int?
+  admin_id       Int?
+  staff_id       Int?
+  salary_date    DateTime      @db.Date
+  salary_amount  Float
+  bonus          Float?        @default(0)
+  advance        Float?        @default(0)
+  due            Float?        @default(0)
+  payment_status PaymentStatus
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  teacher teachers? @relation(fields: [teacher_id], references: [id])
+  admin   admins?   @relation(fields: [admin_id], references: [id])
+  staff   staffs?   @relation(fields: [staff_id], references: [id])
+
+  @@index([teacher_id])
+  @@index([admin_id])
+  @@index([staff_id])
+  @@index([user_type])
+  @@index([salary_date])
 }
 
 // Notices (Official)

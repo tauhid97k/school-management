@@ -3,6 +3,8 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const isEmpty = require('lodash/isEmpty')
 const asyncHandler = require('express-async-handler')
+const { v4: uuidV4 } = require('uuid')
+const fs = require('node:fs/promises')
 const {
   sendEmailVerifyCode,
   sendPasswordResetCode,
@@ -16,6 +18,7 @@ const {
   passwordUpdateValidator,
 } = require('../validators/verificationValidators')
 const assignRole = require('../utils/assignRole')
+const { imageValidator } = require('../validators/imageValidator')
 
 /*
   @route    POST: /register
@@ -25,18 +28,41 @@ const assignRole = require('../utils/assignRole')
 const register = asyncHandler(async (req, res, next) => {
   const data = await registerValidator.validate(req.body, { abortEarly: false })
 
-  // Encrypt password
-  data.password = await bcrypt.hash(data.password, 12)
-
   // Create new user
   await prisma.$transaction(
     async (tx) => {
+      if (req.files) {
+        const { profile_img } = await imageValidator().validate(req.files, {
+          abortEarly: false,
+        })
+
+        // Profile Img
+        const uniqueFolder = `admin_${uuidV4()}_${new Date() * 1000}`
+        const uploadPath = `uploads/admins/profiles/${uniqueFolder}/${profile_img.name}`
+        const filePathToSave = `${uniqueFolder}/${profile_img.name}`
+
+        profile_img.mv(uploadPath, (error) => {
+          if (error)
+            return res.status(500).json({
+              message: 'Error saving Profile image',
+            })
+        })
+
+        // Update file path (For saving to database)
+        data.profile_img = filePathToSave
+      }
+
+      // Encrypt password
+      data.password = await bcrypt.hash(data.password, 12)
+
       const admin = await tx.admins.create({
         data: {
           name: data.name,
           email: data.email,
           password: data.password,
-          school: data.school,
+          designation: data.designation,
+          school_name: data.school_name,
+          school_address: data.school_address,
         },
       })
 
@@ -245,21 +271,30 @@ const login = asyncHandler(async (req, res, next) => {
           email,
         },
       })
-    }
-
-    if (role === 'teacher') {
+    } else if (role === 'teacher') {
       user = await tx.teachers.findUnique({
+        where: {
+          email,
+        },
+      })
+    } else if (role === 'student') {
+      user = await tx.students.findUnique({
+        where: {
+          email,
+        },
+      })
+    } else if (role === 'staff') {
+      user = await tx.staffs.findUnique({
         where: {
           email,
         },
       })
     }
 
-    if (role === 'student') {
-      user = await tx.students.findUnique({
-        where: {
-          email,
-        },
+    // Check if user found
+    if (!user) {
+      return res.status(400).json({
+        message: 'No user found',
       })
     }
 
@@ -315,9 +350,7 @@ const login = asyncHandler(async (req, res, next) => {
             user_device: deviceWithModel,
           },
         })
-      }
-
-      if (role === 'teacher') {
+      } else if (role === 'teacher') {
         await tx.personal_tokens.create({
           data: {
             teacher_id: user.id,
@@ -325,12 +358,18 @@ const login = asyncHandler(async (req, res, next) => {
             user_device: deviceWithModel,
           },
         })
-      }
-
-      if (role === 'student') {
+      } else if (role === 'student') {
         await tx.personal_tokens.create({
           data: {
             student_id: user.id,
+            refresh_token: refreshToken,
+            user_device: deviceWithModel,
+          },
+        })
+      } else if (role === 'staff') {
+        await tx.personal_tokens.create({
+          data: {
+            staff_id: user.id,
             refresh_token: refreshToken,
             user_device: deviceWithModel,
           },
@@ -402,18 +441,20 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
               email,
             },
           })
-        }
-
-        if (role === 'teacher') {
+        } else if (role === 'teacher') {
           possibleCompromisedUser = await prisma.teachers.findUnique({
             where: {
               email,
             },
           })
-        }
-
-        if (role === 'student') {
+        } else if (role === 'student') {
           possibleCompromisedUser = await prisma.students.findUnique({
+            where: {
+              email,
+            },
+          })
+        } else {
+          possibleCompromisedUser = await prisma.staffs.findUnique({
             where: {
               email,
             },
@@ -428,20 +469,22 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
                 admin_id: possibleCompromisedUser.id,
               },
             })
-          }
-
-          if (role === 'teacher') {
+          } else if (role === 'teacher') {
             await prisma.personal_tokens.deleteMany({
               where: {
                 teacher_id: possibleCompromisedUser.id,
               },
             })
-          }
-
-          if (role === 'student') {
+          } else if (role === 'student') {
             await prisma.personal_tokens.deleteMany({
               where: {
                 student_id: possibleCompromisedUser.id,
+              },
+            })
+          } else if (role === 'staff') {
+            await prisma.personal_tokens.deleteMany({
+              where: {
+                staff_id: possibleCompromisedUser.id,
               },
             })
           }
@@ -471,18 +514,20 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
             email,
           },
         })
-      }
-
-      if (role === 'teacher') {
+      } else if (role === 'teacher') {
         user = await prisma.teachers.findUnique({
           where: {
             email,
           },
         })
-      }
-
-      if (role === 'student') {
+      } else if (role === 'student') {
         user = await prisma.students.findUnique({
+          where: {
+            email,
+          },
+        })
+      } else {
+        user = await prisma.staffs.findUnique({
           where: {
             email,
           },

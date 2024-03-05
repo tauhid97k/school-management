@@ -110,10 +110,92 @@ const getUserTypeWithInfo = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /salaries
+  @access   private
+  @desc     Get All Salaries
+*/
+const getSalaries = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, salaryFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const [salaries, total] = await prisma.$transaction([
+    prisma.salaries.findMany({
+      take,
+      skip,
+      orderBy,
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+            designation: true,
+            profile_img: true,
+          },
+        },
+      },
+    }),
+    prisma.salaries.count(),
+  ])
+
+  res.json({
+    data: salaries,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
   @route    POST: /salaries
   @access   private
-  @desc     Create salary for admin/teacher
+  @desc     Create salary for admin/teacher/staff
 */
-const createSalary = asyncHandler(async (req, res, next) => {})
+const createSalary = asyncHandler(async (req, res, next) => {
+  const data = await salaryValidator().validate(req.body, { abortEarly: false })
 
-module.exports = { getUserTypeWithInfo }
+  if (data.user_type === 'admin') {
+    await prisma.salaries.create({
+      data: {
+        user_type: data.user_type,
+        salary_amount: data.salary_amount,
+        salary_date: data.salary_date,
+        bonus: data.bonus,
+        advance: data.advance,
+        due: data.due,
+        payment_status: data.payment_status,
+        admin_id: data.user_id,
+      },
+    })
+
+    return res.json({
+      message: 'Salary created',
+    })
+  }
+
+  if (data.user_type === 'teacher') {
+    await prisma.salaries.create({
+      data: {
+        user_type: data.user_type,
+        salary_amount: data.salary_amount,
+        salary_date: data.salary_date,
+        bonus: data.bonus,
+        advance: data.advance,
+        due: data.due,
+        payment_status: data.payment_status,
+        teacher_id: data.user_id,
+      },
+    })
+
+    return res.json({
+      message: 'Salary created',
+    })
+  }
+
+  res.status(400).json({
+    message: 'User type did not match',
+  })
+})
+
+module.exports = { getUserTypeWithInfo, getSalaries, createSalary }

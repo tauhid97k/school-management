@@ -16,6 +16,38 @@ const getRoles = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /role-permissions/roles/ns
+  @access   private
+  @desc     Get roles without student
+*/
+const getRolesWithoutStudent = asyncHandler(async (req, res, next) => {
+  const roles = await prisma.roles.findMany({
+    where: {
+      NOT: {
+        name: 'student',
+      },
+    },
+  })
+  res.json(roles)
+})
+
+/*
+  @route    GET: /role-permissions/roles/nats
+  @access   private
+  @desc     Get roles without student
+*/
+const getRolesWithoutAdminTeacherAndStudent = asyncHandler(
+  async (req, res, next) => {
+    const roles = await prisma.roles.findMany({
+      where: {
+        NOT: [{ name: 'admin' }, { name: 'teacher' }, { name: 'student' }],
+      },
+    })
+    res.json(roles)
+  }
+)
+
+/*
   @route    GET: /role-permissions/permissions
   @access   private
   @desc     Get all permissions
@@ -168,6 +200,8 @@ const updateRolePermissions = asyncHandler(async (req, res, next) => {
 
 module.exports = {
   getRoles,
+  getRolesWithoutStudent,
+  getRolesWithoutAdminTeacherAndStudent,
   getPermissions,
   getRolePermissions,
   createRolePermissions,
