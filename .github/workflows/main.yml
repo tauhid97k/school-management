@@ -1,0 +1,42 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPO_URL }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t school-management-backend .
+          docker tag school-management-backend:latest ${{ secrets.ECR_REPO_URL }}/school-management-backend:${{ github.sha }}
+          docker push ${{ secrets.ECR_REPO_URL }}/school-management-backend:${{ github.sha }}
+          docker tag ${{ secrets.ECR_REPO_URL }}/school-management-backend:${{ github.sha }} ${{ secrets.ECR_REPO_URL }}/school-management-backend:latest
+          docker push ${{ secrets.ECR_REPO_URL }}/school-management-backend:latest
+
+    
+          
+      - name: Deploy app
+        run: |
+          chmod 400 testing
+          mkdir ~/.ssh
+          touch ~/.ssh/known_hosts
+          ssh-keyscan ${{ secrets.AWS_SSH_DNS }} >> ~/.ssh/known_hosts
+          ssh -i testing ubuntu@${{ secrets.AWS_SSH_DNS }} "chmod +x ~/school-management-backend/setup.sh && ~/school-management-backend/setup.sh"
