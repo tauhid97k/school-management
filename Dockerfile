@@ -6,14 +6,9 @@ WORKDIR /app
 COPY . .
 
 RUN npm i
-RUN npx prisma generate
 
-RUN npx prisma db push
-RUN npx prisma db seed
 
 EXPOSE 5000
 
 ENV PORT 5000
 
-
-CMD ["npm", "start"]
