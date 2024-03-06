@@ -37,11 +37,7 @@ const limiter = rateLimit({
 // Middlewares
 app.use(
   cors({
-    origin: [
-      'https://schoolapi.silicornya.net',
-      'https://school.silicornya.net',
-      'https://schoolstaff.silicornya.net'
-    ],
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
