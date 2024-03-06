@@ -37,7 +37,11 @@ const limiter = rateLimit({
 // Middlewares
 app.use(
   cors({
-    origin: '*',
+    origin: [
+      'https://schoolapi.silicornya.net',
+      'https://school.silicornya.net',
+      'https://schoolstaff.silicornya.net',
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -55,12 +59,13 @@ app.use(
     createParentPath: true,
   })
 )
-// app.use((req, res, next) => {
-//   res.header('Access-Control-Allow-Credentials', true)
-//   res.header('Cross-Origin-Resource-Policy', 'cross-origin')
-//   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
-//   next()
-// })
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Credentials', true)
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin')
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+  next()
+})
 // Static file upload/serve middleware
 app.use(
   '/uploads',
