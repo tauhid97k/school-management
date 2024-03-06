@@ -119,7 +119,7 @@ const register = asyncHandler(async (req, res, next) => {
       res.cookie('express_jwt', refreshToken, {
         httpOnly: true, // Accessible only by server
         secure: true, // https
-        sameSite: 'lax',
+        sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -257,7 +257,7 @@ const login = asyncHandler(async (req, res, next) => {
     res.clearCookie('express_jwt', {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      sameSite: 'none',
     })
   }
 
@@ -384,7 +384,7 @@ const login = asyncHandler(async (req, res, next) => {
       res.cookie('express_jwt', refreshToken, {
         httpOnly: true, // Accessible only by server
         secure: true, // https
-        sameSite: 'lax',
+        sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -423,7 +423,7 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
   res.clearCookie('express_jwt', {
     httpOnly: true,
     secure: true,
-    sameSite: 'lax',
+    sameSite: 'none',
   })
 
   // Possible reuse of refresh token detection
@@ -578,7 +578,7 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
       res.cookie('express_jwt', newRefreshToken, {
         httpOnly: true, // Accessible only by server
         secure: true, // https
-        sameSite: 'lax',
+        sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -611,7 +611,7 @@ const logout = asyncHandler(async (req, res, next) => {
     res.clearCookie('express_jwt', {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      sameSite: 'none',
     })
 
     res.json({
@@ -689,7 +689,7 @@ const logoutAll = asyncHandler(async (req, res, next) => {
     res.clearCookie('express_jwt', {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      sameSite: 'none',
     })
 
     res.json({
