@@ -98,6 +98,16 @@ const salaryFields = [
   'sortOrder',
 ]
 
+// Student fees Fields
+const studentFeesFields = [
+  'payment_status',
+  'payment_date',
+  'page',
+  'limit',
+  'sortBy',
+  'sortOrder',
+]
+
 module.exports = {
   selectQueries,
   paginateWithSorting,
@@ -110,4 +120,5 @@ module.exports = {
   classRoutineFields,
   applicationFields,
   salaryFields,
+  studentFeesFields,
 }

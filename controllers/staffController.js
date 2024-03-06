@@ -59,7 +59,6 @@ const getStaffs = asyncHandler(async (req, res, next) => {
   @access   private
   @desc     Get staff details
 */
-
 const getStaff = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
   const findStaff = await prisma.teachers.findUnique({

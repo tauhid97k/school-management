@@ -225,6 +225,7 @@ model students {
   exam_results         exam_results[]
   student_homework     student_homeworks[]
   student_applications student_applications[]
+  student_fees         student_fees[]
 
   @@index([roll])
   @@index([class_id])
@@ -676,6 +677,28 @@ model salaries {
   @@index([staff_id])
   @@index([user_type])
   @@index([salary_date])
+}
+
+// Student Fees
+model student_fees {
+  id             Int           @id @default(autoincrement())
+  student_id     Int
+  fee_type       String
+  fee_amount     Float
+  fine_type      String?
+  fine_amount    Float?
+  due_type       Float?
+  due_amount     Float?
+  payment_status PaymentStatus
+  payment_date   DateTime      @db.Date
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  student students @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@index([student_id])
+  @@index([payment_status])
+  @@index([payment_date])
 }
 
 // Notices (Official)

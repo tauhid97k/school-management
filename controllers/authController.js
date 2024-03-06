@@ -4,11 +4,7 @@ const jwt = require('jsonwebtoken')
 const isEmpty = require('lodash/isEmpty')
 const asyncHandler = require('express-async-handler')
 const { v4: uuidV4 } = require('uuid')
-const fs = require('node:fs/promises')
-const {
-  sendEmailVerifyCode,
-  sendPasswordResetCode,
-} = require('../utils/mailHandlers')
+const emailEventEmitter = require('../event/sendEmailEvent')
 const registerValidator = require('../validators/registerValidator')
 const loginValidator = require('../validators/loginValidator')
 const {
@@ -71,7 +67,10 @@ const register = asyncHandler(async (req, res, next) => {
 
       // Send a verification code to email
       const verificationCode = Math.floor(10000000 + Math.random() * 90000000)
-      await sendEmailVerifyCode(data.email, 'admin', verificationCode, tx)
+      emailEventEmitter.emit('verificationEmail', {
+        email: admin.email,
+        code: verificationCode,
+      })
 
       // Login the admin
       // Generate JWT Access Token
@@ -120,7 +119,7 @@ const register = asyncHandler(async (req, res, next) => {
       res.cookie('express_jwt', refreshToken, {
         httpOnly: true, // Accessible only by server
         secure: true, // https
-        sameSite: 'none',
+        sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -163,7 +162,10 @@ const resendEmail = asyncHandler(async (req, res, next) => {
       },
     })
 
-    await sendEmailVerifyCode(user.email, 'admin', verificationCode, tx)
+    emailEventEmitter.emit('verificationEmail', {
+      email: user.email,
+      code: verificationCode,
+    })
   })
 
   res.json({
@@ -255,7 +257,7 @@ const login = asyncHandler(async (req, res, next) => {
     res.clearCookie('express_jwt', {
       httpOnly: true,
       secure: true,
-      sameSite: 'none',
+      sameSite: 'lax',
     })
   }
 
@@ -289,6 +291,8 @@ const login = asyncHandler(async (req, res, next) => {
           email,
         },
       })
+    } else {
+      user = undefined
     }
 
     // Check if user found
@@ -380,7 +384,7 @@ const login = asyncHandler(async (req, res, next) => {
       res.cookie('express_jwt', refreshToken, {
         httpOnly: true, // Accessible only by server
         secure: true, // https
-        sameSite: 'none',
+        sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -419,7 +423,7 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
   res.clearCookie('express_jwt', {
     httpOnly: true,
     secure: true,
-    sameSite: 'none',
+    sameSite: 'lax',
   })
 
   // Possible reuse of refresh token detection
@@ -481,7 +485,7 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
                 student_id: possibleCompromisedUser.id,
               },
             })
-          } else if (role === 'staff') {
+          } else {
             await prisma.personal_tokens.deleteMany({
               where: {
                 staff_id: possibleCompromisedUser.id,
@@ -574,7 +578,7 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
       res.cookie('express_jwt', newRefreshToken, {
         httpOnly: true, // Accessible only by server
         secure: true, // https
-        sameSite: 'none',
+        sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -607,7 +611,7 @@ const logout = asyncHandler(async (req, res, next) => {
     res.clearCookie('express_jwt', {
       httpOnly: true,
       secure: true,
-      sameSite: 'none',
+      sameSite: 'lax',
     })
 
     res.json({
@@ -685,7 +689,7 @@ const logoutAll = asyncHandler(async (req, res, next) => {
     res.clearCookie('express_jwt', {
       httpOnly: true,
       secure: true,
-      sameSite: 'none',
+      sameSite: 'lax',
     })
 
     res.json({
@@ -706,7 +710,10 @@ const resetPassword = asyncHandler(async (req, res, next) => {
 
   // Send a password reset code to email
   const resetCode = Math.floor(10000000 + Math.random() * 90000000)
-  await sendPasswordResetCode(email, role, resetCode)
+  emailEventEmitter.emit('passwordResetEmail', {
+    email,
+    code: resetCode,
+  })
 
   res.json({
     message: 'A verification code has been sent to your email',
