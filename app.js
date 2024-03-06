@@ -37,7 +37,11 @@ const limiter = rateLimit({
 // Middlewares
 app.use(
   cors({
-    origin: '*',
+    origin: [
+      'https://school.siloicornya.net',
+      'http://localhost:5000',
+      
+    ],
     credentials: true,
   })
 )
