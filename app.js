@@ -42,9 +42,10 @@ app.use(
       'https://school.silicornya.net',
       'https://schoolstaff.silicornya.net',
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: 'omit',
+    credentials: true,
+
+    // methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    // allowedHeaders: ['Content-Type', 'Authorization'],
   })
 )
 app.use(helmet())
