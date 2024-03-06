@@ -56,7 +56,6 @@ app.use(
   })
 )
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*')
   res.header('Access-Control-Allow-Credentials', true)
   res.header('Cross-Origin-Resource-Policy', 'cross-origin')
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
