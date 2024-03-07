@@ -41,6 +41,8 @@ app.use(
       'https://schoolapi.silicornya.net',
       'https://school.silicornya.net',
       'https://schoolstaff.silicornya.net',
+      'http://27.147.163.201:5173',
+      'http://27.147.163.201:5174',
       'http://127.0.0.1:5000',
       '*',
     ],
