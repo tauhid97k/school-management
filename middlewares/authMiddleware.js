@@ -4,6 +4,14 @@ const getAuthUser = require('../utils/getAuthUser')
 
 const authMiddleware = (requiredPermission) => {
   return async (req, res, next) => {
+    // Check if cookie exist
+    const subdomain = req.hostname.split('.')[0]
+    const cookieName = `${subdomain}_sm_management`
+    const cookies = req.cookies
+    if (!cookies || !cookies[cookieName]) {
+      return res.status(401).json({ message: 'Unauthorized' })
+    }
+
     // Check if token attached
     const authHeader = req.headers.authorization || req.headers.Authorization
     if (!authHeader?.startsWith('Bearer ')) {

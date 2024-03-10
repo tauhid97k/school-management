@@ -116,10 +116,14 @@ const register = asyncHandler(async (req, res, next) => {
       })
 
       // Create secure cookie with refresh token
-      res.cookie('express_jwt', refreshToken, {
+      const subdomain = req.hostname.split('.')[0]
+      const cookieName = `${subdomain}_sm_management`
+      const cookieDomain = req.hostname
+      res.cookie(cookieName, refreshToken, {
         httpOnly: true, // Accessible only by server
         secure: true, // https
         sameSite: 'none',
+        domain: cookieDomain,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -242,9 +246,11 @@ const verifyEmail = asyncHandler(async (req, res, next) => {
 */
 const login = asyncHandler(async (req, res, next) => {
   // Check if any old cookie exist
+  const subdomain = req.hostname.split('.')[0]
+  const cookieName = `${subdomain}_sm_management`
   const cookies = req.cookies
-  if (cookies?.express_jwt) {
-    const refreshToken = cookies.express_jwt
+  if (cookies && cookies[cookieName]) {
+    const refreshToken = cookies[cookieName]
 
     // Check if this token exist in database (Delete it)
     await prisma.personal_tokens.deleteMany({
@@ -254,10 +260,12 @@ const login = asyncHandler(async (req, res, next) => {
     })
 
     // Delete old cookie
-    res.clearCookie('express_jwt', {
+    const cookieDomain = req.hostname
+    res.clearCookie(cookieName, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
+      domain: cookieDomain,
     })
   }
 
@@ -381,10 +389,14 @@ const login = asyncHandler(async (req, res, next) => {
       }
 
       // Create secure cookie with refresh token
-      res.cookie('express_jwt', refreshToken, {
+      const subdomain = req.hostname.split('.')[0]
+      const cookieName = `${subdomain}_sm_management`
+      const cookieDomain = req.hostname
+      res.cookie(cookieName, refreshToken, {
         httpOnly: true, // Accessible only by server
         secure: true, // https
         sameSite: 'none',
+        domain: cookieDomain,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -406,11 +418,14 @@ const login = asyncHandler(async (req, res, next) => {
   @desc     Generate access token (because access token has expired)
 */
 const refreshAuthToken = asyncHandler(async (req, res, next) => {
+  const subdomain = req.hostname.split('.')[0]
+  const cookieName = `${subdomain}_sm_management`
   const cookies = req.cookies
-  if (!cookies?.express_jwt)
+  if (!cookies || !cookies[cookieName]) {
     return res.status(401).json({ message: 'Unauthorized' })
+  }
 
-  const refreshToken = cookies.express_jwt
+  const refreshToken = cookies[cookieName]
 
   // Check if tokens exist
   const tokens = await prisma.personal_tokens.findMany({
@@ -420,10 +435,12 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
   })
 
   // Delete current cookie
-  res.clearCookie('express_jwt', {
+  const cookieDomain = req.hostname
+  res.clearCookie(cookieName, {
     httpOnly: true,
     secure: true,
     sameSite: 'none',
+    domain: cookieDomain,
   })
 
   // Possible reuse of refresh token detection
@@ -575,10 +592,15 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
       })
 
       // Create new secure cookie with refresh token
-      res.cookie('express_jwt', newRefreshToken, {
+      // Create secure cookie with refresh token
+      const subdomain = req.hostname.split('.')[0]
+      const cookieName = `${subdomain}_sm_management`
+      const cookieDomain = req.hostname
+      res.cookie(cookieName, newRefreshToken, {
         httpOnly: true, // Accessible only by server
         secure: true, // https
         sameSite: 'none',
+        domain: cookieDomain,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
 
@@ -594,11 +616,14 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
 */
 const logout = asyncHandler(async (req, res, next) => {
   await prisma.$transaction(async (tx) => {
+    const subdomain = req.hostname.split('.')[0]
+    const cookieName = `${subdomain}_sm_management`
     const cookies = req.cookies
-    if (!cookies?.express_jwt)
+    if (!cookies || !cookies[cookieName]) {
       return res.status(401).json({ message: 'Unauthorized' })
+    }
 
-    const refreshToken = cookies.express_jwt
+    const refreshToken = cookies[cookieName]
 
     // Delete refresh tokens from database
     await tx.personal_tokens.deleteMany({
@@ -608,10 +633,12 @@ const logout = asyncHandler(async (req, res, next) => {
     })
 
     // Clear cookie
-    res.clearCookie('express_jwt', {
+    const cookieDomain = req.hostname
+    res.clearCookie(cookieName, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
+      domain: cookieDomain,
     })
 
     res.json({
@@ -627,9 +654,12 @@ const logout = asyncHandler(async (req, res, next) => {
 */
 const logoutAll = asyncHandler(async (req, res, next) => {
   await prisma.$transaction(async (tx) => {
+    const subdomain = req.hostname.split('.')[0]
+    const cookieName = `${subdomain}_sm_management`
     const cookies = req.cookies
-    if (!cookies?.express_jwt)
+    if (!cookies || !cookies[cookieName]) {
       return res.status(401).json({ message: 'Unauthorized' })
+    }
 
     // Get the user
     const email = req.user.email
@@ -686,10 +716,12 @@ const logoutAll = asyncHandler(async (req, res, next) => {
     }
 
     // Clear cookie
-    res.clearCookie('express_jwt', {
+    const cookieDomain = req.hostname
+    res.clearCookie(cookieName, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
+      domain: cookieDomain,
     })
 
     res.json({
