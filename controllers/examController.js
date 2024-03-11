@@ -165,19 +165,18 @@ const getExam = asyncHandler(async (req, res, next) => {
   @desc     Create a new exam
 */
 const createExam = asyncHandler(async (req, res, next) => {
-  const { exam_category_id, classes, sections, exam_routine } =
-    await examValidator().validate(req.body, {
-      abortEarly: false,
-    })
+  const data = await examValidator().validate(req.body, {
+    abortEarly: false,
+  })
 
   // Format Data For Database
-  const formatClasses = classes.map((class_id) => ({ class_id }))
-  const formatSections = sections.map((section_id) => ({ section_id }))
+  const formatClasses = data.classes.map((class_id) => ({ class_id }))
+  const formatSections = data.sections.map((section_id) => ({ section_id }))
 
   await prisma.$transaction(async (tx) => {
     const exam = await tx.exams.create({
       data: {
-        exam_category_id,
+        exam_category_id: data.exam_category_id,
         exam_classes: {
           createMany: {
             data: formatClasses,
@@ -192,21 +191,20 @@ const createExam = asyncHandler(async (req, res, next) => {
         }),
         exam_routines: {
           createMany: {
-            data: exam_routine,
+            data: data.exam_routine,
           },
         },
       },
     })
 
-    // Create result publish
-    await tx.exam_results_publish.create({
+    await tx.exam_results_publishing.create({
       data: {
         exam_id: exam.id,
       },
     })
-
-    res.status(201).json({ message: 'Exam created successfully' })
   })
+
+  res.status(201).json({ message: 'Exam created successfully' })
 })
 
 /*
