@@ -136,6 +136,7 @@ const getTeacher = asyncHandler(async (req, res, next) => {
     include: {
       designation: {
         select: {
+          id: true,
           title: true,
         },
       },
@@ -210,6 +211,7 @@ const getTeacher = asyncHandler(async (req, res, next) => {
     name,
     email,
     email_verified_at,
+    designation_id: designation.id,
     designation: designation.title,
     date_of_birth: formatDate(date_of_birth),
     blood_group,
@@ -371,21 +373,21 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
     // Delete Previous records (Classes)
     await tx.teacher_classes.deleteMany({
       where: {
-        id,
+        teacher_id: findTeacher.id,
       },
     })
 
     // Delete Previous records (Sections)
     await tx.teacher_sections.deleteMany({
       where: {
-        id,
+        teacher_id: findTeacher.id,
       },
     })
 
     // Delete Previous records (Subjects)
     await tx.teacher_subjects.deleteMany({
       where: {
-        id,
+        teacher_id: findTeacher.id,
       },
     })
 
@@ -434,7 +436,7 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
     data.date_of_birth = dayjs(data.date_of_birth).toISOString()
     data.joining_date = dayjs(data.joining_date).toISOString()
 
-    await tx.teachers.update({
+    const teacher = await tx.teachers.update({
       where: { id },
       data: {
         name: data.name,
@@ -473,6 +475,8 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
         },
       },
     })
+
+    await assignRole(teacher.id, 'teacher', tx)
 
     res.json({ message: 'Teacher updated successfully' })
   })

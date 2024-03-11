@@ -182,7 +182,6 @@ const teacherValidator = (id) =>
       .optional(),
     subjects: yup
       .array(yup.number().typeError('Subject must be an id'))
-      .required('At least one subject is required')
       .test('exist', 'One or more subjects are invalid', async (values) => {
         const checkSubjects = await prisma.subjects.findMany({
           where: {
@@ -206,6 +205,7 @@ const teacherValidator = (id) =>
           )
         }
       })
+      .required('At least one subject is required')
       .min(1, 'At least one class is required'),
   })
 
