@@ -39,9 +39,9 @@ const getStaffs = asyncHandler(async (req, res, next) => {
     prisma.staffs.count(),
   ])
 
-  const formatStaff = staffs.map((teacher) => ({
-    ...teacher,
-    profile_img: generateFileLink(`staffs/profiles/${teacher.profile_img}`),
+  const formatStaff = staffs.map((staff) => ({
+    ...staff,
+    profile_img: generateFileLink(`staffs/profiles/${staff.profile_img}`),
   }))
 
   res.json({
@@ -91,7 +91,9 @@ const getStaff = asyncHandler(async (req, res, next) => {
   @desc     Create a new staffs
 */
 const createStaff = asyncHandler(async (req, res, next) => {
+  console.log('before')
   let data = await staffValidator().validate(req.body, { abortEarly: false })
+  console.log('after')
 
   await prisma.$transaction(async (tx) => {
     if (req.files) {

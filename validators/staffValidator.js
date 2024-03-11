@@ -9,25 +9,25 @@ const staffValidator = (id) =>
       .required('Email is required')
       .email('Email is invalid')
       .test('unique', 'This email already exist', async (value) => {
-        const findTeacher = await prisma.teachers.findUnique({
+        const findStaff = await prisma.staffs.findUnique({
           where: {
             email: value,
           },
         })
 
-        if (findTeacher && !id) {
+        if (findStaff && !id) {
           return false
         }
 
-        if (findTeacher && id) {
-          if (findTeacher.id === id) {
+        if (findStaff && id) {
+          if (findStaff.id === id) {
             return true
           } else {
             return false
           }
         }
 
-        if (!findTeacher) {
+        if (!findStaff) {
           return true
         }
       }),
