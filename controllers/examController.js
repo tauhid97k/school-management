@@ -204,9 +204,9 @@ const createExam = asyncHandler(async (req, res, next) => {
         exam_id: exam.id,
       },
     })
-  })
 
-  res.status(201).json({ message: 'Exam created successfully' })
+    res.status(201).json({ message: 'Exam created successfully' })
+  })
 })
 
 /*

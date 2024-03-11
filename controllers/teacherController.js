@@ -127,12 +127,49 @@ const getTeachers = asyncHandler(async (req, res, next) => {
   @access   private
   @desc     Get teacher details
 */
-
 const getTeacher = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
   const findTeacher = await prisma.teachers.findUnique({
     where: {
       id,
+    },
+    include: {
+      designation: {
+        select: {
+          title: true,
+        },
+      },
+      teacher_classes: {
+        select: {
+          class: {
+            select: {
+              id: true,
+              class_name: true,
+            },
+          },
+        },
+      },
+      teacher_sections: {
+        select: {
+          section: {
+            select: {
+              id: true,
+              section_name: true,
+            },
+          },
+        },
+      },
+      teacher_subjects: {
+        select: {
+          subject: {
+            select: {
+              id: true,
+              name: true,
+              code: true,
+            },
+          },
+        },
+      },
     },
   })
 
@@ -141,17 +178,73 @@ const getTeacher = asyncHandler(async (req, res, next) => {
       message: 'No teacher found',
     })
 
-  // Correct date format
-  findTeacher.date_of_birth = formatDate(findTeacher.date_of_birth)
-  findTeacher.joining_date = formatDate(findTeacher.joining_date)
-  findTeacher.profile_img = generateFileLink(
-    `teachers/profiles/${findTeacher.profile_img}`
-  )
+  // Format Data
+  const {
+    id: teacherId,
+    name,
+    email,
+    email_verified_at,
+    designation,
+    date_of_birth,
+    blood_group,
+    religion,
+    gender,
+    age,
+    joining_date,
+    phone_number,
+    address,
+    salary,
+    profile_img,
+    cover_letter,
+    education,
+    experience,
+    is_suspended,
+    teacher_classes,
+    teacher_sections,
+    teacher_subjects,
+    created_at,
+    updated_at,
+  } = findTeacher
+  const formatData = {
+    id: teacherId,
+    name,
+    email,
+    email_verified_at,
+    designation: designation.title,
+    date_of_birth: formatDate(date_of_birth),
+    blood_group,
+    religion,
+    gender,
+    age,
+    joining_date: formatDate(joining_date),
+    phone_number,
+    address,
+    salary,
+    profile_img: profile_img
+      ? generateFileLink(`teachers/profiles/${profile_img}`)
+      : null,
+    cover_letter,
+    education,
+    experience,
+    classes: teacher_classes.map(({ class: teacherClass }) => ({
+      id: teacherClass.id,
+      class_name: teacherClass.class_name,
+    })),
+    sections: teacher_sections.map(({ section }) => ({
+      id: section.id,
+      section_name: section.section_name,
+    })),
+    subjects: teacher_subjects.map(({ subject }) => ({
+      id: subject.id,
+      name: subject.name,
+      code: subject.code,
+    })),
+    is_suspended,
+    created_at,
+    updated_at,
+  }
 
-  // Exclude password field
-  const formatTeacher = excludeFields(findTeacher, ['password'])
-
-  res.json(formatTeacher)
+  res.json(formatData)
 })
 
 /*

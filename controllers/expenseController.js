@@ -10,9 +10,11 @@ const {
   expenseAttachmentValidator,
 } = require('../validators/expenseValidator')
 const dayjs = require('dayjs')
+const { v4: uuidV4 } = require('uuid')
+const fs = require('node:fs/promises')
 const generateFileLink = require('../utils/generateFileLink')
-const { v4: uuid } = require('uuid')
 const { formatDate } = require('../utils/transformData')
+const { attachmentValidator } = require('../validators/attachmentValidator')
 
 /*
   @route    GET: /expenses
@@ -56,10 +58,9 @@ const getAllExpenses = asyncHandler(async (req, res, next) => {
       amount,
       invoice_no,
       date,
-      attachment:
-        attachment === 'undefined'
-          ? null
-          : generateFileLink(`expenses/${attachment}`),
+      attachment: attachment
+        ? generateFileLink(`expenses/${attachment}`)
+        : null,
       created_at,
       updated_at,
     })
@@ -96,10 +97,9 @@ const getExpense = asyncHandler(async (req, res, next) => {
 
   // Correct date format & File link
   findExpense.date = formatDate(findExpense.date)
-  findExpense.attachment =
-    findExpense.attachment === 'undefined'
-      ? null
-      : generateFileLink(`expenses/${findExpense.attachment}`)
+  findExpense.attachment = findExpense.attachment
+    ? generateFileLink(`expenses/${findExpense.attachment}`)
+    : null
 
   res.json(findExpense)
 })
@@ -115,24 +115,23 @@ const createExpense = asyncHandler(async (req, res, next) => {
   })
 
   if (req.files) {
-    await expenseAttachmentValidator.validate(req.files, { abortEarly: false })
+    const { attachment } = await attachmentValidator().validate(req.files, {
+      abortEarly: false,
+    })
 
-    const { attachment } = req.files
-    const fileNameWithoutExt = attachment.name.split('.').shift()
-    const uniqueFolderName = `${uuid()}_${fileNameWithoutExt}`
+    // Notice Attachment
+    const uniqueFolder = `expense_${uuidV4()}_${new Date() * 1000}`
+    const uploadPath = `uploads/expenses/${uniqueFolder}/${attachment.name}`
+    const filePathToSave = `${uniqueFolder}/${attachment.name}`
 
-    // The path where the file is uploaded
-    const uploadPath = `uploads/expenses/${uniqueFolderName}/${attachment.name}`
-    const filePathToSave = `${uniqueFolderName}/${attachment.name}`
-
-    // Move the uploaded file to the correct folder
     attachment.mv(uploadPath, (error) => {
       if (error)
         return res.status(500).json({
-          message: 'Error uploading attachment',
+          message: 'Error saving notice attachment',
         })
     })
 
+    // Update file path (For saving to database)
     data.attachment = filePathToSave
   }
 
@@ -167,37 +166,47 @@ const updateExpense = asyncHandler(async (req, res, next) => {
       })
 
     if (req.files) {
-      await expenseAttachmentValidator.validate(req.files, {
+      const { attachment } = await attachmentValidator().validate(req.files, {
         abortEarly: false,
       })
 
-      const { attachment } = req.files
-      const fileNameWithoutExt = attachment.name.split('.').shift()
-      const uniqueFolderName = `${uuid()}_${fileNameWithoutExt}`
+      // Delete Previous attachment (If Exist)
+      if (findExpense.attachment) {
+        try {
+          const photoDir = `uploads/expenses/${
+            findExpense.attachment.split('/')[0]
+          }`
+          await fs.rm(photoDir, { recursive: true })
+        } catch (error) {
+          return res.json({
+            message: 'Error deleting previous attachment',
+          })
+        }
+      }
 
-      // The path where the file is uploaded
-      const uploadPath = `uploads/expenses/${uniqueFolderName}/${attachment.name}`
-      const filePathToSave = `${uniqueFolderName}/${attachment.name}`
+      // New Attachment
+      const uniqueFolder = `expense_${uuidV4()}_${new Date() * 1000}`
+      const uploadPath = `uploads/expenses/${uniqueFolder}/${attachment.name}`
+      const filePathToSave = `${uniqueFolder}/${attachment.name}`
 
-      // Move the uploaded file to the correct folder
       attachment.mv(uploadPath, (error) => {
         if (error)
           return res.status(500).json({
-            message: 'Error uploading attachment',
+            message: 'Error saving attachment',
           })
       })
 
+      // Update file path (For saving to database)
       data.attachment = filePathToSave
     }
 
-    data.attachment = 'undefined'
     await tx.expenses.update({
       where: { id },
       data,
     })
-  })
 
-  res.json({ message: 'Expense updated' })
+    res.json({ message: 'Expense updated' })
+  })
 })
 
 /*
@@ -219,6 +228,20 @@ const deleteExpense = asyncHandler(async (req, res, next) => {
       return res.status(404).json({
         message: 'No expense found',
       })
+
+    // Delete Attachment (If Exist)
+    if (findExpense.attachment) {
+      try {
+        const photoDir = `uploads/expenses/${
+          findExpense.attachment.split('/')[0]
+        }`
+        await fs.rm(photoDir, { recursive: true })
+      } catch (error) {
+        return res.json({
+          message: 'Error deleting attachment',
+        })
+      }
+    }
 
     await tx.expenses.delete({
       where: { id },

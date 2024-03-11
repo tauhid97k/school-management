@@ -248,6 +248,7 @@ const login = asyncHandler(async (req, res, next) => {
   // Check if any old cookie exist
   const subdomain = req.hostname.split('.')[0]
   const cookieName = `${subdomain}_sm_management`
+  const cookieDomain = req.hostname
   const cookies = req.cookies
   if (cookies && cookies[cookieName]) {
     const refreshToken = cookies[cookieName]
@@ -260,7 +261,6 @@ const login = asyncHandler(async (req, res, next) => {
     })
 
     // Delete old cookie
-    const cookieDomain = req.hostname
     res.clearCookie(cookieName, {
       httpOnly: true,
       secure: true,
@@ -293,20 +293,11 @@ const login = asyncHandler(async (req, res, next) => {
           email,
         },
       })
-    } else if (role === 'staff') {
+    } else {
       user = await tx.staffs.findUnique({
         where: {
           email,
         },
-      })
-    } else {
-      user = undefined
-    }
-
-    // Check if user found
-    if (!user) {
-      return res.status(400).json({
-        message: 'No user found',
       })
     }
 
@@ -378,7 +369,7 @@ const login = asyncHandler(async (req, res, next) => {
             user_device: deviceWithModel,
           },
         })
-      } else if (role === 'staff') {
+      } else {
         await tx.personal_tokens.create({
           data: {
             staff_id: user.id,
@@ -389,9 +380,6 @@ const login = asyncHandler(async (req, res, next) => {
       }
 
       // Create secure cookie with refresh token
-      const subdomain = req.hostname.split('.')[0]
-      const cookieName = `${subdomain}_sm_management`
-      const cookieDomain = req.hostname
       res.cookie(cookieName, refreshToken, {
         httpOnly: true, // Accessible only by server
         secure: true, // https
@@ -421,6 +409,7 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
   const subdomain = req.hostname.split('.')[0]
   const cookieName = `${subdomain}_sm_management`
   const cookies = req.cookies
+  const cookieDomain = req.hostname
   if (!cookies || !cookies[cookieName]) {
     return res.status(401).json({ message: 'Unauthorized' })
   }
@@ -434,88 +423,87 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
     },
   })
 
-  // Delete current cookie
-  const cookieDomain = req.hostname
-  res.clearCookie(cookieName, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'none',
-    domain: cookieDomain,
-  })
-
   // Possible reuse of refresh token detection
-  if (!tokens.length) {
-    jwt.verify(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET,
-      asyncHandler(async (error, decoded) => {
-        if (error) return res.status(403).json({ message: 'Forbidden' })
+  // if (!tokens.length) {
+  //   jwt.verify(
+  //     refreshToken,
+  //     process.env.REFRESH_TOKEN_SECRET,
+  //     asyncHandler(async (error, decoded) => {
+  //       if (error) return res.status(403).json({ message: 'Forbidden' })
 
-        // Check if user exist
-        const email = decoded.user.email
-        const role = decoded.user.role
-        let possibleCompromisedUser
+  //       // Check if user exist
+  //       const email = decoded.user.email
+  //       const role = decoded.user.role
+  //       let possibleCompromisedUser
 
-        if (role === 'admin') {
-          possibleCompromisedUser = await prisma.admins.findUnique({
-            where: {
-              email,
-            },
-          })
-        } else if (role === 'teacher') {
-          possibleCompromisedUser = await prisma.teachers.findUnique({
-            where: {
-              email,
-            },
-          })
-        } else if (role === 'student') {
-          possibleCompromisedUser = await prisma.students.findUnique({
-            where: {
-              email,
-            },
-          })
-        } else {
-          possibleCompromisedUser = await prisma.staffs.findUnique({
-            where: {
-              email,
-            },
-          })
-        }
+  //       if (role === 'admin') {
+  //         possibleCompromisedUser = await prisma.admins.findUnique({
+  //           where: {
+  //             email,
+  //           },
+  //         })
+  //       } else if (role === 'teacher') {
+  //         possibleCompromisedUser = await prisma.teachers.findUnique({
+  //           where: {
+  //             email,
+  //           },
+  //         })
+  //       } else if (role === 'student') {
+  //         possibleCompromisedUser = await prisma.students.findUnique({
+  //           where: {
+  //             email,
+  //           },
+  //         })
+  //       } else {
+  //         possibleCompromisedUser = await prisma.staffs.findUnique({
+  //           where: {
+  //             email,
+  //           },
+  //         })
+  //       }
 
-        // If user exist, delete all related tokens
-        if (possibleCompromisedUser) {
-          if (role === 'admin') {
-            await prisma.personal_tokens.deleteMany({
-              where: {
-                admin_id: possibleCompromisedUser.id,
-              },
-            })
-          } else if (role === 'teacher') {
-            await prisma.personal_tokens.deleteMany({
-              where: {
-                teacher_id: possibleCompromisedUser.id,
-              },
-            })
-          } else if (role === 'student') {
-            await prisma.personal_tokens.deleteMany({
-              where: {
-                student_id: possibleCompromisedUser.id,
-              },
-            })
-          } else {
-            await prisma.personal_tokens.deleteMany({
-              where: {
-                staff_id: possibleCompromisedUser.id,
-              },
-            })
-          }
-        }
-      })
-    )
+  //       // If user exist, delete all related tokens
+  //       if (possibleCompromisedUser) {
+  //         if (role === 'admin') {
+  //           await prisma.personal_tokens.deleteMany({
+  //             where: {
+  //               admin_id: possibleCompromisedUser.id,
+  //             },
+  //           })
+  //         } else if (role === 'teacher') {
+  //           await prisma.personal_tokens.deleteMany({
+  //             where: {
+  //               teacher_id: possibleCompromisedUser.id,
+  //             },
+  //           })
+  //         } else if (role === 'student') {
+  //           await prisma.personal_tokens.deleteMany({
+  //             where: {
+  //               student_id: possibleCompromisedUser.id,
+  //             },
+  //           })
+  //         } else {
+  //           await prisma.personal_tokens.deleteMany({
+  //             where: {
+  //               staff_id: possibleCompromisedUser.id,
+  //             },
+  //           })
+  //         }
+  //       }
+  //     })
+  //   )
 
-    // Don't let go further
-    return res.status(403).json({ message: 'Forbidden' })
-  }
+  //   // Delete current cookie
+  //   res.clearCookie(cookieName, {
+  //     httpOnly: true,
+  //     secure: true,
+  //     sameSite: 'none',
+  //     domain: cookieDomain,
+  //   })
+
+  //   // Don't let go further
+  //   return res.status(403).json({ message: 'Forbidden' })
+  // }
 
   // If token exist, verify the token
   jwt.verify(
@@ -592,7 +580,6 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
       })
 
       // Create new secure cookie with refresh token
-      // Create secure cookie with refresh token
       const subdomain = req.hostname.split('.')[0]
       const cookieName = `${subdomain}_sm_management`
       const cookieDomain = req.hostname
@@ -618,6 +605,7 @@ const logout = asyncHandler(async (req, res, next) => {
   await prisma.$transaction(async (tx) => {
     const subdomain = req.hostname.split('.')[0]
     const cookieName = `${subdomain}_sm_management`
+    const cookieDomain = req.hostname
     const cookies = req.cookies
     if (!cookies || !cookies[cookieName]) {
       return res.status(401).json({ message: 'Unauthorized' })
@@ -633,7 +621,6 @@ const logout = asyncHandler(async (req, res, next) => {
     })
 
     // Clear cookie
-    const cookieDomain = req.hostname
     res.clearCookie(cookieName, {
       httpOnly: true,
       secure: true,
@@ -656,6 +643,7 @@ const logoutAll = asyncHandler(async (req, res, next) => {
   await prisma.$transaction(async (tx) => {
     const subdomain = req.hostname.split('.')[0]
     const cookieName = `${subdomain}_sm_management`
+    const cookieDomain = req.hostname
     const cookies = req.cookies
     if (!cookies || !cookies[cookieName]) {
       return res.status(401).json({ message: 'Unauthorized' })
@@ -672,51 +660,54 @@ const logoutAll = asyncHandler(async (req, res, next) => {
           email,
         },
       })
-    }
-
-    if (role === 'teacher') {
+    } else if (role === 'teacher') {
       user = await tx.teachers.findUnique({
         where: {
           email,
         },
       })
-    }
-
-    if (role === 'student') {
+    } else if (role === 'student') {
       user = await tx.students.findUnique({
         where: {
           email,
         },
       })
+    } else {
+      user = await tx.personal_tokens.deleteMany({
+        where: {
+          staff_id: user.id,
+        },
+      })
     }
 
-    // Delete refresh tokens from database
+    // Delete tokens from database
     if (role === 'admin') {
       await tx.personal_tokens.deleteMany({
         where: {
           admin_id: user.id,
         },
       })
-    }
-
-    if (role === 'teacher') {
+    } else if (role === 'teacher') {
       await tx.personal_tokens.deleteMany({
         where: {
           teacher_id: user.id,
         },
       })
-    }
-
-    if (role === 'student') {
+    } else if (role === 'student') {
       await tx.personal_tokens.deleteMany({
         where: {
           student_id: user.id,
         },
       })
+    } else {
+      await tx.personal_tokens.deleteMany({
+        where: {
+          staff_id: user.id,
+        },
+      })
     }
 
     // Clear cookie
-    const cookieDomain = req.hostname
     res.clearCookie(cookieName, {
       httpOnly: true,
       secure: true,
@@ -778,16 +769,15 @@ const verifyResetCode = asyncHandler(async (req, res, next) => {
   if (checkVerifyCode.admin_id) {
     userId = checkVerifyCode.admin_id
     role = 'admin'
-  }
-
-  if (checkVerifyCode.teacher_id) {
+  } else if (checkVerifyCode.teacher_id) {
     userId = checkVerifyCode.teacher_id
     role = 'teacher'
-  }
-
-  if (checkVerifyCode.student_id) {
+  } else if (checkVerifyCode.student_id) {
     userId = checkVerifyCode.student_id
     role = 'student'
+  } else {
+    userId = checkVerifyCode.staff_id
+    role = 'staff'
   }
 
   // Generate A Token (With user id)
