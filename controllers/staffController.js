@@ -11,7 +11,6 @@ const {
   staffProfileImageValidator,
 } = require('../validators/staffValidator')
 const dayjs = require('dayjs')
-const excludeFields = require('../utils/excludeFields')
 const { formatDate } = require('../utils/transformData')
 const { v4: uuidV4 } = require('uuid')
 const generateFileLink = require('../utils/generateFileLink')
@@ -41,7 +40,10 @@ const getStaffs = asyncHandler(async (req, res, next) => {
 
   const formatStaff = staffs.map((staff) => ({
     ...staff,
-    profile_img: generateFileLink(`staffs/profiles/${staff.profile_img}`),
+    designation: staff.designation.title,
+    profile_img: staff.profile_img
+      ? generateFileLink(`staffs/profiles/${staff.profile_img}`)
+      : null,
   }))
 
   res.json({
@@ -61,28 +63,86 @@ const getStaffs = asyncHandler(async (req, res, next) => {
 */
 const getStaff = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
-  const findStaff = await prisma.teachers.findUnique({
+  const findStaff = await prisma.staffs.findUnique({
     where: {
       id,
+    },
+    include: {
+      designation: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+      staff_role: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   })
 
   if (!findStaff)
     return res.status(404).json({
-      message: 'No teacher found',
+      message: 'Staff not found',
     })
 
-  // Correct date format
-  findStaff.date_of_birth = formatDate(findStaff.date_of_birth)
-  findStaff.joining_date = formatDate(findStaff.joining_date)
-  findStaff.profile_img = generateFileLink(
-    `staffs/profiles/${findStaff.profile_img}`
-  )
+  // Format Data
+  const {
+    id: staffId,
+    name,
+    email,
+    email_verified_at,
+    staff_role,
+    designation,
+    date_of_birth,
+    blood_group,
+    religion,
+    gender,
+    age,
+    joining_date,
+    phone_number,
+    address,
+    salary,
+    profile_img,
+    cover_letter,
+    education,
+    experience,
+    is_suspended,
+    created_at,
+    updated_at,
+  } = findStaff
+  const formatData = {
+    id: staffId,
+    name,
+    email,
+    email_verified_at,
+    role_id: staff_role.id,
+    role: staff_role.name,
+    designation_id: designation.id,
+    designation: designation.title,
+    date_of_birth: formatDate(date_of_birth),
+    blood_group,
+    religion,
+    gender,
+    age,
+    joining_date: formatDate(joining_date),
+    phone_number,
+    address,
+    salary,
+    profile_img: profile_img
+      ? generateFileLink(`staffs/profiles/${profile_img}`)
+      : null,
+    cover_letter,
+    education,
+    experience,
+    is_suspended,
+    created_at,
+    updated_at,
+  }
 
-  // Exclude password field
-  const formatStaff = excludeFields(findStaff, ['password'])
-
-  res.json(formatStaff)
+  res.json(formatData)
 })
 
 /*
@@ -91,9 +151,7 @@ const getStaff = asyncHandler(async (req, res, next) => {
   @desc     Create a new staffs
 */
 const createStaff = asyncHandler(async (req, res, next) => {
-  console.log('before')
   let data = await staffValidator().validate(req.body, { abortEarly: false })
-  console.log('after')
 
   await prisma.$transaction(async (tx) => {
     if (req.files) {
@@ -131,6 +189,7 @@ const createStaff = asyncHandler(async (req, res, next) => {
       data: {
         name: data.name,
         email: data.email,
+        role: data.role,
         designation_id: data.designation_id,
         password: data.password,
         date_of_birth: data.date_of_birth,
@@ -165,7 +224,7 @@ const createStaff = asyncHandler(async (req, res, next) => {
 const updateStaff = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
-  const data = await teacherValidator(id).validate(req.body, {
+  const data = await staffValidator(id).validate(req.body, {
     abortEarly: false,
   })
 
@@ -178,7 +237,7 @@ const updateStaff = asyncHandler(async (req, res, next) => {
 
     if (!findStaff)
       return res.status(404).json({
-        message: 'No staff found',
+        message: 'Staff not found',
       })
 
     if (req.files) {
@@ -231,6 +290,7 @@ const updateStaff = asyncHandler(async (req, res, next) => {
       data: {
         name: data.name,
         email: data.email,
+        role: data.role,
         designation_id: data.designation_id,
         password: data.password,
         date_of_birth: data.date_of_birth,
@@ -272,7 +332,7 @@ const deleteStaff = asyncHandler(async (req, res, next) => {
 
     if (!findStaff)
       return res.status(404).json({
-        message: 'No staff found',
+        message: 'Staff not found',
       })
 
     // Delete Profile Image

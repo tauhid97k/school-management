@@ -121,6 +121,7 @@ model staffs {
   id                Int        @id @default(autoincrement())
   name              String
   email             String     @unique
+  role              String
   designation_id    Int?
   password          String
   email_verified_at DateTime?
@@ -141,7 +142,9 @@ model staffs {
   created_at        DateTime   @default(now())
   updated_at        DateTime   @updatedAt
 
-  designation         designations?         @relation(fields: [designation_id], references: [id], onDelete: SetNull)
+  designation designations? @relation(fields: [designation_id], references: [id], onDelete: SetNull)
+  staff_role  roles         @relation(fields: [role], references: [name], onDelete: Cascade)
+
   personal_tokens     personal_tokens[]
   verification_tokens verification_tokens[]
   user_roles          user_roles?
@@ -318,6 +321,7 @@ model roles {
 
   user_roles       user_roles[]
   role_permissions role_permissions[]
+  staffs           staffs[]
 }
 
 // Permissions

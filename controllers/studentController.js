@@ -38,7 +38,9 @@ const getStudents = asyncHandler(async (req, res, next) => {
 
   const formatStudents = students.map((student) => ({
     ...student,
-    profile_img: generateFileLink(`students/profiles/${student.profile_img}`),
+    profile_img: student.profile_img
+      ? generateFileLink(`students/profiles/${student.profile_img}`)
+      : null,
   }))
 
   res.json({
@@ -76,9 +78,9 @@ const getStudent = asyncHandler(async (req, res, next) => {
   // Correct date & image format
   findStudent.date_of_birth = formatDate(findStudent.date_of_birth)
   findStudent.admission_date = formatDate(findStudent.admission_date)
-  findStudent.profile_img = generateFileLink(
-    `students/profiles/${findStudent.profile_img}`
-  )
+  findStudent.profile_img = findStudent.profile_img
+    ? generateFileLink(`students/profiles/${findStudent.profile_img}`)
+    : null
 
   // Exclude password field
   const dataWithExcludeFields = excludeFields(findStudent, ['password'])

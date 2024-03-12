@@ -109,7 +109,9 @@ const getTeachers = asyncHandler(async (req, res, next) => {
 
   const formatTeachers = teachers.map((teacher) => ({
     ...teacher,
-    profile_img: generateFileLink(`teachers/profiles/${teacher.profile_img}`),
+    profile_img: teacher.profile_img
+      ? generateFileLink(`teachers/profiles/${teacher.profile_img}`)
+      : null,
   }))
 
   res.json({
