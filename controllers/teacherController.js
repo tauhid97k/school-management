@@ -11,7 +11,6 @@ const {
   teacherProfileImageValidator,
 } = require('../validators/teacherValidator')
 const dayjs = require('dayjs')
-const excludeFields = require('../utils/excludeFields')
 const { formatDate } = require('../utils/transformData')
 const { v4: uuidV4 } = require('uuid')
 const generateFileLink = require('../utils/generateFileLink')
@@ -83,6 +82,85 @@ const getSubjectsForTeacher = asyncHandler(async (req, res, next) => {
     })
 
     res.json(subjects)
+  })
+})
+
+/*
+  @route    GET: /teachers/:id/salaries
+  @access   private
+  @desc     Get teacher's salaries
+*/
+const getTeacherSalaries = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const selectedQueries = selectQueries(req.query, commonFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const findTeacher = await prisma.teachers.findUnique({
+    where: {
+      id,
+    },
+  })
+
+  if (!findTeacher) {
+    return res.status(400).json({
+      message: 'Teacher not found',
+    })
+  }
+
+  const [salaries, total] = await prisma.$transaction([
+    prisma.salaries.findMany({
+      where: {
+        teacher_id: findTeacher.id,
+      },
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+            joining_date: true,
+            designation: {
+              select: {
+                title: true,
+              },
+            },
+          },
+        },
+      },
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.salaries.count({
+      where: {
+        teacher_id: findTeacher.id,
+      },
+    }),
+  ])
+
+  const formatTeacherSalaries = salaries.map((salary) => {
+    const { admin, teacher, staff, admin_id, teacher_id, staff_id, ...rest } =
+      salary
+    let user_details = teacher
+    user_details = {
+      teacher_id: user_details.id,
+      name: user_details.name,
+      designation: user_details.designation.title,
+      joining_date: user_details.joining_date,
+    }
+
+    return {
+      ...rest,
+      ...user_details,
+    }
+  })
+
+  res.json({
+    data: formatTeacherSalaries,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
   })
 })
 
@@ -529,6 +607,7 @@ const deleteTeacher = asyncHandler(async (req, res, next) => {
 module.exports = {
   getClassesForTeacher,
   getSubjectsForTeacher,
+  getTeacherSalaries,
   getTeachers,
   getTeacher,
   createTeacher,

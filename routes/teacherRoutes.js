@@ -4,6 +4,7 @@ const authMiddleware = require('../middlewares/authMiddleware')
 const {
   getClassesForTeacher,
   getSubjectsForTeacher,
+  getTeacherSalaries,
   getTeachers,
   getTeacher,
   createTeacher,
@@ -13,6 +14,7 @@ const {
 
 router.get('/:id/classes', getClassesForTeacher)
 router.get('/:id/subjects', getSubjectsForTeacher)
+router.get('/:id/salaries', getTeacherSalaries)
 router.get('/', getTeachers)
 router.get('/:id', authMiddleware(), getTeacher)
 router.post('/', createTeacher)

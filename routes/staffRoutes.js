@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const authMiddleware = require('../middlewares/authMiddleware')
 const {
+  getStaffSalaries,
   getStaffs,
   getStaff,
   createStaff,
@@ -11,6 +12,7 @@ const {
 
 router.get('/', getStaffs)
 router.get('/:id', authMiddleware(), getStaff)
+router.get('/:id/salaries', getStaffSalaries)
 router.post('/', createStaff)
 router.put('/:id', authMiddleware(), updateStaff)
 router.delete('/:id', authMiddleware(), deleteStaff)

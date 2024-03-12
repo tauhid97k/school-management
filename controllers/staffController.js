@@ -18,6 +18,85 @@ const fs = require('node:fs/promises')
 const assignRole = require('../utils/assignRole')
 
 /*
+  @route    GET: /staffs/:id/salaries
+  @access   private
+  @desc     Get staff's salaries
+*/
+const getStaffSalaries = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const selectedQueries = selectQueries(req.query, commonFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const findStaff = await prisma.staffs.findUnique({
+    where: {
+      id,
+    },
+  })
+
+  if (!findStaff) {
+    return res.status(400).json({
+      message: 'Staff not found',
+    })
+  }
+
+  const [salaries, total] = await prisma.$transaction([
+    prisma.salaries.findMany({
+      where: {
+        staff_id: findStaff.id,
+      },
+      include: {
+        staff: {
+          select: {
+            id: true,
+            name: true,
+            joining_date: true,
+            designation: {
+              select: {
+                title: true,
+              },
+            },
+          },
+        },
+      },
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.salaries.count({
+      where: {
+        staff_id: findStaff.id,
+      },
+    }),
+  ])
+
+  const formatStaffSalaries = salaries.map((salary) => {
+    const { admin, teacher, staff, admin_id, teacher_id, staff_id, ...rest } =
+      salary
+    let user_details = staff
+    user_details = {
+      staff_id: user_details.id,
+      name: user_details.name,
+      designation: user_details.designation.title,
+      joining_date: user_details.joining_date,
+    }
+
+    return {
+      ...rest,
+      ...user_details,
+    }
+  })
+
+  res.json({
+    data: formatStaffSalaries,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
   @route    GET: /staffs
   @access   private
   @desc     Get all staffs
@@ -358,6 +437,7 @@ const deleteStaff = asyncHandler(async (req, res, next) => {
 })
 
 module.exports = {
+  getStaffSalaries,
   getStaffs,
   getStaff,
   createStaff,
