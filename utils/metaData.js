@@ -100,6 +100,9 @@ const salaryFields = [
 
 // Student fees Fields
 const studentFeesFields = [
+  'class_id',
+  'section_id',
+  'student_id',
   'payment_status',
   'payment_date',
   'page',
