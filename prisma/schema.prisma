@@ -691,7 +691,7 @@ model student_fees {
   fee_amount     Float
   fine_type      String?
   fine_amount    Float?
-  due_type       Float?
+  due_type       String?
   due_amount     Float?
   payment_status PaymentStatus
   payment_date   DateTime      @db.Date

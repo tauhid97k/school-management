@@ -157,11 +157,9 @@ const studentFeeDetails = asyncHandler(async (req, res, next) => {})
   @desc     Create student fee
 */
 const createStudentFee = asyncHandler(async (req, res, next) => {
-  console.log('before')
   const data = await studentFeesValidator().validate(req.body, {
     abortEarly: false,
   })
-  console.log('after')
 
   await prisma.student_fees.create({
     data,
