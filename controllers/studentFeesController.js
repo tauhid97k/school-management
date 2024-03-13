@@ -238,25 +238,44 @@ const studentFeeDetails = asyncHandler(async (req, res, next) => {
 */
 const getStudentFeesHistory = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
+  const selectedQueries = selectQueries(req.query, studentFeesFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
-  await prisma.$transaction(async (tx) => {
-    const findStudent = await tx.students.findUnique({
-      where: {
-        id,
-      },
+  const findStudent = await prisma.students.findUnique({
+    where: {
+      id,
+    },
+  })
+
+  if (!findStudent) {
+    return res.status(404).json({
+      message: 'Student not found',
     })
+  }
 
-    if (!findStudent) {
-      return res.status(404).json({
-        message: 'Student not found',
-      })
-    }
-
-    const studentFeeHistory = await tx.student_fees.findMany({
+  const [studentFeeHistory, total] = await prisma.$transaction([
+    prisma.student_fees.findMany({
       where: {
         student_id: id,
       },
-    })
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.student_fees.findMany({
+      where: {
+        student_id: id,
+      },
+    }),
+  ])
+
+  res.json({
+    data: studentFeeHistory,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
   })
 })
 
