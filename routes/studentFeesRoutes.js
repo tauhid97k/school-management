@@ -7,6 +7,7 @@ const {
   studentFeeDetails,
   getStudentFeesHistory,
   createStudentFee,
+  updateStudentFee,
 } = require('../controllers/studentFeesController')
 
 router.get('/student-info', authMiddleware(), getStudentInfo)
@@ -14,6 +15,6 @@ router.get('/student/:id', authMiddleware(), getStudentFeesHistory)
 router.get('/', authMiddleware(), studentFeeList)
 router.get('/:id', authMiddleware(), studentFeeDetails)
 router.post('/', authMiddleware(), createStudentFee)
-router.put('/:id', authMiddleware(), createStudentFee)
+router.put('/:id', authMiddleware(), updateStudentFee)
 
 module.exports = router

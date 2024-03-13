@@ -194,11 +194,13 @@ const studentFeeDetails = asyncHandler(async (req, res, next) => {
             profile_img: true,
             class: {
               select: {
+                id: true,
                 class_name: true,
               },
             },
             section: {
               select: {
+                id: true,
                 section_name: true,
               },
             },
@@ -223,7 +225,9 @@ const studentFeeDetails = asyncHandler(async (req, res, next) => {
       profile_img: student.profile_img
         ? generateFileLink(`students/profiles/${student.profile_img}`)
         : null,
+      class_id: student.class.id,
       class_name: student.class.class_name,
+      section_id: student.section.id,
       section_name: student.section.section_name,
     }
 
