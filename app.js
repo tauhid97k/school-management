@@ -37,7 +37,6 @@ const limiter = rateLimit({
 // Middlewares
 app.use(
   cors({
-    credentials: true,
     origin: [
       'https://schoolapi.silicornya.net',
       'https://school.silicornya.net',
@@ -46,6 +45,7 @@ app.use(
       'http://27.147.163.201:5174',
       'http://127.0.0.1:5000',
     ],
+    credentials: true,
   })
 )
 app.use(helmet())
@@ -66,9 +66,8 @@ app.use(
   '/uploads',
   (req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*')
-    res.header('Access-Control-Allow-Credentials', true)
-    res.header('Cross-Origin-Resource-Policy', 'cross-origin')
     res.header('Access-Control-Expose-Headers', 'Content-Disposition')
+    res.header('Cross-Origin-Resource-Policy', 'cross-origin')
     res.header('Content-Disposition', 'attachment')
 
     next()
