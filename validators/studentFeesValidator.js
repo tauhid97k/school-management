@@ -17,12 +17,27 @@ const studentFeesValidator = (id) =>
         return findStudent ? true : false
       }),
     fee_type: yup.string().required('Fee type is required'),
-    fee_amount: yup.number().integer().required('Fee amount is required'),
+    fee_amount: yup
+      .number()
+      .integer()
+      .typeError('Fee amount must be an integer')
+      .required('Fee amount is required'),
     fine_type: yup.string().optional(),
-    fine_amount: yup.number().integer().optional(),
+    fine_amount: yup
+      .number()
+      .integer()
+      .typeError('Fee amount must be an integer')
+      .optional(),
     due_type: yup.string().optional(),
-    due_amount: yup.number().integer().optional(),
-    payment_status: yup.date().required('Payment status is required'),
+    due_amount: yup
+      .number()
+      .integer()
+      .typeError('Fee amount must be an integer')
+      .optional(),
+    payment_status: yup
+      .string()
+      .required('Payment status is required')
+      .oneOf(['PAID', 'UNPAID']),
     payment_date: yup.date().required('Payment date is required'),
   })
 

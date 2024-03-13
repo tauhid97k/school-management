@@ -236,6 +236,7 @@ const getTeacher = asyncHandler(async (req, res, next) => {
             select: {
               id: true,
               section_name: true,
+              class_id: true,
             },
           },
         },
@@ -315,6 +316,7 @@ const getTeacher = asyncHandler(async (req, res, next) => {
     sections: teacher_sections.map(({ section }) => ({
       id: section.id,
       section_name: section.section_name,
+      class_id: section.class_id,
     })),
     subjects: teacher_subjects.map(({ subject }) => ({
       id: subject.id,

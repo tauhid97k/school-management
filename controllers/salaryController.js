@@ -7,6 +7,7 @@ const {
 } = require('../utils/metaData')
 const { salaryValidator } = require('../validators/salaryValidator')
 const generateFileLink = require('../utils/generateFileLink')
+const { formatDate } = require('../utils/transformData')
 
 /*
   @route    GET: /salaries/user-info
@@ -99,7 +100,7 @@ const getUserTypeWithInfo = asyncHandler(async (req, res, next) => {
         id: true,
         name: true,
         profile_img: true,
-        joining_date: true,
+        created_at: true,
       },
     })
 
@@ -108,7 +109,7 @@ const getUserTypeWithInfo = asyncHandler(async (req, res, next) => {
       id: getAdmin.id,
       name: getAdmin.name,
       profile_img: getAdmin.profile_img ? getAdmin.profile_img : null,
-      joining_date: getAdmin.joining_date,
+      joining_date: getAdmin.created_at,
     }
 
     response.user_info = formatAdmin
@@ -129,7 +130,9 @@ const getUserTypeWithInfo = asyncHandler(async (req, res, next) => {
     const formatStaff = {
       id: getStaff.id,
       name: getStaff.name,
-      profile_img: getStaff.profile_img ? getStaff.profile_img : null,
+      profile_img: getStaff.profile_img
+        ? generateFileLink(`staffs/profiles/${getStaff.profile_img}`)
+        : null,
       joining_date: getStaff.joining_date,
     }
 
@@ -266,12 +269,21 @@ const getSalaryDetails = asyncHandler(async (req, res, next) => {
     }
 
     // Format salary details
-    const { admin, teacher, staff, admin_id, teacher_id, staff_id, ...rest } =
-      findSalary
+    const {
+      admin,
+      teacher,
+      staff,
+      admin_id,
+      teacher_id,
+      staff_id,
+      salary_date,
+      ...rest
+    } = findSalary
 
     let user_details = teacher || admin || staff
 
     user_details = {
+      user_id: user_details.id,
       name: user_details.name,
       designation: user_details.designation.title,
       profile_img:
@@ -288,6 +300,7 @@ const getSalaryDetails = asyncHandler(async (req, res, next) => {
 
     const formatSalary = {
       ...rest,
+      salary_date: formatDate(salary_date),
       ...user_details,
     }
 
@@ -361,9 +374,87 @@ const createSalary = asyncHandler(async (req, res, next) => {
   })
 })
 
+/*
+  @route    PUT: /salaries
+  @access   private
+  @desc     Update salary for admin/teacher/staff
+*/
+const updateSalary = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  const data = await salaryValidator().validate(req.body, { abortEarly: false })
+
+  if (data.user_type === 'admin') {
+    await prisma.salaries.update({
+      where: {
+        id,
+      },
+      data: {
+        user_type: data.user_type,
+        salary_amount: data.salary_amount,
+        salary_date: data.salary_date,
+        bonus: data.bonus,
+        advance: data.advance,
+        due: data.due,
+        payment_status: data.payment_status,
+        admin_id: data.user_id,
+      },
+    })
+
+    return res.json({
+      message: 'Salary updated',
+    })
+  } else if (data.user_type === 'teacher') {
+    await prisma.salaries.update({
+      where: {
+        id,
+      },
+      data: {
+        user_type: data.user_type,
+        salary_amount: data.salary_amount,
+        salary_date: data.salary_date,
+        bonus: data.bonus,
+        advance: data.advance,
+        due: data.due,
+        payment_status: data.payment_status,
+        teacher_id: data.user_id,
+      },
+    })
+
+    return res.json({
+      message: 'Salary updated',
+    })
+  } else if (data.user_type !== 'teacher' || data.user_type !== 'admin') {
+    await prisma.salaries.update({
+      where: {
+        id,
+      },
+      data: {
+        user_type: data.user_type,
+        salary_amount: data.salary_amount,
+        salary_date: data.salary_date,
+        bonus: data.bonus,
+        advance: data.advance,
+        due: data.due,
+        payment_status: data.payment_status,
+        staff_id: data.user_id,
+      },
+    })
+
+    return res.json({
+      message: 'Salary updated',
+    })
+  }
+
+  res.status(400).json({
+    message: 'User type did not match',
+  })
+})
+
 module.exports = {
   getUserTypeWithInfo,
   getSalaries,
   getSalaryDetails,
   createSalary,
+  updateSalary,
 }

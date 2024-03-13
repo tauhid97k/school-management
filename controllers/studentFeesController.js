@@ -6,7 +6,6 @@ const {
   studentFeesFields,
   paginateWithSorting,
 } = require('../utils/metaData')
-const dayjs = require('dayjs')
 const { formatDate } = require('../utils/transformData')
 const generateFileLink = require('../utils/generateFileLink')
 
@@ -93,6 +92,26 @@ const studentFeeList = asyncHandler(async (req, res, next) => {
 
   const [studentFees, total] = await prisma.$transaction([
     prisma.student_fees.findMany({
+      include: {
+        student: {
+          select: {
+            id: true,
+            name: true,
+            roll: true,
+            profile_img: true,
+            class: {
+              select: {
+                class_name: true,
+              },
+            },
+            section: {
+              select: {
+                section_name: true,
+              },
+            },
+          },
+        },
+      },
       take,
       skip,
       orderBy,
@@ -100,8 +119,23 @@ const studentFeeList = asyncHandler(async (req, res, next) => {
     prisma.student_fees.count(),
   ])
 
+  // Format Student Fees
+  const formatStudentFees = studentFees.map((fee) => {
+    const { student, ...rest } = fee
+    return {
+      ...rest,
+      name: student.name,
+      roll: student.roll,
+      profile_img: student.profile_img
+        ? generateFileLink(`students/profiles/${student.profile_img}`)
+        : null,
+      class_name: student.class.class_name,
+      section_name: student.section.section_name,
+    }
+  })
+
   res.json({
-    data: studentFees,
+    data: formatStudentFees,
     meta: {
       page,
       limit: take,
@@ -111,14 +145,23 @@ const studentFeeList = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /student-fees
+  @access   private
+  @desc     Get fee details
+*/
+const studentFeeDetails = asyncHandler(async (req, res, next) => {})
+
+/*
   @route    POST: /student-fees
   @access   private
   @desc     Create student fee
 */
 const createStudentFee = asyncHandler(async (req, res, next) => {
+  console.log('before')
   const data = await studentFeesValidator().validate(req.body, {
     abortEarly: false,
   })
+  console.log('after')
 
   await prisma.student_fees.create({
     data,

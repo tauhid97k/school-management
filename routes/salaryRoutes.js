@@ -8,5 +8,6 @@ router.get('/user-info', authMiddleware(), salaryController.getUserTypeWithInfo)
 router.get('/', authMiddleware(), salaryController.getSalaries)
 router.get('/:id', authMiddleware(), salaryController.getSalaryDetails)
 router.post('/', authMiddleware(), salaryController.createSalary)
+router.put('/:id', authMiddleware(), salaryController.updateSalary)
 
 module.exports = router
