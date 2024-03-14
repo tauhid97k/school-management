@@ -103,14 +103,15 @@ const getClassRoutineOrSections = asyncHandler(async (req, res, next) => {
           id: true,
           section: {
             select: {
+              id: true,
               section_name: true,
             },
           },
         },
       })
       // Format Data
-      const formatSections = findDistinctSections.map(({ id, section }) => ({
-        id,
+      const formatSections = findDistinctSections.map(({ section }) => ({
+        id: section.id,
         section_name: section.section_name,
       }))
       response.sections = formatSections
@@ -195,6 +196,16 @@ const getSectionRoutine = asyncHandler(async (req, res, next) => {
           select: {
             id: true,
             section_name: true,
+            room: {
+              select: {
+                room_number: true,
+              },
+            },
+            class: {
+              select: {
+                class_name: true,
+              },
+            },
           },
         },
         routines: {
@@ -216,23 +227,29 @@ const getSectionRoutine = asyncHandler(async (req, res, next) => {
     })
 
     // Format Data
-    const formatData = findSectionRoutine.map(
-      ({ id, week_day, created_at, updated_at, section, routines }) => ({
-        id,
-        week_day,
-        section_id: section.id,
-        section_name: section.section_name,
-        routines: routines.map(({ subject, start_time, end_time }) => ({
-          subject_id: subject.id,
-          subject_name: subject.name,
-          subject_code: subject.code,
-          start_time,
-          end_time,
-        })),
-        created_at,
-        updated_at,
-      })
-    )
+    const formatData = {
+      class_name: findSectionRoutine.at(0).section.class.class_name,
+      section_name: findSectionRoutine.at(0).section.section_name,
+      room_number: findSectionRoutine.at(0).section.room.room_number,
+      routines: findSectionRoutine.map(
+        ({ id, week_day, created_at, updated_at, section, routines }) => ({
+          id,
+          week_day,
+          section_id: section.id,
+          section_name: section.section_name,
+          class_name: section.class.class_name,
+          routines: routines.map(({ subject, start_time, end_time }) => ({
+            subject_id: subject.id,
+            subject_name: subject.name,
+            subject_code: subject.code,
+            start_time,
+            end_time,
+          })),
+          created_at,
+          updated_at,
+        })
+      ),
+    }
 
     res.json(formatData)
   })

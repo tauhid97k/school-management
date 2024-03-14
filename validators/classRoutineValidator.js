@@ -1,7 +1,7 @@
 const yup = require('yup')
 const prisma = require('../utils/prisma')
 
-const classRoutineValidator = () =>
+const classRoutineValidator = (id) =>
   yup.object({
     class_id: yup
       .number()
@@ -47,7 +47,37 @@ const classRoutineValidator = () =>
         'WEDNESDAY',
         'THURSDAY',
         'FRIDAY',
-      ]),
+      ])
+      .test('unique', 'Weekday already exist', async (value, ctx) => {
+        const class_id = ctx.parent.class_id
+        const section_id = ctx.parent.section_id
+
+        if (section_id) {
+          const findSectionRoutine = await prisma.class_routines.findFirst({
+            where: {
+              section_id,
+              AND: {
+                week_day: value,
+              },
+            },
+          })
+
+          return findSectionRoutine ? false : true
+        } else if (class_id && !section_id) {
+          const findClassRoutine = await prisma.class_routines.findFirst({
+            where: {
+              class_id,
+              AND: {
+                week_day: value,
+              },
+            },
+          })
+
+          return findClassRoutine ? false : true
+        }
+
+        return true
+      }),
     routines: yup
       .array()
       .of(
