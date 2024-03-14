@@ -266,7 +266,7 @@ const getStudentFeesHistory = asyncHandler(async (req, res, next) => {
       skip,
       orderBy,
     }),
-    prisma.student_fees.findMany({
+    prisma.student_fees.count({
       where: {
         student_id: id,
       },
