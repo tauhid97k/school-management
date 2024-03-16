@@ -8,6 +8,7 @@ const {
   getSectionRoutine,
   createClassRoutine,
   updateClassRoutine,
+  deleteClassRoutineOnWeek,
   deleteClassRoutine,
 } = require('../controllers/classRoutineController')
 
@@ -19,5 +20,6 @@ router.get('/section/:id', authMiddleware(), getSectionRoutine)
 router.post('/', authMiddleware(), createClassRoutine)
 router.put('/:id', authMiddleware(), updateClassRoutine)
 router.delete('/:id', authMiddleware(), deleteClassRoutine)
+router.delete('/:id/week', authMiddleware(), deleteClassRoutineOnWeek)
 
 module.exports = router

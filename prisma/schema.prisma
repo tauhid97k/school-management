@@ -189,6 +189,7 @@ model teachers {
   teacher_notices      teacher_notices[]
   teacher_applications teacher_applications[]
   salaries             salaries[]
+  routines             routines[]
 }
 
 // Student
@@ -763,6 +764,7 @@ model routines {
   id               Int      @id @default(autoincrement())
   class_routine_id Int
   subject_id       Int
+  teacher_id       Int
   start_time       DateTime
   end_time         DateTime
   created_at       DateTime @default(now())
@@ -770,8 +772,10 @@ model routines {
 
   subject subjects       @relation(fields: [subject_id], references: [id], onDelete: Cascade)
   routine class_routines @relation(fields: [class_routine_id], references: [id], onDelete: Cascade)
+  teacher teachers       @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 
   @@index([class_routine_id])
+  @@index([teacher_id])
   @@index([start_time])
 }
 

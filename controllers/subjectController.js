@@ -8,6 +8,51 @@ const {
 } = require('../utils/metaData')
 
 /*
+  @route    GET: /subjects/:id/teachers
+  @access   private
+  @desc     Get subject teachers
+*/
+const getSubjectTeachers = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findSubject = await tx.subjects.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findSubject) {
+      return res.status(404).json({
+        message: 'Subject not found',
+      })
+    }
+
+    const getTeachers = await tx.teacher_subjects.findMany({
+      where: {
+        subject_id: findSubject.id,
+      },
+      select: {
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    })
+
+    // Format Data
+    const formatData = getTeachers.map(({ teacher }) => ({
+      id: teacher.id,
+      name: teacher.name,
+    }))
+
+    res.json(formatData)
+  })
+})
+
+/*
   @route    GET: /subjects
   @access   private
   @desc     All subjects
@@ -227,6 +272,7 @@ const deleteSubject = asyncHandler(async (req, res, next) => {
 
 module.exports = {
   getAllSubjects,
+  getSubjectTeachers,
   getSubject,
   createSubject,
   updateSubject,

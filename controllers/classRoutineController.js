@@ -77,6 +77,12 @@ const getRoutineByClassOrSection = asyncHandler(async (req, res, next) => {
               code: true,
             },
           },
+          teacher: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
           start_time: true,
           end_time: true,
         },
@@ -85,10 +91,12 @@ const getRoutineByClassOrSection = asyncHandler(async (req, res, next) => {
   })
 
   const formatRoutines = classSectionRoutine.flatMap(({ routines }) =>
-    routines.map(({ subject, start_time, end_time }) => ({
+    routines.map(({ subject, teacher, start_time, end_time }) => ({
       subject_id: subject.id,
       subject_name: subject.name,
       subject_code: subject.code,
+      teacher_id: teacher.id,
+      teacher_name: teacher.name,
       start_time,
       end_time,
     }))
@@ -227,6 +235,17 @@ const getClassRoutineOrSections = asyncHandler(async (req, res, next) => {
                   code: true,
                 },
               },
+              teacher: {
+                select: {
+                  id: true,
+                  name: true,
+                  designation: {
+                    select: {
+                      title: true,
+                    },
+                  },
+                },
+              },
               start_time: true,
               end_time: true,
             },
@@ -239,13 +258,18 @@ const getClassRoutineOrSections = asyncHandler(async (req, res, next) => {
           id,
           week_day,
           class_name: routineClass.class_name,
-          routines: routines.map(({ subject, start_time, end_time }) => ({
-            subject_id: subject.id,
-            subject_name: subject.name,
-            subject_code: subject.code,
-            start_time,
-            end_time,
-          })),
+          routines: routines.map(
+            ({ subject, teacher, start_time, end_time }) => ({
+              subject_id: subject.id,
+              subject_name: subject.name,
+              subject_code: subject.code,
+              teacher_id: teacher.id,
+              teacher_name: teacher.name,
+              teacher_designation: teacher.designation.title,
+              start_time,
+              end_time,
+            })
+          ),
         })
       )
       response.class_routine = formatData
@@ -310,6 +334,17 @@ const getSectionRoutine = asyncHandler(async (req, res, next) => {
                 code: true,
               },
             },
+            teacher: {
+              select: {
+                id: true,
+                name: true,
+                designation: {
+                  select: {
+                    title: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -327,13 +362,18 @@ const getSectionRoutine = asyncHandler(async (req, res, next) => {
           section_id: section.id,
           section_name: section.section_name,
           class_name: section.class.class_name,
-          routines: routines.map(({ subject, start_time, end_time }) => ({
-            subject_id: subject.id,
-            subject_name: subject.name,
-            subject_code: subject.code,
-            start_time,
-            end_time,
-          })),
+          routines: routines.map(
+            ({ subject, teacher, start_time, end_time }) => ({
+              subject_id: subject.id,
+              subject_name: subject.name,
+              subject_code: subject.code,
+              teacher_id: teacher.id,
+              teacher_name: teacher.name,
+              teacher_designation: teacher.designation.title,
+              start_time,
+              end_time,
+            })
+          ),
           created_at,
           updated_at,
         })
@@ -429,7 +469,7 @@ const updateClassRoutine = asyncHandler(async (req, res, next) => {
 })
 
 /*
-  @route    DELETE: /class-routines/:id
+  @route    DELETE: /class-routines/:id/week
   @access   private
   @desc     delete class routine
 */
@@ -486,23 +526,25 @@ const deleteClassRoutineOnWeek = asyncHandler(async (req, res, next) => {
     }
   }
 
-  await prisma.class_routines.findMany({
-    where: whereCondition,
-    select: {
-      routines: {
-        select: {
-          subject: {
-            select: {
-              id: true,
-              name: true,
-              code: true,
-            },
-          },
-          start_time: true,
-          end_time: true,
-        },
-      },
-    },
+  await prisma.$transaction(async (tx) => {
+    const routineToDelete = await tx.class_routines.findMany({
+      where: whereCondition,
+    })
+
+    if (routineToDelete.length === 0) {
+      return res.status(404).json({
+        message: 'No class routine found',
+      })
+    }
+
+    // Delete the found routines
+    await tx.class_routines.deleteMany({
+      where: whereCondition,
+    })
+
+    res.json({
+      message: `${week_day} routine deleted`,
+    })
   })
 })
 
@@ -543,5 +585,6 @@ module.exports = {
   getSectionRoutine,
   createClassRoutine,
   updateClassRoutine,
+  deleteClassRoutineOnWeek,
   deleteClassRoutine,
 }

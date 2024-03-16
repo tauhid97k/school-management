@@ -108,6 +108,20 @@ const classRoutineValidator = (id) =>
               if (findSubject) return true
               else return false
             }),
+          teacher_id: yup
+            .number()
+            .typeError('Teacher id must be a number')
+            .required('Teacher is required')
+            .test('exist', 'Teacher does not exist', async (value) => {
+              const findTeacher = await prisma.teachers.findUnique({
+                where: {
+                  id: value,
+                },
+              })
+
+              if (findTeacher) return true
+              else return false
+            }),
           start_time: yup
             .date()
             .typeError('Start time must be a valid date time')
