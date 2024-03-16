@@ -62,7 +62,13 @@ const classRoutineValidator = (id) =>
             },
           })
 
-          return findSectionRoutine ? false : true
+          if (findSectionRoutine && !id) {
+            return false
+          } else if (findSectionRoutine && id) {
+            if (findSectionRoutine.id === id) {
+              return true
+            }
+          }
         } else if (class_id && !section_id) {
           const findClassRoutine = await prisma.class_routines.findFirst({
             where: {
@@ -73,7 +79,13 @@ const classRoutineValidator = (id) =>
             },
           })
 
-          return findClassRoutine ? false : true
+          if (findClassRoutine && !id) {
+            return false
+          } else if (findClassRoutine && id) {
+            if (findClassRoutine.id === id) {
+              return true
+            }
+          }
         }
 
         return true

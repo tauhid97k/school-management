@@ -410,7 +410,7 @@ const updateClassRoutine = asyncHandler(async (req, res, next) => {
 
     await tx.class_routines.update({
       where: {
-        id,
+        id: classRoutine.id,
       },
       data: {
         class_id: data.class_id,
@@ -433,6 +433,84 @@ const updateClassRoutine = asyncHandler(async (req, res, next) => {
   @access   private
   @desc     delete class routine
 */
+const deleteClassRoutineOnWeek = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, classRoutineFields)
+  let { class_id, section_id, week_day } = selectedQueries
+  class_id = class_id ? Number(class_id) : null
+  section_id = section_id ? Number(section_id) : null
+
+  if (!class_id) {
+    return res.status(400).json({
+      message: 'Class id is required',
+    })
+  }
+
+  // Check class section
+  if (!section_id) {
+    const checkClassSection = await prisma.classes.findUnique({
+      where: {
+        id: class_id,
+      },
+      select: {
+        id: true,
+        _count: {
+          select: {
+            sections: true,
+          },
+        },
+      },
+    })
+
+    if (checkClassSection._count.sections > 0) {
+      return res.status(400).json({
+        message: 'Section id is required',
+      })
+    }
+  }
+
+  if (!week_day) {
+    return res.status(400).json({
+      message: 'Week day is required',
+    })
+  }
+
+  let whereCondition = {}
+
+  if (class_id && section_id) {
+    whereCondition = {
+      AND: [{ class_id }, { section_id }, { week_day }],
+    }
+  } else if (class_id && !section_id) {
+    whereCondition = {
+      AND: [{ class_id }, { week_day }],
+    }
+  }
+
+  await prisma.class_routines.findMany({
+    where: whereCondition,
+    select: {
+      routines: {
+        select: {
+          subject: {
+            select: {
+              id: true,
+              name: true,
+              code: true,
+            },
+          },
+          start_time: true,
+          end_time: true,
+        },
+      },
+    },
+  })
+})
+
+/*
+  @route    DELETE: /class-routines/:classId
+  @access   private
+  @desc     delete class routine
+*/
 const deleteClassRoutine = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
@@ -448,8 +526,10 @@ const deleteClassRoutine = asyncHandler(async (req, res, next) => {
         message: 'No class routine found',
       })
 
-    await tx.class_routines.delete({
-      where: { id },
+    await tx.class_routines.deleteMany({
+      where: {
+        class_id: classRoutine.class_id,
+      },
     })
 
     res.json({ message: 'Class routine deleted' })
