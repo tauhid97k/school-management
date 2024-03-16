@@ -8,6 +8,96 @@ const {
 const { classRoutineValidator } = require('../validators/classRoutineValidator')
 
 /*
+  @route    GET: /class-routines/routine?class_id&section_id&week_day
+  @access   private
+  @desc     Get routine by class or section and weekday (Filter)
+*/
+const getRoutineByClassOrSection = asyncHandler(async (req, res, next) => {
+  const selectedQueries = selectQueries(req.query, classRoutineFields)
+  let { class_id, section_id, week_day } = selectedQueries
+  class_id = class_id ? Number(class_id) : null
+  section_id = section_id ? Number(section_id) : null
+
+  if (!class_id) {
+    return res.status(400).json({
+      message: 'Class id is required',
+    })
+  }
+
+  // Check class section
+  if (!section_id) {
+    const checkClassSection = await prisma.classes.findUnique({
+      where: {
+        id: class_id,
+      },
+      select: {
+        id: true,
+        _count: {
+          select: {
+            sections: true,
+          },
+        },
+      },
+    })
+
+    if (checkClassSection._count.sections > 0) {
+      return res.status(400).json({
+        message: 'Section id is required',
+      })
+    }
+  }
+
+  if (!week_day) {
+    return res.status(400).json({
+      message: 'Week day is required',
+    })
+  }
+
+  let whereCondition = {}
+
+  if (class_id && section_id) {
+    whereCondition = {
+      AND: [{ class_id }, { section_id }, { week_day }],
+    }
+  } else if (class_id && !section_id) {
+    whereCondition = {
+      AND: [{ class_id }, { week_day }],
+    }
+  }
+
+  const classSectionRoutine = await prisma.class_routines.findMany({
+    where: whereCondition,
+    select: {
+      routines: {
+        select: {
+          subject: {
+            select: {
+              id: true,
+              name: true,
+              code: true,
+            },
+          },
+          start_time: true,
+          end_time: true,
+        },
+      },
+    },
+  })
+
+  const formatRoutines = classSectionRoutine.flatMap(({ routines }) =>
+    routines.map(({ subject, start_time, end_time }) => ({
+      subject_id: subject.id,
+      subject_name: subject.name,
+      subject_code: subject.code,
+      start_time,
+      end_time,
+    }))
+  )
+
+  res.json(formatRoutines)
+})
+
+/*
   @route    GET: /class-routines/classes
   @access   private
   @desc     All classes that has routine
@@ -15,7 +105,6 @@ const { classRoutineValidator } = require('../validators/classRoutineValidator')
 const getAllRoutineClasses = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, classRoutineFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
-  const { week_day, class_id, section_id } = selectedQueries
 
   const routineClasses = await prisma.class_routines.findMany({
     distinct: ['class_id'],
@@ -368,6 +457,7 @@ const deleteClassRoutine = asyncHandler(async (req, res, next) => {
 })
 
 module.exports = {
+  getRoutineByClassOrSection,
   getAllRoutineClasses,
   getClassRoutineOrSections,
   getSectionRoutine,
