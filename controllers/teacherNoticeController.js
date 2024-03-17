@@ -14,6 +14,103 @@ const {
 } = require('../validators/teacherNoticeValidator')
 
 /*
+  @route    GET: /teacher-notices/student/:id
+  @access   private
+  @desc     GET Notice for student
+*/
+const getTeacherNoticeForStudent = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const selectedQueries = selectQueries(req.query, teacherNoticeFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const findStudent = await prisma.students.findUnique({
+    where: {
+      id,
+    },
+  })
+
+  if (!findStudent) {
+    return res.status(404).json({ message: 'Student not found' })
+  }
+
+  let whereCondition = {}
+
+  if (findStudent.class_id && !findStudent.section_id) {
+    whereCondition = {
+      AND: [{ class_id: findStudent.class_id }, { status: 'PUBLISHED' }],
+    }
+  } else if (findStudent.section_id) {
+    whereCondition = {
+      AND: [{ section_id: findStudent.section_id }, { status: 'PUBLISHED' }],
+    }
+  }
+
+  // Get Notices
+  const [notices, total] = await prisma.$transaction([
+    prisma.teacher_notices.findMany({
+      where: whereCondition,
+      include: {
+        teacher: {
+          select: {
+            name: true,
+            designation: {
+              select: {
+                title: true,
+              },
+            },
+            profile_img: true,
+          },
+        },
+      },
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.teacher_notices.count({
+      where: whereCondition,
+    }),
+  ])
+
+  // Format Data
+  const formatData = notices.map(
+    ({
+      id,
+      title,
+      status,
+      description,
+      attachment,
+      teacher,
+      created_at,
+      updated_at,
+    }) => ({
+      id,
+      title,
+      status,
+      description,
+      attachment: attachment
+        ? generateFileLink(`teachers/notices/${attachment}`)
+        : null,
+      teacher_name: teacher.name,
+      teacher_designation: teacher.designation.title,
+      teacher_profile_img: teacher.profile_img
+        ? generateFileLink(`teachers/profiles/${teacher.profile_img}`)
+        : null,
+      created_at,
+      updated_at,
+    })
+  )
+
+  res.json({
+    data: formatData,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
   @route    GET: /teacher-notices/teacher/:teacherId
   @access   private
   @desc     GET All Notices
@@ -63,7 +160,12 @@ const getAllTeacherNotices = asyncHandler(async (req, res, next) => {
       skip,
       orderBy,
     }),
-    prisma.teacher_notices.count(),
+    prisma.teacher_notices.count({
+      where: {
+        teacher_id: teacherId,
+        ...(status && { status }),
+      },
+    }),
   ])
 
   const formatNotices = notices.map(
@@ -311,6 +413,7 @@ const deleteTeacherNotice = asyncHandler(async (req, res, next) => {
 })
 
 module.exports = {
+  getTeacherNoticeForStudent,
   getAllTeacherNotices,
   getTeacherNotice,
   createTeacherNotice,
