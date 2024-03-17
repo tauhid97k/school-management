@@ -2,6 +2,8 @@ const express = require('express')
 const router = express.Router()
 const authMiddleware = require('../middlewares/authMiddleware')
 const {
+  getStudentClassRoutine,
+  getTeacherClassRoutine,
   getRoutineByClassOrSection,
   getAllRoutineClasses,
   getClassRoutineOrSections,
@@ -13,6 +15,8 @@ const {
 } = require('../controllers/classRoutineController')
 
 // Protected Routes
+router.get('/student/:id', authMiddleware(), getStudentClassRoutine)
+router.get('/teacher/:id', authMiddleware(), getTeacherClassRoutine)
 router.get('/routine', authMiddleware(), getRoutineByClassOrSection)
 router.get('/classes', authMiddleware(), getAllRoutineClasses)
 router.get('/:id', authMiddleware(), getClassRoutineOrSections)

@@ -19,6 +19,50 @@ const fs = require('node:fs/promises')
 const assignRole = require('../utils/assignRole')
 
 /*
+  @route    GET: /students/:id/subjects
+  @access   private
+  @desc     Get only assigned subjects for a student (Based on class)
+*/
+const getSubjectsForStudent = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findStudent = await tx.students.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findStudent) {
+      return res.status(404).json({ message: 'Student not found' })
+    }
+
+    // Get Subjects for this student (Based on class)
+    const subjects = await tx.subject_classes.findMany({
+      where: {
+        class_id: findStudent.class_id,
+      },
+      include: {
+        subject: true,
+      },
+    })
+
+    // Format Data
+    const formatData = subjects.map(
+      ({ subject: { id, name, code, created_at, updated_at } }) => ({
+        id,
+        name,
+        code,
+        created_at,
+        updated_at,
+      })
+    )
+
+    res.json(formatData)
+  })
+})
+
+/*
   @route    GET: /students
   @access   private
   @desc     Get all students
@@ -271,6 +315,7 @@ const deleteStudent = asyncHandler(async (req, res, next) => {
 })
 
 module.exports = {
+  getSubjectsForStudent,
   getStudents,
   getStudent,
   createStudent,

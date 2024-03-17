@@ -8,6 +8,228 @@ const {
 const { classRoutineValidator } = require('../validators/classRoutineValidator')
 
 /*
+  @route    GET: /class-routines/teacher/:id
+  @access   private
+  @desc     Get routine by for a student (Based on class/section)
+*/
+const getTeacherClassRoutine = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findTeacher = await tx.teachers.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findTeacher) {
+      return res.status(404).json({ message: 'Teacher not found' })
+    }
+
+    const routines = await tx.routines.findMany({
+      where: {
+        teacher_id: findTeacher.id,
+      },
+      select: {
+        subject: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+        start_time: true,
+        end_time: true,
+        routine: {
+          select: {
+            id: true,
+            week_day: true,
+            class: {
+              select: {
+                id: true,
+                class_name: true,
+              },
+            },
+            section: {
+              select: {
+                id: true,
+                section_name: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    // Format Data
+    const formatData = routines.map(
+      ({ routine, subject, start_time, end_time }) => ({
+        id: routine.id,
+        week_day: routine.week_day,
+        class_name: routine.class.class_name,
+        section_name: routine.section ? routine.section.section_name : null,
+        subject_id: subject.id,
+        subject_name: subject.name,
+        subject_code: subject.code,
+        start_time,
+        end_time,
+      })
+    )
+
+    return res.json(formatData)
+  })
+})
+
+/*
+  @route    GET: /class-routines/student/:id
+  @access   private
+  @desc     Get routine by for a student (Based on class/section)
+*/
+const getStudentClassRoutine = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findStudent = await tx.students.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findStudent) {
+      return res.status(404).json({ message: 'Student not found' })
+    }
+
+    // Get class or section routine (Based on student)
+    let response
+    if (findStudent.class_id && !findStudent.section_id) {
+      response = await tx.class_routines.findMany({
+        where: {
+          class_id: findStudent.class_id,
+        },
+        select: {
+          id: true,
+          week_day: true,
+          class: {
+            select: {
+              class_name: true,
+            },
+          },
+          routines: {
+            select: {
+              subject: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true,
+                },
+              },
+              teacher: {
+                select: {
+                  id: true,
+                  name: true,
+                  designation: {
+                    select: {
+                      title: true,
+                    },
+                  },
+                },
+              },
+              start_time: true,
+              end_time: true,
+            },
+          },
+        },
+      })
+
+      // Format Data
+      const formatData = response.map(
+        ({ id, week_day, class: routineClass, routines }) => ({
+          id,
+          week_day,
+          class_name: routineClass.class_name,
+          routines: routines.map(
+            ({ subject, teacher, start_time, end_time }) => ({
+              subject_id: subject.id,
+              subject_name: subject.name,
+              subject_code: subject.code,
+              teacher_id: teacher.id,
+              teacher_name: teacher.name,
+              teacher_designation: teacher.designation.title,
+              start_time,
+              end_time,
+            })
+          ),
+        })
+      )
+
+      return res.json(formatData)
+    } else if (findStudent.section_id) {
+      response = await tx.class_routines.findMany({
+        where: {
+          section_id: findStudent.section_id,
+        },
+        select: {
+          id: true,
+          week_day: true,
+          class: {
+            select: {
+              class_name: true,
+            },
+          },
+          routines: {
+            select: {
+              subject: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true,
+                },
+              },
+              teacher: {
+                select: {
+                  id: true,
+                  name: true,
+                  designation: {
+                    select: {
+                      title: true,
+                    },
+                  },
+                },
+              },
+              start_time: true,
+              end_time: true,
+            },
+          },
+        },
+      })
+
+      // Format Data
+      const formatData = response.map(
+        ({ id, week_day, class: routineClass, routines }) => ({
+          id,
+          week_day,
+          class_name: routineClass.class_name,
+          routines: routines.map(
+            ({ subject, teacher, start_time, end_time }) => ({
+              subject_id: subject.id,
+              subject_name: subject.name,
+              subject_code: subject.code,
+              teacher_id: teacher.id,
+              teacher_name: teacher.name,
+              teacher_designation: teacher.designation.title,
+              start_time,
+              end_time,
+            })
+          ),
+        })
+      )
+
+      return res.json(formatData)
+    }
+  })
+})
+
+/*
   @route    GET: /class-routines/routine?class_id&section_id&week_day
   @access   private
   @desc     Get routine by class or section and weekday (Filter)
@@ -579,6 +801,8 @@ const deleteClassRoutine = asyncHandler(async (req, res, next) => {
 })
 
 module.exports = {
+  getStudentClassRoutine,
+  getTeacherClassRoutine,
   getRoutineByClassOrSection,
   getAllRoutineClasses,
   getClassRoutineOrSections,
