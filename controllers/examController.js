@@ -81,16 +81,6 @@ const getExamForStudent = asyncHandler(async (req, res, next) => {
       id: exam.id,
       exam_name: exam.exam_category.exam_name,
       exam_date: exam.exam_routines?.at(0)?.start_time,
-      exam_routine: exam.exam_routines.map(
-        ({ id, full_mark, start_time, end_time, subject: { name, code } }) => ({
-          id,
-          full_mark,
-          start_time,
-          end_time,
-          subject_name: name,
-          subject_code: code,
-        })
-      ),
       status: exam.status,
       created_at: exam.created_at,
       updated_at: exam.updated_at,
@@ -104,6 +94,98 @@ const getExamForStudent = asyncHandler(async (req, res, next) => {
       limit: take,
       total,
     },
+  })
+})
+
+/*
+  @route    GET: /exams/student/:id/details/:examId
+  @access   private
+  @desc     Get exam details for student
+*/
+const getExamDetailsForStudent = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const examId = Number(req.params.examId)
+
+  await prisma.$transaction(async (tx) => {
+    const findStudent = await tx.students.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findStudent) {
+      return res.status(404).json({ message: 'Student not found' })
+    }
+
+    let whereCondition = {}
+
+    if (findStudent.class_id && !findStudent.section_id) {
+      whereCondition = {
+        exam_sections: {
+          some: {
+            class_id: findStudent.class_id,
+          },
+        },
+      }
+    } else if (findStudent.section_id) {
+      whereCondition = {
+        exam_sections: {
+          some: {
+            section_id: findStudent.section_id,
+          },
+        },
+      }
+    }
+
+    // Get Exam Details
+    const findExam = await tx.exams.findUnique({
+      where: {
+        id: examId,
+      },
+      include: {
+        exam_category: true,
+        exam_routines: {
+          include: {
+            subject: true,
+          },
+          orderBy: {
+            start_time: 'asc',
+          },
+        },
+      },
+    })
+
+    if (!findExam) {
+      return res.status(404).json({ message: 'Exam not found' })
+    }
+
+    // Format Data
+    const formatData = {
+      id: findExam.id,
+      status: findExam.status,
+      exam_date: findExam.exam_routines?.at(0)?.start_time,
+      exam_name: findExam.exam_category.exam_name,
+      exam_routine: findExam.exam_routines.map(
+        ({
+          id,
+          full_mark,
+          start_time,
+          end_time,
+          subject: { id: subjectId, name, code },
+        }) => ({
+          id,
+          full_mark,
+          start_time,
+          end_time,
+          subject_name: name,
+          subject_code: code,
+        })
+      ),
+      created_at: findExam.created_at,
+      updated_at: findExam.updated_at,
+    }
+
+    res.json(formatData)
   })
 })
 
@@ -460,6 +542,7 @@ const deleteExam = asyncHandler(async (req, res, next) => {
 module.exports = {
   getAllClassesAndSections,
   getExamForStudent,
+  getExamDetailsForStudent,
   getAllExams,
   getExam,
   createExam,
