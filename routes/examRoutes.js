@@ -3,6 +3,7 @@ const router = express.Router()
 const authMiddleware = require('../middlewares/authMiddleware')
 const {
   getAllClassesAndSections,
+  getExamForStudent,
   getAllExams,
   getExam,
   createExam,
@@ -15,6 +16,7 @@ const {
 router.get('/class-sections', authMiddleware(), getAllClassesAndSections)
 router.get('/', authMiddleware(), getAllExams)
 router.get('/:id', authMiddleware(), getExam)
+router.get('/student/:id', authMiddleware(), getExamForStudent)
 router.post('/', authMiddleware(), createExam)
 router.put('/:id', authMiddleware(), updateExam)
 router.patch('/:id/status', authMiddleware(), updateExamStatus)
