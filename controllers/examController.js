@@ -11,6 +11,130 @@ const {
 } = require('../validators/examValidator')
 
 /*
+  @route    GET: /exams/teacher/:id
+  @access   private
+  @desc     Get exam for teacher
+*/
+const getExamForTeacher = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const selectedQueries = selectQueries(req.query, commonFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const findTeacher = await prisma.teachers.findUnique({
+    where: {
+      id,
+    },
+    select: {
+      id: true,
+      teacher_classes: {
+        select: {
+          class_id: true,
+        },
+      },
+      teacher_sections: {
+        select: {
+          section_id: true,
+        },
+      },
+    },
+  })
+
+  if (!findTeacher) {
+    return res.status(404).json({ message: 'Teacher not found' })
+  }
+
+  // Format teacher classes/sections
+  const formatClasses = findTeacher.teacher_classes.map(
+    ({ class_id }) => class_id
+  )
+  const formatSections = findTeacher.teacher_sections.map(
+    ({ section_id }) => section_id
+  )
+
+  // Get Exam
+  const [exams, total] = await prisma.$transaction([
+    prisma.exams.findMany({
+      where: {
+        OR: [
+          {
+            AND: [
+              { exam_sections: { every: { section_id: null } } },
+              { exam_classes: { some: { class_id: { in: formatClasses } } } },
+            ],
+          },
+          {
+            exam_sections: { some: { section_id: { in: formatSections } } },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        status: true,
+        created_at: true,
+        updated_at: true,
+        exam_category: {
+          select: {
+            exam_name: true,
+          },
+        },
+        exam_routines: {
+          select: {
+            full_mark: true,
+            start_time: true,
+            end_time: true,
+            subject: {
+              select: {
+                name: true,
+                code: true,
+              },
+            },
+          },
+          orderBy: {
+            start_time: 'asc',
+          },
+        },
+      },
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.exams.count({
+      where: {
+        OR: [
+          {
+            AND: [
+              { exam_sections: { every: { section_id: null } } },
+              { exam_classes: { some: { class_id: { in: formatClasses } } } },
+            ],
+          },
+          {
+            exam_sections: { some: { section_id: { in: formatSections } } },
+          },
+        ],
+      },
+    }),
+  ])
+
+  const formatExams = exams.map((exam) => ({
+    id: exam.id,
+    exam_name: exam.exam_category.exam_name,
+    exam_date: exam.exam_routines?.at(0)?.start_time,
+    status: exam.status,
+    created_at: exam.created_at,
+    updated_at: exam.updated_at,
+  }))
+
+  res.json({
+    data: formatExams,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
   @route    GET: /exams/student/:id
   @access   private
   @desc     Get exam for student
@@ -542,6 +666,7 @@ const deleteExam = asyncHandler(async (req, res, next) => {
 module.exports = {
   getAllClassesAndSections,
   getExamForStudent,
+  getExamForTeacher,
   getExamDetailsForStudent,
   getAllExams,
   getExam,

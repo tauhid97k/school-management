@@ -333,11 +333,12 @@ const updateExamResult = asyncHandler(async (req, res, next) => {
 })
 
 /*
-  @route    PUT: /exam-results/publishing
+  @route    GET: /exam-results/publishing
   @access   private
   @desc     Get Publishable exam results
 */
 const getExamResultPublishing = asyncHandler(async (req, res, next) => {
+  console.log('Hello')
   const selectedQueries = selectQueries(req.query, commonFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
   const getResultPublishingList = await prisma.exam_results_publishing.findMany(

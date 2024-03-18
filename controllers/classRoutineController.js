@@ -696,76 +696,28 @@ const updateClassRoutine = asyncHandler(async (req, res, next) => {
   @desc     delete class routine
 */
 const deleteClassRoutineOnWeek = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, classRoutineFields)
-  let { class_id, section_id, week_day } = selectedQueries
-  class_id = class_id ? Number(class_id) : null
-  section_id = section_id ? Number(section_id) : null
-
-  if (!class_id) {
-    return res.status(400).json({
-      message: 'Class id is required',
-    })
-  }
-
-  // Check class section
-  if (!section_id) {
-    const checkClassSection = await prisma.classes.findUnique({
-      where: {
-        id: class_id,
-      },
-      select: {
-        id: true,
-        _count: {
-          select: {
-            sections: true,
-          },
-        },
-      },
-    })
-
-    if (checkClassSection._count.sections > 0) {
-      return res.status(400).json({
-        message: 'Section id is required',
-      })
-    }
-  }
-
-  if (!week_day) {
-    return res.status(400).json({
-      message: 'Week day is required',
-    })
-  }
-
-  let whereCondition = {}
-
-  if (class_id && section_id) {
-    whereCondition = {
-      AND: [{ class_id }, { section_id }, { week_day }],
-    }
-  } else if (class_id && !section_id) {
-    whereCondition = {
-      AND: [{ class_id }, { week_day }],
-    }
-  }
+  const id = Number(req.params.id)
 
   await prisma.$transaction(async (tx) => {
-    const routineToDelete = await tx.class_routines.findMany({
-      where: whereCondition,
+    const classRoutine = await tx.class_routines.findUnique({
+      where: {
+        id,
+      },
     })
 
-    if (routineToDelete.length === 0) {
+    if (!classRoutine)
       return res.status(404).json({
         message: 'No class routine found',
       })
-    }
 
-    // Delete the found routines
-    await tx.class_routines.deleteMany({
-      where: whereCondition,
+    await tx.class_routines.delete({
+      where: {
+        id: classRoutine.id,
+      },
     })
 
     res.json({
-      message: `${week_day} routine deleted`,
+      message: `${classRoutine.week_day} routine deleted`,
     })
   })
 })
