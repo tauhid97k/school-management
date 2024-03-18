@@ -338,11 +338,11 @@ const updateExamResult = asyncHandler(async (req, res, next) => {
   @desc     Get Publishable exam results
 */
 const getExamResultPublishing = asyncHandler(async (req, res, next) => {
-  console.log('Hello')
   const selectedQueries = selectQueries(req.query, commonFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
-  const getResultPublishingList = await prisma.exam_results_publishing.findMany(
-    {
+
+  const [getResultPublishingList, total] = await prisma.$transaction([
+    prisma.exam_results_publishing.findMany({
       select: {
         id: true,
         status: true,
@@ -366,8 +366,9 @@ const getExamResultPublishing = asyncHandler(async (req, res, next) => {
       take,
       skip,
       orderBy,
-    }
-  )
+    }),
+    prisma.exam_results_publishing.count(),
+  ])
 
   const formatData = getResultPublishingList.map(
     ({
@@ -424,7 +425,7 @@ const publishExamResult = asyncHandler(async (req, res, next) => {
       })
     }
 
-    tx.exam_results_publishing.update({
+    await tx.exam_results_publishing.update({
       where: {
         id: findPublishable.id,
       },

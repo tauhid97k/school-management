@@ -84,7 +84,7 @@ const examResultPublishValidator = () =>
     status: yup
       .string()
       .required('Status is required')
-      .oneOf(['PENDING', 'REVALUATING', 'PUBLISHED']),
+      .oneOf(['REVALUATING', 'PUBLISHED']),
   })
 
 module.exports = { examResultValidator, examResultPublishValidator }

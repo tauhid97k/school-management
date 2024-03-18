@@ -12,12 +12,12 @@ const {
 } = require('../controllers/examResultController')
 
 // Protected Routes
+router.get('/publishing', authMiddleware(), getExamResultPublishing)
+router.put('/publishing/:id', authMiddleware(), publishExamResult)
 router.get('/subjects', authMiddleware(), getExamSubjectsForResults)
 router.get('/', authMiddleware(), getExamResults)
 router.get('/:id', authMiddleware(), getExamResultDetails)
 router.post('/', authMiddleware(), createExamResult)
 router.put('/:id', authMiddleware(), updateExamResult)
-router.get('/publishing', authMiddleware(), getExamResultPublishing)
-router.put('/publishing/:id', authMiddleware(), publishExamResult)
 
 module.exports = router
