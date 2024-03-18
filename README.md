@@ -7,6 +7,7 @@
 ```
 Do above for different secret tokens (Access token, refresh token and reset_token)
 
+- NODE_ENV=production
 - PORT=5000
 - DOMAIN_NAME=
 - ACCESS_TOKEN_SECRET=
