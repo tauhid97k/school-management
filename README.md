@@ -24,4 +24,4 @@ Do above for different secret tokens (Access token, refresh token and reset_toke
 ### Database Setup
 - npx prisma db push
 - npx prisma db seed
-- npm run start
+- npm run prod
