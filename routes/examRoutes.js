@@ -5,6 +5,7 @@ const {
   getAllClassesAndSections,
   getExamForStudent,
   getExamDetailsForStudent,
+  getExamDetailsForTeacher,
   getExamForTeacher,
   getAllExams,
   getExam,
@@ -25,6 +26,11 @@ router.get(
   getExamDetailsForStudent
 )
 router.get('/teacher/:id', authMiddleware(), getExamForTeacher)
+router.get(
+  '/teacher/:id/details/:examId',
+  authMiddleware(),
+  getExamDetailsForTeacher
+)
 router.post('/', authMiddleware(), createExam)
 router.put('/:id', authMiddleware(), updateExam)
 router.patch('/:id/status', authMiddleware(), updateExamStatus)
