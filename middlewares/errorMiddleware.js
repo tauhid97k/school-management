@@ -40,9 +40,6 @@ const globalError = (error, req, res, next) => {
     } else {
       res.status(500).json({
         message: 'Something went wrong',
-        type: error.name,
-        stackTrace: error.stack,
-        error,
       })
     }
   }
