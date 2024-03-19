@@ -188,7 +188,7 @@ const getExamResultDetailsForStudent = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
   const resultId = Number(req.params.resultId)
 
-  const result = await prisma.exam_results.findUnique({
+  const result = await prisma.exam_results.findFirst({
     where: {
       AND: [{ id: resultId }, { student_id: id }],
     },
