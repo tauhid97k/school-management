@@ -109,6 +109,139 @@ const getExamSubjectsForResults = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /exam-results/student/:id
+  @access   private
+  @desc     Get exam results for student
+*/
+const getExamResultsForStudent = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const selectedQueries = selectQueries(req.query, examResultFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const findStudent = await prisma.students.findUnique({
+    where: {
+      id,
+    },
+  })
+
+  if (!findStudent) {
+    return res.status(404).json({
+      message: 'Student not found',
+    })
+  }
+
+  const [exams, total] = await prisma.$transaction([
+    prisma.exam_results.findMany({
+      where: {
+        AND: [{ student_id: id }, { exam: { status: 'CONCLUDED' } }],
+      },
+      select: {
+        id: true,
+        exam: {
+          include: {
+            exam_category: true,
+            exam_routines: {
+              orderBy: {
+                start_time: 'asc',
+              },
+            },
+          },
+        },
+      },
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.exam_results.count({
+      where: {
+        AND: [{ student_id: id }, { exam: { status: 'CONCLUDED' } }],
+      },
+    }),
+  ])
+
+  // Format Data
+  const formatData = exams.map(({ id, exam }) => ({
+    id,
+    status: exam.status,
+    exam_date: exam.exam_routines[0]?.start_time,
+    exam_name: exam.exam_category.exam_name,
+    created_at: exam.created_at,
+    updated_at: exam.updated_at,
+  }))
+
+  res.json({
+    data: formatData,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
+  @route    GET: /exam-results/student/:id/result/:resultId
+  @access   private
+  @desc     Get exam result details for student
+*/
+const getExamResultDetailsForStudent = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const resultId = Number(req.params.resultId)
+
+  const result = await prisma.exam_results.findUnique({
+    where: {
+      AND: [{ id: resultId }, { student_id: id }],
+    },
+    include: {
+      class: true,
+      exam: {
+        include: {
+          exam_category: true,
+          exam_routines: {
+            orderBy: {
+              start_time: 'asc',
+            },
+          },
+        },
+      },
+      student: {
+        select: {
+          id: true,
+          profile_img: true,
+          name: true,
+          roll: true,
+        },
+      },
+    },
+  })
+
+  if (!result) {
+    return res.status(404).json({
+      message: 'Result not found',
+    })
+  }
+
+  const formatResult = {
+    id: result.id,
+    exam_id: result.exam.id,
+    exam_name: result.exam.exam_category.exam_name,
+    exam_date: result.exam.exam_routines[0]?.start_time,
+    profile_img: generateFileLink(
+      `students/profiles/${result.student.profile_img}`
+    ),
+    class_id: result.class.id,
+    class_name: result.class.class_name,
+    student_name: result.student.name,
+    student_roll: result.student.roll,
+    subjects_marks: result.subjects_marks,
+    created_at: result.created_at,
+    updated_at: result.updated_at,
+  }
+
+  res.json(formatResult)
+})
+
+/*
   @route    GET: /exam-results
   @access   private
   @desc     Get exam results
@@ -425,12 +558,27 @@ const publishExamResult = asyncHandler(async (req, res, next) => {
       })
     }
 
+    let examStatus
+    if (status === 'PUBLISHED') {
+      examStatus = 'CONCLUDED'
+    } else if (status === 'PENDING' || status === 'REVALUATING') {
+      examStatus = 'ACTIVE'
+    }
+
+    'REVALUATING', 'PUBLISHED'
     await tx.exam_results_publishing.update({
       where: {
         id: findPublishable.id,
       },
       data: {
         status,
+        exam: {
+          update: {
+            data: {
+              status: examStatus,
+            },
+          },
+        },
       },
     })
 
@@ -442,6 +590,8 @@ const publishExamResult = asyncHandler(async (req, res, next) => {
 
 module.exports = {
   getExamSubjectsForResults,
+  getExamResultsForStudent,
+  getExamResultDetailsForStudent,
   getExamResults,
   getExamResultDetails,
   createExamResult,

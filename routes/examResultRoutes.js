@@ -3,6 +3,8 @@ const router = express.Router()
 const authMiddleware = require('../middlewares/authMiddleware')
 const {
   getExamSubjectsForResults,
+  getExamResultsForStudent,
+  getExamResultDetailsForStudent,
   getExamResults,
   getExamResultDetails,
   createExamResult,
@@ -14,6 +16,12 @@ const {
 // Protected Routes
 router.get('/publishing', authMiddleware(), getExamResultPublishing)
 router.put('/publishing/:id', authMiddleware(), publishExamResult)
+router.get('/student/:id', authMiddleware(), getExamResultsForStudent)
+router.get(
+  '/student/:id/result/:resultId',
+  authMiddleware(),
+  getExamResultDetailsForStudent
+)
 router.get('/subjects', authMiddleware(), getExamSubjectsForResults)
 router.get('/', authMiddleware(), getExamResults)
 router.get('/:id', authMiddleware(), getExamResultDetails)
