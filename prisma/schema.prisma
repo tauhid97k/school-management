@@ -299,6 +299,10 @@ model user_roles {
   staffs   staffs?   @relation(fields: [staff_id], references: [id], onDelete: Cascade)
 
   @@index([role_id])
+  @@index([admin_id])
+  @@index([teacher_id])
+  @@index([student_id])
+  @@index([staff_id])
 }
 
 // Roles Permissions

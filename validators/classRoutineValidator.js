@@ -55,10 +55,7 @@ const classRoutineValidator = (id) =>
         if (section_id) {
           const findSectionRoutine = await prisma.class_routines.findFirst({
             where: {
-              section_id,
-              AND: {
-                week_day: value,
-              },
+              AND: [{ section_id: Number(section_id) }, { week_day: value }],
             },
           })
 
@@ -72,10 +69,7 @@ const classRoutineValidator = (id) =>
         } else if (class_id && !section_id) {
           const findClassRoutine = await prisma.class_routines.findFirst({
             where: {
-              class_id,
-              AND: {
-                week_day: value,
-              },
+              AND: [{ class_id: Number(class_id) }, { week_day: value }],
             },
           })
 

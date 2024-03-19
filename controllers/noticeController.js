@@ -36,7 +36,9 @@ const getAllNotice = asyncHandler(async (req, res, next) => {
 
   const formatNotices = notices.map((notice) => ({
     ...notice,
-    attachment: generateFileLink(`notices/${notice.attachment}`),
+    attachment: notice.attachment
+      ? generateFileLink(`notices/${notice.attachment}`)
+      : null,
   }))
 
   res.json({
@@ -67,7 +69,9 @@ const getNotice = asyncHandler(async (req, res, next) => {
       message: 'No notice found',
     })
 
-  findNotice.attachment = generateFileLink(`notices/${findNotice.attachment}`)
+  findNotice.attachment = findNotice.attachment
+    ? generateFileLink(`notices/${findNotice.attachment}`)
+    : null
 
   res.json(findNotice)
 })

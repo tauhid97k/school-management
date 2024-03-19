@@ -293,7 +293,7 @@ const login = asyncHandler(async (req, res, next) => {
           email,
         },
       })
-    } else {
+    } else if (role === 'staff') {
       user = await tx.staffs.findUnique({
         where: {
           email,
@@ -369,7 +369,7 @@ const login = asyncHandler(async (req, res, next) => {
             user_device: deviceWithModel,
           },
         })
-      } else {
+      } else if (role === 'staff') {
         await tx.personal_tokens.create({
           data: {
             staff_id: user.id,
@@ -545,12 +545,24 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
 
       if (!user) return res.status(401).json({ message: 'Unauthorized' })
 
+      // Determine role
+      let setRole
+      if (role === 'admin') {
+        setRole = 'admin'
+      } else if (role === 'teacher') {
+        setRole = 'teacher'
+      } else if (role === 'student') {
+        setRole = 'student'
+      } else {
+        setRole = 'staff'
+      }
+
       // New JWT Access Token
       const newAccessToken = jwt.sign(
         {
           user: {
             email: user.email,
-            role,
+            role: setRole,
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
@@ -562,7 +574,7 @@ const refreshAuthToken = asyncHandler(async (req, res, next) => {
         {
           user: {
             email: user.email,
-            role,
+            role: setRole,
           },
         },
         process.env.REFRESH_TOKEN_SECRET,

@@ -12,7 +12,7 @@ const loginValidator = yup.object({
         },
       })
 
-      if (role) return true
+      if (role || value === 'staff') return true
       else return false
     }),
   email: yup
@@ -34,20 +34,20 @@ const loginValidator = yup.object({
             email: value,
           },
         })
-      }
-
-      // Check Teacher
-      if (role === 'teacher') {
+      } else if (role === 'teacher') {
         email = await prisma.teachers.findUnique({
           where: {
             email: value,
           },
         })
-      }
-
-      // Check Student
-      if (role === 'student') {
+      } else if (role === 'student') {
         email = await prisma.students.findUnique({
+          where: {
+            email: value,
+          },
+        })
+      } else if (role === 'staff') {
+        email = await prisma.staffs.findUnique({
           where: {
             email: value,
           },

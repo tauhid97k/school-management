@@ -54,10 +54,10 @@ const authMiddleware = (requiredPermission) => {
           email: user.email,
           email_verified_at: user.email_verified_at,
           created_at: user.created_at,
-          role: user.user_roles.at(0).roles.name,
-          permissions: user.user_roles
-            .at(0)
-            .roles.role_permissions.map(({ permissions }) => permissions.name),
+          role: user.user_roles[0]?.roles.name,
+          permissions: user.user_roles[0]?.roles.role_permissions.map(
+            ({ permissions }) => permissions.name
+          ),
         }
 
         // Format dates
