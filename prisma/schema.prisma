@@ -423,7 +423,6 @@ model classes {
 
   sections            sections[]
   subject_classes     subject_classes[]
-  exam_classes        exam_classes[]
   studens             students[]
   class_attendance    class_attendance[]
   exam_results        exam_results[]
@@ -431,6 +430,7 @@ model classes {
   teacher_assignments teacher_assignments[]
   teacher_notices     teacher_notices[]
   class_routines      class_routines[]
+  exams               exams[]
 }
 
 // Section Management
@@ -444,12 +444,12 @@ model sections {
 
   class               classes               @relation(fields: [class_id], references: [id], onDelete: Cascade)
   room                rooms?                @relation(fields: [room_id], references: [id])
-  exam_sections       exam_sections[]
   teacher_sections    teacher_sections[]
   teacher_assignments teacher_assignments[]
   students            students[]
   teacher_notices     teacher_notices[]
   class_routines      class_routines[]
+  exams               exams[]
 
   @@index([section_name])
   @@index([class_id])
@@ -516,47 +516,24 @@ model exam_categories {
 model exams {
   id               Int         @id @default(autoincrement())
   exam_category_id Int
+  class_id         Int
+  section_id       Int?
   status           exam_status @default(INACTIVE)
   created_at       DateTime    @default(now())
   updated_at       DateTime    @updatedAt
 
   exam_category exam_categories @relation(fields: [exam_category_id], references: [id])
+  class         classes         @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  section       sections?       @relation(fields: [section_id], references: [id], onDelete: Cascade)
 
-  exam_classes            exam_classes[]
-  exam_sections           exam_sections[]
   exam_routines           exam_routines[]
   exam_results            exam_results[]
   exam_results_publishing exam_results_publishing[]
-}
 
-// Exam Classes
-model exam_classes {
-  id         Int      @id @default(autoincrement())
-  exam_id    Int
-  class_id   Int
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  exam  exams   @relation(fields: [exam_id], references: [id], onDelete: Cascade)
-  class classes @relation(fields: [class_id], references: [id], onDelete: Cascade)
-
-  @@index([exam_id])
+  @@index([exam_category_id])
   @@index([class_id])
-}
-
-// Exam Sections
-model exam_sections {
-  id         Int      @id @default(autoincrement())
-  exam_id    Int
-  section_id Int?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  exam    exams     @relation(fields: [exam_id], references: [id], onDelete: Cascade)
-  section sections? @relation(fields: [section_id], references: [id], onDelete: Cascade)
-
-  @@index([exam_id])
   @@index([section_id])
+  @@index([status])
 }
 
 // Exam Routine

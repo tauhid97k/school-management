@@ -1,9 +1,10 @@
 const asyncHandler = require('express-async-handler')
 const prisma = require('./prisma')
+const generateFileLink = require('./generateFileLink')
 
 module.exports = asyncHandler(async (role, email) => {
   if (role === 'admin') {
-    return await prisma.admins.findUnique({
+    const admin = await prisma.admins.findUnique({
       where: {
         email,
       },
@@ -23,8 +24,14 @@ module.exports = asyncHandler(async (role, email) => {
         },
       },
     })
+
+    admin.profile_img = admin.profile_img
+      ? generateFileLink(`admins/profiles/${admin.profile_img}`)
+      : null
+
+    return admin
   } else if (role === 'teacher') {
-    return await prisma.teachers.findUnique({
+    const teacher = await prisma.teachers.findUnique({
       where: {
         email,
       },
@@ -44,8 +51,13 @@ module.exports = asyncHandler(async (role, email) => {
         },
       },
     })
+    teacher.profile_img = teacher.profile_img
+      ? generateFileLink(`teachers/profiles/${teacher.profile_img}`)
+      : null
+
+    return teacher
   } else if (role === 'student') {
-    return await prisma.students.findUnique({
+    const student = await prisma.students.findUnique({
       where: {
         email,
       },
@@ -65,8 +77,14 @@ module.exports = asyncHandler(async (role, email) => {
         },
       },
     })
+
+    student.profile_img = student.profile_img
+      ? generateFileLink(`students/profiles/${student.profile_img}`)
+      : null
+
+    return student
   } else {
-    return await prisma.staffs.findUnique({
+    const staff = await prisma.staffs.findUnique({
       where: {
         email,
       },
@@ -86,5 +104,11 @@ module.exports = asyncHandler(async (role, email) => {
         },
       },
     })
+
+    staff.profile_img = staff.profile_img
+      ? generateFileLink(`staffs/profiles/${staff.profile_img}`)
+      : null
+
+    return staff
   }
 })

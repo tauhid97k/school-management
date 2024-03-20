@@ -119,21 +119,11 @@ const classRoutineValidator = (id) =>
           start_time: yup
             .date()
             .typeError('Start time must be a valid date time')
-            .required('Start time is required')
-            .test('time', 'Start time must be in the future', (value) => {
-              const currentDate = new Date()
-              const startDate = new Date(value)
-              return startDate > currentDate
-            }),
+            .required('Start time is required'),
           end_time: yup
             .date()
             .typeError('End time must be a valid date time')
             .required('End time is required')
-            .test('time', 'End time must be in the future', (value) => {
-              const currentDate = new Date()
-              const endDate = new Date(value)
-              return endDate > currentDate
-            })
             .test(
               'compare',
               'End time must be after start time; and must be on the same day',

@@ -5,6 +5,8 @@ const {
   getExamSubjectsForResults,
   getExamResultsForStudent,
   getExamResultDetailsForStudent,
+  getExamsForResultForTeacher,
+  getExamResultsForTeacher,
   getExamResults,
   getExamResultDetails,
   createExamResult,
@@ -21,6 +23,12 @@ router.get(
   '/student/:id/result/:resultId',
   authMiddleware(),
   getExamResultDetailsForStudent
+)
+router.get('/teacher/:id/exams', authMiddleware(), getExamsForResultForTeacher)
+router.get(
+  '/teacher/:id/exams/:examId',
+  authMiddleware(),
+  getExamResultsForTeacher
 )
 router.get('/subjects', authMiddleware(), getExamSubjectsForResults)
 router.get('/', authMiddleware(), getExamResults)

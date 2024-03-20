@@ -37,38 +37,18 @@ const getExamSubjectsForResults = asyncHandler(async (req, res, next) => {
 
     const findExams = await tx.exams.findMany({
       where: {
-        status: 'ACTIVE',
+        AND: [{ status: 'ACTIVE' }, { class_id: Number(class_id) }],
       },
       include: {
-        exam_classes: {
-          where: {
-            class_id: Number(class_id),
-          },
-          include: {
-            exam: {
-              include: {
-                exam_category: true,
-              },
-            },
-          },
-        },
+        exam_category: true,
       },
     })
 
     if (findExams.length) {
-      response.exams = findExams.flatMap(({ exam_classes }) =>
-        exam_classes.map(
-          ({
-            exam: {
-              id,
-              exam_category: { exam_name },
-            },
-          }) => ({
-            id,
-            exam_name,
-          })
-        )
-      )
+      response.exams = findExams.map(({ id, exam_category }) => ({
+        id,
+        exam_name: exam_category.exam_name,
+      }))
     }
 
     // Get All Students (Of selected class)
@@ -242,6 +222,160 @@ const getExamResultDetailsForStudent = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /exam-results/teacher/:id/exams
+  @access   private
+  @desc     Get exam list for results for teacher
+*/
+const getExamsForResultForTeacher = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const selectedQueries = selectQueries(req.query, examResultFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const findTeacher = await prisma.teachers.findUnique({
+    where: {
+      id,
+    },
+    select: {
+      id: true,
+      teacher_classes: {
+        select: {
+          class_id: true,
+        },
+      },
+      teacher_sections: {
+        select: {
+          section_id: true,
+        },
+      },
+    },
+  })
+
+  if (!findTeacher) {
+    return res.status(404).json({
+      message: 'Teacher not found',
+    })
+  }
+
+  // Format teacher classes/sections
+  const formatClasses = findTeacher.teacher_classes.map(
+    ({ class_id }) => class_id
+  )
+  const formatSections = findTeacher.teacher_sections.map(
+    ({ section_id }) => section_id
+  )
+
+  const [exams, total] = await prisma.$transaction([
+    prisma.exam_results.findMany({
+      where: {
+        exam: {
+          AND: [
+            { class_id: { in: formatClasses } },
+            { section_id: { in: formatSections } },
+            { status: 'CONCLUDED' },
+          ],
+        },
+      },
+      select: {
+        id: true,
+        exam: {
+          include: {
+            exam_category: true,
+            exam_routines: {
+              orderBy: {
+                start_time: 'asc',
+              },
+            },
+          },
+        },
+      },
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.exam_results.count({
+      where: {
+        exam: {
+          AND: [
+            { class_id: { in: formatClasses } },
+            { section_id: { in: formatSections } },
+            { status: 'CONCLUDED' },
+          ],
+        },
+      },
+    }),
+  ])
+
+  // Format Data
+  const formatData = exams.map(({ id, exam }) => ({
+    id,
+    status: exam.status,
+    exam_date: exam.exam_routines[0]?.start_time,
+    exam_name: exam.exam_category.exam_name,
+    created_at: exam.created_at,
+    updated_at: exam.updated_at,
+  }))
+
+  res.json({
+    data: formatData,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
+  @route    GET: /exam-results/teacher/:id/exams/:examId
+  @access   private
+  @desc     Get exam list for results for teacher
+*/
+const getExamResultsForTeacher = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const examId = Number(req.params.examId)
+
+  const selectedQueries = selectQueries(req.query, examResultFields)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  const findTeacher = await prisma.teachers.findUnique({
+    where: {
+      id,
+    },
+  })
+
+  if (!findTeacher) {
+    return res.status(404).json({
+      message: 'Teacher not found',
+    })
+  }
+
+  const [results, total] = await prisma.$transaction([
+    prisma.exam_results.findMany({
+      where: {
+        exam_id: examId,
+      },
+      take,
+      skip,
+      orderBy,
+    }),
+    prisma.exam_results.count({
+      where: {
+        exam_id: examId,
+      },
+    }),
+  ])
+
+  res.json({
+    data: results,
+    meta: {
+      page,
+      limit: take,
+      total,
+    },
+  })
+})
+
+/*
   @route    GET: /exam-results
   @access   private
   @desc     Get exam results
@@ -258,35 +392,18 @@ const getExamResults = asyncHandler(async (req, res, next) => {
 
   if (class_id) {
     const findExams = await prisma.exams.findMany({
+      where: {
+        class_id: Number(class_id),
+      },
       include: {
-        exam_classes: {
-          where: {
-            class_id: Number(class_id),
-          },
-          include: {
-            exam: {
-              include: {
-                exam_category: true,
-              },
-            },
-          },
-        },
+        exam_category: true,
       },
     })
 
-    response.exams = findExams.flatMap(({ exam_classes }) =>
-      exam_classes.map(
-        ({
-          exam: {
-            id,
-            exam_category: { exam_name },
-          },
-        }) => ({
-          id,
-          exam_name,
-        })
-      )
-    )
+    response.exams = findExams.map(({ id, exam_category }) => ({
+      id,
+      exam_name: exam_category.exam_name,
+    }))
   }
 
   const [results, total] = await prisma.$transaction([
@@ -592,6 +709,8 @@ module.exports = {
   getExamSubjectsForResults,
   getExamResultsForStudent,
   getExamResultDetailsForStudent,
+  getExamsForResultForTeacher,
+  getExamResultsForTeacher,
   getExamResults,
   getExamResultDetails,
   createExamResult,

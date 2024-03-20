@@ -52,6 +52,7 @@ const authMiddleware = (requiredPermission) => {
           id: user.id,
           name: user.name,
           email: user.email,
+          profile_img: user.profile_img,
           email_verified_at: user.email_verified_at,
           created_at: user.created_at,
           role: user.user_roles[0]?.roles.name,

@@ -57,13 +57,10 @@ const getExamForTeacher = asyncHandler(async (req, res, next) => {
       where: {
         OR: [
           {
-            AND: [
-              { exam_sections: { every: { section_id: null } } },
-              { exam_classes: { some: { class_id: { in: formatClasses } } } },
-            ],
+            AND: [{ section_id: null }, { class_id: { in: formatClasses } }],
           },
           {
-            exam_sections: { some: { section_id: { in: formatSections } } },
+            section_id: { in: formatSections },
           },
         ],
       },
@@ -158,19 +155,11 @@ const getExamForStudent = asyncHandler(async (req, res, next) => {
 
   if (findStudent.class_id && !findStudent.section_id) {
     whereCondition = {
-      exam_sections: {
-        some: {
-          class_id: findStudent.class_id,
-        },
-      },
+      class_id: findStudent.class_id,
     }
   } else if (findStudent.section_id) {
     whereCondition = {
-      exam_sections: {
-        some: {
-          section_id: findStudent.section_id,
-        },
-      },
+      section_id: findStudent.section_id,
     }
   }
 
@@ -245,19 +234,11 @@ const getExamDetailsForStudent = asyncHandler(async (req, res, next) => {
 
     if (findStudent.class_id && !findStudent.section_id) {
       whereCondition = {
-        exam_sections: {
-          some: {
-            class_id: findStudent.class_id,
-          },
-        },
+        class_id: findStudent.class_id,
       }
     } else if (findStudent.section_id) {
       whereCondition = {
-        exam_sections: {
-          some: {
-            section_id: findStudent.section_id,
-          },
-        },
+        section_id: findStudent.section_id,
       }
     }
 
@@ -301,6 +282,7 @@ const getExamDetailsForStudent = asyncHandler(async (req, res, next) => {
           full_mark,
           start_time,
           end_time,
+          subject_id: subjectId,
           subject_name: name,
           subject_code: code,
         })
@@ -373,6 +355,7 @@ const getExamDetailsForTeacher = asyncHandler(async (req, res, next) => {
           full_mark,
           start_time,
           end_time,
+          subject_id: subjectId,
           subject_name: name,
           subject_code: code,
         })
@@ -464,16 +447,8 @@ const getExam = asyncHandler(async (req, res, next) => {
       },
       include: {
         exam_category: true,
-        exam_classes: {
-          include: {
-            class: true,
-          },
-        },
-        exam_sections: {
-          include: {
-            section: true,
-          },
-        },
+        class: true,
+        section: true,
         exam_routines: {
           include: {
             subject: true,
@@ -496,17 +471,10 @@ const getExam = asyncHandler(async (req, res, next) => {
       status: findExam.status,
       exam_date: findExam.exam_routines?.at(0)?.start_time,
       exam_category: findExam.exam_category,
-      classes: findExam.exam_classes.map(({ class: { id, class_name } }) => ({
-        id,
-        class_name,
-      })),
-      sections: findExam.exam_sections.map(
-        ({ section: { id, class_id, section_name } }) => ({
-          id,
-          class_id,
-          section_name,
-        })
-      ),
+      class_id: findExam.class.id,
+      class_name: findExam.class.class_name,
+      section_id: findExam.section.id,
+      section_name: findExam.section.section_name,
       exam_routine: findExam.exam_routines.map(
         ({
           id,
@@ -544,26 +512,35 @@ const createExam = asyncHandler(async (req, res, next) => {
     abortEarly: false,
   })
 
-  // Format Data For Database
-  const formatClasses = data.classes.map((class_id) => ({ class_id }))
-  const formatSections = data.sections.map((section_id) => ({ section_id }))
+  // Check class section
+  if (!data.section_id) {
+    const checkClassSection = await prisma.classes.findUnique({
+      where: {
+        id: data.class_id,
+      },
+      select: {
+        id: true,
+        _count: {
+          select: {
+            sections: true,
+          },
+        },
+      },
+    })
+
+    if (checkClassSection._count.sections > 0) {
+      return res.status(400).json({
+        message: 'Section id is required',
+      })
+    }
+  }
 
   await prisma.$transaction(async (tx) => {
     const exam = await tx.exams.create({
       data: {
         exam_category_id: data.exam_category_id,
-        exam_classes: {
-          createMany: {
-            data: formatClasses,
-          },
-        },
-        ...(formatSections.length > 0 && {
-          exam_sections: {
-            createMany: {
-              data: formatSections,
-            },
-          },
-        }),
+        class_id: data.class_id,
+        section_id: data.section_id,
         exam_routines: {
           createMany: {
             data: data.exam_routine,
@@ -590,10 +567,9 @@ const createExam = asyncHandler(async (req, res, next) => {
 const updateExam = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
-  const { exam_category_id, classes, sections, exam_routine } =
-    await examValidator().validate(req.body, {
-      abortEarly: false,
-    })
+  const data = await examValidator().validate(req.body, {
+    abortEarly: false,
+  })
 
   await prisma.$transaction(async (tx) => {
     const findExam = await tx.exams.findUnique({
@@ -604,22 +580,8 @@ const updateExam = asyncHandler(async (req, res, next) => {
 
     if (!findExam)
       return res.status(404).json({
-        message: 'No exam found',
+        message: 'Exam not found',
       })
-
-    // Delete existing entries in exam classes
-    await tx.exam_classes.deleteMany({
-      where: {
-        exam_id: findExam.id,
-      },
-    })
-
-    // Delete existing entries in exam sections
-    await tx.exam_sections.deleteMany({
-      where: {
-        exam_id: findExam.id,
-      },
-    })
 
     // Delete existing entries in exam routine
     await tx.exam_routines.deleteMany({
@@ -628,31 +590,17 @@ const updateExam = asyncHandler(async (req, res, next) => {
       },
     })
 
-    // Format Data For Database
-    const formatClasses = classes.map((class_id) => ({ class_id }))
-    const formatSections = sections.map((section_id) => ({ section_id }))
-
     await tx.exams.update({
       where: {
         id: findExam.id,
       },
       data: {
-        exam_category_id,
-        exam_classes: {
-          createMany: {
-            data: formatClasses,
-          },
-        },
-        ...(formatSections.length > 0 && {
-          exam_sections: {
-            createMany: {
-              data: formatSections,
-            },
-          },
-        }),
+        exam_category_id: data.exam_category_id,
+        class_id: data.class_id,
+        section_id: data.section_id,
         exam_routines: {
           createMany: {
-            data: exam_routine,
+            data: data.exam_routine,
           },
         },
       },
