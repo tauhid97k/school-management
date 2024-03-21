@@ -17,7 +17,8 @@ const examValidator = () =>
         return findExamCategory ? true : false
       }),
     class_id: yup
-      .array(yup.number().typeError('Class must be an id'))
+      .number()
+      .typeError('Class must be an id')
       .required('At least one class is required')
       .test('exist', 'Class does not exist', async (value) => {
         const findClass = await prisma.classes.findUnique({
@@ -29,7 +30,8 @@ const examValidator = () =>
         return findClass ? true : false
       }),
     section_id: yup
-      .array(yup.number().typeError('Section must be an id'))
+      .number()
+      .typeError('Section must be an id')
       .test('exist', 'Section does not exist', async (value) => {
         if (!value) return true
 

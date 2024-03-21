@@ -279,6 +279,8 @@ const getExamsForResultForTeacher = asyncHandler(async (req, res, next) => {
         id: true,
         exam: {
           include: {
+            class: true,
+            section: true,
             exam_category: true,
             exam_routines: {
               orderBy: {
@@ -311,6 +313,8 @@ const getExamsForResultForTeacher = asyncHandler(async (req, res, next) => {
     status: exam.status,
     exam_date: exam.exam_routines[0]?.start_time,
     exam_name: exam.exam_category.exam_name,
+    class_name: exam.class.class_name,
+    section_name: exam.section.section_name,
     created_at: exam.created_at,
     updated_at: exam.updated_at,
   }))
@@ -354,6 +358,17 @@ const getExamResultsForTeacher = asyncHandler(async (req, res, next) => {
       where: {
         exam_id: examId,
       },
+      select: {
+        id: true,
+        student: {
+          select: {
+            id: true,
+            profile_img: true,
+            name: true,
+            roll: true,
+          },
+        },
+      },
       take,
       skip,
       orderBy,
@@ -365,8 +380,18 @@ const getExamResultsForTeacher = asyncHandler(async (req, res, next) => {
     }),
   ])
 
+  const formatResults = results.map(({ id, student }) => ({
+    id,
+    name: student.name,
+    student_id: student.id,
+    roll: student.roll,
+    profile_img: student.profile_img
+      ? generateFileLink(`students/profiles/${student.profile_img}`)
+      : null,
+  }))
+
   res.json({
-    data: results,
+    data: formatResults,
     meta: {
       page,
       limit: take,

@@ -104,6 +104,8 @@ model admins {
   profile_img       String?
   designation       String
   email_verified_at DateTime?
+  phone_number      String?
+  address           String?
   is_suspended      Boolean   @default(false)
   school_name       String    @unique
   school_address    String

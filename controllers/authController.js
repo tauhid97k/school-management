@@ -59,6 +59,7 @@ const register = asyncHandler(async (req, res, next) => {
           designation: data.designation,
           school_name: data.school_name,
           school_address: data.school_address,
+          profile_img: data.profile_img,
         },
       })
 

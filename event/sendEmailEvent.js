@@ -10,7 +10,7 @@ const emailEventEmitter = new EventEmitter()
 // Email verification on register
 emailEventEmitter.on('verificationEmail', async ({ email, code }) => {
   try {
-    await prisma.users.update({
+    await prisma.admins.update({
       where: {
         email,
       },
@@ -33,6 +33,7 @@ emailEventEmitter.on('verificationEmail', async ({ email, code }) => {
       subject: 'Email verification',
       text: `Your email verification code is ${code}`,
     })
+    console.log(`Sent verification email to ${email}`)
   } catch (error) {
     console.error(`Failed to send email for ${email}:`, error)
   }

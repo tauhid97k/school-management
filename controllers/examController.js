@@ -74,6 +74,18 @@ const getExamForTeacher = asyncHandler(async (req, res, next) => {
             exam_name: true,
           },
         },
+        class: {
+          select: {
+            id: true,
+            class_name: true,
+          },
+        },
+        section: {
+          select: {
+            id: true,
+            section_name: true,
+          },
+        },
         exam_routines: {
           select: {
             full_mark: true,
@@ -99,13 +111,10 @@ const getExamForTeacher = asyncHandler(async (req, res, next) => {
       where: {
         OR: [
           {
-            AND: [
-              { exam_sections: { every: { section_id: null } } },
-              { exam_classes: { some: { class_id: { in: formatClasses } } } },
-            ],
+            AND: [{ section_id: null }, { class_id: { in: formatClasses } }],
           },
           {
-            exam_sections: { some: { section_id: { in: formatSections } } },
+            section_id: { in: formatSections },
           },
         ],
       },
@@ -116,6 +125,8 @@ const getExamForTeacher = asyncHandler(async (req, res, next) => {
     id: exam.id,
     exam_name: exam.exam_category.exam_name,
     exam_date: exam.exam_routines?.at(0)?.start_time,
+    class_name: exam.class.class_name,
+    section_name: exam.section.section_name,
     status: exam.status,
     created_at: exam.created_at,
     updated_at: exam.updated_at,
@@ -177,7 +188,6 @@ const getExamForStudent = asyncHandler(async (req, res, next) => {
             start_time: 'asc',
           },
         },
-        exam_sections: true,
       },
       take,
       skip,
@@ -470,7 +480,8 @@ const getExam = asyncHandler(async (req, res, next) => {
       id: findExam.id,
       status: findExam.status,
       exam_date: findExam.exam_routines?.at(0)?.start_time,
-      exam_category: findExam.exam_category,
+      exam_category_id: findExam.exam_category.id,
+      exam_name: findExam.exam_category.exam_name,
       class_id: findExam.class.id,
       class_name: findExam.class.class_name,
       section_id: findExam.section.id,
@@ -487,11 +498,9 @@ const getExam = asyncHandler(async (req, res, next) => {
           full_mark,
           start_time,
           end_time,
-          subject: {
-            id: subjectId,
-            name,
-            code,
-          },
+          subject_id: subjectId,
+          subject_name: name,
+          subject_code: code,
         })
       ),
       created_at: findExam.created_at,
