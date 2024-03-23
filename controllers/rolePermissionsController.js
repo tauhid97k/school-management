@@ -82,7 +82,7 @@ const getRolePermissions = asyncHandler(async (req, res, next) => {
     })
 
     if (!findRole) {
-      return res.status(400).json({
+      return res.status(404).json({
         message: 'Role not found',
       })
     }

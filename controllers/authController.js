@@ -25,118 +25,113 @@ const register = asyncHandler(async (req, res, next) => {
   const data = await registerValidator.validate(req.body, { abortEarly: false })
 
   // Create new user
-  await prisma.$transaction(
-    async (tx) => {
-      if (req.files) {
-        const { profile_img } = await imageValidator().validate(req.files, {
-          abortEarly: false,
-        })
-
-        // Profile Img
-        const uniqueFolder = `admin_${uuidV4()}_${new Date() * 1000}`
-        const uploadPath = `uploads/admins/profiles/${uniqueFolder}/${profile_img.name}`
-        const filePathToSave = `${uniqueFolder}/${profile_img.name}`
-
-        profile_img.mv(uploadPath, (error) => {
-          if (error)
-            return res.status(500).json({
-              message: 'Error saving Profile image',
-            })
-        })
-
-        // Update file path (For saving to database)
-        data.profile_img = filePathToSave
-      }
-
-      // Encrypt password
-      data.password = await bcrypt.hash(data.password, 12)
-
-      const admin = await tx.admins.create({
-        data: {
-          name: data.name,
-          email: data.email,
-          password: data.password,
-          designation: data.designation,
-          school_name: data.school_name,
-          school_address: data.school_address,
-          profile_img: data.profile_img,
-        },
+  await prisma.$transaction(async (tx) => {
+    if (req.files) {
+      const { profile_img } = await imageValidator().validate(req.files, {
+        abortEarly: false,
       })
 
-      // Assign a role (Default admin for public registration)
-      await assignRole(admin.id, 'admin', tx)
+      // Profile Img
+      const uniqueFolder = `admin_${uuidV4()}_${new Date() * 1000}`
+      const uploadPath = `uploads/admins/profiles/${uniqueFolder}/${profile_img.name}`
+      const filePathToSave = `${uniqueFolder}/${profile_img.name}`
 
-      // Send a verification code to email
-      const verificationCode = Math.floor(10000000 + Math.random() * 90000000)
-      emailEventEmitter.emit('verificationEmail', {
-        email: admin.email,
-        code: verificationCode,
+      profile_img.mv(uploadPath, (error) => {
+        if (error)
+          return res.status(500).json({
+            message: 'Error saving Profile image',
+          })
       })
 
-      // Login the admin
-      // Generate JWT Access Token
-      const accessToken = jwt.sign(
-        {
-          user: {
-            email: admin.email,
-            role: 'admin',
-          },
-        },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '24h' }
-      )
-
-      // Generate JWT Refresh Token
-      const refreshToken = jwt.sign(
-        {
-          user: {
-            email: admin.email,
-            role: 'admin',
-          },
-        },
-        process.env.REFRESH_TOKEN_SECRET,
-        { expiresIn: '7d' }
-      )
-
-      // Save refresh token to database with device model (if available)
-      const deviceBrand = isEmpty(req.device.device.brand)
-        ? ''
-        : req.device.device.brand
-      const deviceModel = isEmpty(req.device.device.model)
-        ? ''
-        : req.device.device.model
-      const deviceWithModel =
-        deviceBrand && deviceModel ? `${deviceBrand} ${deviceModel}` : 'unknown'
-
-      await tx.personal_tokens.create({
-        data: {
-          admin_id: admin.id,
-          refresh_token: refreshToken,
-          user_device: deviceWithModel,
-        },
-      })
-
-      // Create secure cookie with refresh token
-      const subdomain = req.hostname.split('.')[0]
-      const cookieName = `${subdomain}_sm_management`
-      const cookieDomain = req.hostname
-      res.cookie(cookieName, refreshToken, {
-        httpOnly: true, // Accessible only by server
-        secure: true, // https
-        sameSite: 'none',
-        domain: cookieDomain,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      })
-
-      res.status(201).json({
-        message: 'Account created',
-        accessToken,
-      })
-    },
-    {
-      timeout: 7000,
+      // Update file path (For saving to database)
+      data.profile_img = filePathToSave
     }
-  )
+
+    // Encrypt password
+    data.password = await bcrypt.hash(data.password, 12)
+
+    const admin = await tx.admins.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        designation: data.designation,
+        school_name: data.school_name,
+        school_address: data.school_address,
+        profile_img: data.profile_img,
+      },
+    })
+
+    // Assign a role (Default admin for public registration)
+    await assignRole(admin.id, 'admin', tx)
+
+    // Send a verification code to email
+    const verificationCode = Math.floor(10000000 + Math.random() * 90000000)
+    emailEventEmitter.emit('verificationEmail', {
+      email: admin.email,
+      code: verificationCode,
+    })
+
+    // Login the admin
+    // Generate JWT Access Token
+    const accessToken = jwt.sign(
+      {
+        user: {
+          email: admin.email,
+          role: 'admin',
+        },
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: '24h' }
+    )
+
+    // Generate JWT Refresh Token
+    const refreshToken = jwt.sign(
+      {
+        user: {
+          email: admin.email,
+          role: 'admin',
+        },
+      },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: '7d' }
+    )
+
+    // Save refresh token to database with device model (if available)
+    const deviceBrand = isEmpty(req.device.device.brand)
+      ? ''
+      : req.device.device.brand
+    const deviceModel = isEmpty(req.device.device.model)
+      ? ''
+      : req.device.device.model
+    const deviceWithModel =
+      deviceBrand && deviceModel ? `${deviceBrand} ${deviceModel}` : 'unknown'
+
+    await tx.personal_tokens.create({
+      data: {
+        admin_id: admin.id,
+        refresh_token: refreshToken,
+        user_device: deviceWithModel,
+      },
+    })
+
+    // Create secure cookie with refresh token
+    const subdomain = req.hostname.split('.')[0]
+    const cookieName = `${subdomain}_sm_management`
+    const cookieDomain = req.hostname
+    res.cookie(cookieName, refreshToken, {
+      httpOnly: true, // Accessible only by server
+      secure: true, // https
+      sameSite: 'none',
+      domain: cookieDomain,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    })
+
+    res.status(201).json({
+      message: 'Account created',
+      accessToken,
+    })
+  })
 })
 
 /*
