@@ -116,6 +116,7 @@ model admins {
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
   salaries            salaries[]
+  todo_list           todo_list[]
 }
 
 // School Staffs
@@ -192,6 +193,7 @@ model teachers {
   teacher_applications teacher_applications[]
   salaries             salaries[]
   routines             routines[]
+  todo_list            todo_list[]
 }
 
 // Student
@@ -232,6 +234,7 @@ model students {
   student_homework     student_homeworks[]
   student_applications student_applications[]
   student_fees         student_fees[]
+  todo_list            todo_list[]
 
   @@index([roll])
   @@index([class_id])
@@ -329,6 +332,7 @@ model roles {
   user_roles       user_roles[]
   role_permissions role_permissions[]
   staffs           staffs[]
+  todo_list        todo_list[]
 }
 
 // Permissions
@@ -863,6 +867,29 @@ model student_applications {
 
   @@index([student_id])
   @@index([date])
+}
+
+// Todo List
+model todo_list {
+  id           Int      @id @default(autoincrement())
+  admin_id     Int?
+  teacher_id   Int?
+  student_id   Int?
+  role         String
+  title        String
+  description  String?
+  is_completed Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  admin   admins?   @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+  teacher teachers? @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  student students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  roles   roles     @relation(fields: [role], references: [name], onDelete: Cascade)
+
+  @@index([admin_id])
+  @@index([teacher_id])
+  @@index([student_id])
 }
 
 // Photo Gallery (Website)
