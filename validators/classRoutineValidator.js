@@ -152,4 +152,74 @@ const classRoutineValidator = (id) =>
       .min(1, 'Class routine is required'),
   })
 
-module.exports = { classRoutineValidator }
+const classRoutineWeekDayValidator = () =>
+  yup.object({
+    routines: yup
+      .array()
+      .of(
+        yup.object({
+          subject_id: yup
+            .number()
+            .typeError('Subject id must be a number')
+            .required('Subject is required')
+            .test('exist', 'Subject does not exist', async (value) => {
+              const findSubject = await prisma.subjects.findUnique({
+                where: {
+                  id: value,
+                },
+              })
+
+              if (findSubject) return true
+              else return false
+            }),
+          teacher_id: yup
+            .number()
+            .typeError('Teacher id must be a number')
+            .required('Teacher is required')
+            .test('exist', 'Teacher does not exist', async (value) => {
+              const findTeacher = await prisma.teachers.findUnique({
+                where: {
+                  id: value,
+                },
+              })
+
+              if (findTeacher) return true
+              else return false
+            }),
+          start_time: yup
+            .date()
+            .typeError('Start time must be a valid date time')
+            .required('Start time is required'),
+          end_time: yup
+            .date()
+            .typeError('End time must be a valid date time')
+            .required('End time is required')
+            .test(
+              'compare',
+              'End time must be after start time; and must be on the same day',
+              (value, ctx) => {
+                const startTime = ctx.parent.start_time
+
+                if (!startTime) {
+                  throw new yup.ValidationError(
+                    'Please, select start time first',
+                    value,
+                    'start_time'
+                  )
+                }
+
+                const startDate = new Date(startTime)
+                  .toISOString()
+                  .split('T')[0]
+                const endDate = new Date(value).toISOString().split('T')[0]
+
+                return value > startTime && startDate === endDate
+              }
+            ),
+        })
+      )
+      .required('Class routine is required')
+      .min(1, 'Class routine is required'),
+  })
+
+module.exports = { classRoutineValidator, classRoutineWeekDayValidator }

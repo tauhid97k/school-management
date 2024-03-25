@@ -5,7 +5,10 @@ const {
   classRoutineFields,
   paginateWithSorting,
 } = require('../utils/metaData')
-const { classRoutineValidator } = require('../validators/classRoutineValidator')
+const {
+  classRoutineValidator,
+  classRoutineWeekDayValidator,
+} = require('../validators/classRoutineValidator')
 
 /*
   @route    GET: /class-routines/teacher/:id
@@ -445,6 +448,7 @@ const getClassRoutineOrSections = asyncHandler(async (req, res, next) => {
           week_day: true,
           class: {
             select: {
+              id: true,
               class_name: true,
             },
           },
@@ -479,6 +483,7 @@ const getClassRoutineOrSections = asyncHandler(async (req, res, next) => {
         ({ id, week_day, class: routineClass, routines }) => ({
           id,
           week_day,
+          class_id: routineClass.id,
           class_name: routineClass.class_name,
           routines: routines.map(
             ({ subject, teacher, start_time, end_time }) => ({
@@ -575,6 +580,7 @@ const getSectionRoutine = asyncHandler(async (req, res, next) => {
     // Format Data
     const formatData = {
       class_name: findSectionRoutine.at(0).section.class.class_name,
+      section_id: findSectionRoutine.at(0).section.id,
       section_name: findSectionRoutine.at(0).section.section_name,
       room_number: findSectionRoutine.at(0).section.room.room_number,
       routines: findSectionRoutine.map(
@@ -691,6 +697,94 @@ const updateClassRoutine = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    GET: /class-routines/:id/week
+  @access   private
+  @desc     class routine details on week
+*/
+const getClassRoutineOnWeek = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const classRoutine = await tx.class_routines.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        class: true,
+        section: true,
+        routines: true,
+      },
+    })
+
+    if (!classRoutine)
+      return res.status(404).json({
+        message: 'Class routine not found',
+      })
+
+    // Format Data
+    const formatData = {
+      class_id: classRoutine.class.id,
+      class_name: classRoutine.class.class_name,
+      section_id: classRoutine.section ? classRoutine.section.id : null,
+      section_name: classRoutine.section
+        ? classRoutine.section.section_name
+        : null,
+      routines: classRoutine.routines,
+      created_at: classRoutine.created_at,
+      updated_at: classRoutine.updated_at,
+    }
+
+    res.json(formatData)
+  })
+})
+
+/*
+  @route    PUT: /class-routines/:id/week
+  @access   private
+  @desc     class routine update on week
+*/
+const updateClassRoutineOnWeek = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+  const data = await classRoutineWeekDayValidator().validate(req.body, {
+    abortEarly: false,
+  })
+
+  await prisma.$transaction(async (tx) => {
+    const classRoutine = await tx.class_routines.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!classRoutine)
+      return res.status(404).json({
+        message: 'Class routine not found',
+      })
+
+    // Delete Previous Routines
+    await tx.routines.deleteMany({
+      where: {
+        class_routine_id: classRoutine.id,
+      },
+    })
+
+    // Update Routines
+    const formattedRoutines = data.routines.map((routine) => ({
+      ...routine,
+      class_routine_id: classRoutine.id,
+    }))
+
+    await tx.routines.createMany({
+      data: formattedRoutines,
+    })
+
+    res.json({
+      message: 'Routine updated',
+    })
+  })
+})
+
+/*
   @route    DELETE: /class-routines/:id/week
   @access   private
   @desc     delete class routine
@@ -761,6 +855,8 @@ module.exports = {
   getSectionRoutine,
   createClassRoutine,
   updateClassRoutine,
+  getClassRoutineOnWeek,
+  updateClassRoutineOnWeek,
   deleteClassRoutineOnWeek,
   deleteClassRoutine,
 }
