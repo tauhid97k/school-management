@@ -131,7 +131,7 @@ const updateHeroSection = asyncHandler(async (req, res, next) => {
     }
 
     await tx.hero_section.update({
-      where: { id },
+      where: { id: findHeroSection.id },
       data,
     })
 
