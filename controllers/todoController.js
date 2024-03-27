@@ -221,6 +221,10 @@ const updateTodoStatus = asyncHandler(async (req, res, next) => {
         is_completed: data.is_completed,
       },
     })
+
+    res.json({
+      message: 'Todo status updated',
+    })
   })
 })
 
