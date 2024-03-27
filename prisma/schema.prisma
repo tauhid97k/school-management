@@ -892,6 +892,19 @@ model todo_list {
   @@index([student_id])
 }
 
+// Hero Section (Website)
+model hero_section {
+  id             Int      @id @default(autoincrement())
+  title          String
+  description    String?
+  image          String?
+  btn_title      String?
+  btn_link       String?
+  btn_visibility Boolean  @default(true)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+}
+
 // Photo Gallery (Website)
 model photo_gallery {
   id          Int      @id @default(autoincrement())

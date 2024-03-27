@@ -35,6 +35,7 @@ router.use('/teacher-notices', require('./teacherNoticeRoutes'))
 router.use('/homeworks', require('./studentHomeworkRoutes'))
 router.use('/applications', require('./applicationRoutes'))
 router.use('/todos', require('./todoRoutes'))
+router.use('/hero-section', require('./heroSectionRoutes'))
 
 // Website Routes
 router.use('/photo-gallery', require('./photoGalleryRoutes'))
