@@ -905,6 +905,16 @@ model hero_section {
   updated_at     DateTime @updatedAt
 }
 
+// Chairman Section (Website)
+model chairman_section {
+  id            Int      @id @default(autoincrement())
+  message_title String
+  description   String?
+  image         String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
+
 // Photo Gallery (Website)
 model photo_gallery {
   id          Int      @id @default(autoincrement())
