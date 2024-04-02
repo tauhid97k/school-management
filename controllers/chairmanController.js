@@ -35,7 +35,7 @@ const createChairmanSection = asyncHandler(async (req, res, next) => {
 
   // Check if chairman section already exist
   await prisma.$transaction(async (tx) => {
-    const checkChairmanSection = await tx.chairman_text.count()
+    const checkChairmanSection = await tx.chairman_section.count()
     if (checkChairmanSection > 0)
       return res.status(400).json({
         message: 'Chairman section already exist',
@@ -65,7 +65,7 @@ const createChairmanSection = asyncHandler(async (req, res, next) => {
       data.image = filePathToSave
     }
 
-    await tx.chairman_text.create({
+    await tx.chairman_section.create({
       data,
     })
 
@@ -87,7 +87,7 @@ const updateChairmanSection = asyncHandler(async (req, res, next) => {
   })
 
   await prisma.$transaction(async (tx) => {
-    const findChairmanSection = await tx.chairman_text.findUnique({
+    const findChairmanSection = await tx.chairman_section.findUnique({
       where: {
         id,
       },
@@ -136,7 +136,7 @@ const updateChairmanSection = asyncHandler(async (req, res, next) => {
       data.image = filePathToSave
     }
 
-    await tx.chairman_text.update({
+    await tx.chairman_section.update({
       where: { id: findChairmanSection.id },
       data,
     })

@@ -10,7 +10,7 @@ const {
 } = require('../controllers/chairmanController')
 
 // Protected Routes
-router.get('/', authMiddleware(), getChairmanSection)
+router.get('/', getChairmanSection)
 router.post('/', authMiddleware(), createChairmanSection)
 router.put('/:id', authMiddleware(), updateChairmanSection)
 router.delete('/:id', authMiddleware(), deleteChairmanSection)

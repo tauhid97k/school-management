@@ -43,7 +43,10 @@ app.use(
       'https://schoolstaff.silicornya.net',
       'http://27.147.163.201:5173',
       'http://27.147.163.201:5174',
+      'http://localhost:5173',
+      'http://localhost:5174',
       'http://127.0.0.1:5000',
+      '*',
     ],
     credentials: true,
   })
