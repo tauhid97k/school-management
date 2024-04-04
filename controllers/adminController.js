@@ -90,18 +90,10 @@ const getStudentAttendanceStats = asyncHandler(async (req, res, next) => {
   for (const monthData of months) {
     const studentAttendanceData = await prisma.class_attendance.findMany({
       where: {
-        AND: [
-          {
-            date: {
-              gte: monthData.startDate,
-            },
-          },
-          {
-            date: {
-              lt: monthData.endDate,
-            },
-          },
-        ],
+        date: {
+          gte: monthData.startDate,
+          lte: monthData.endDate,
+        },
       },
     })
 
@@ -122,4 +114,102 @@ const getStudentAttendanceStats = asyncHandler(async (req, res, next) => {
   res.json(allMonthsStats.reverse())
 })
 
-module.exports = { getAdmins, getUsersCount, getStudentAttendanceStats }
+/*
+  @route    GET: /admins/stats/admissions/gender
+  @access   private
+  @desc     Get student admissions statistics based on gender (Boy, Girl)
+*/
+const getStudentAdmissionGenderStats = asyncHandler(async (req, res, next) => {
+  // Get Bangladesh Standard Time
+  const bangladeshDate = new Date().toLocaleString('en-US', {
+    timeZone: 'Asia/Dhaka',
+  })
+
+  // Current Date (BD)
+  const currentDate = new Date(bangladeshDate)
+  const currentYear = currentDate.getFullYear()
+  const currentMonth = currentDate.getMonth()
+
+  const months = []
+  const targetYear = currentYear - 1 // Focus on the previous year
+
+  for (let i = 0; i < 12; i++) {
+    // Wrap around for months beyond December
+    const month = (currentMonth - i + 12) % 12
+    // Adjust year for December
+    const year = month === 11 ? targetYear : currentYear
+    const monthStart = new Date(year, month, 1)
+
+    const monthEnd = new Date(year, month + 1, 0) // Get previous day of next month
+    months.push({
+      month: dayjs(monthStart).format('MMM'),
+      startDate: monthStart,
+      endDate: monthEnd,
+    })
+  }
+
+  const allMonthsStats = []
+  for (const monthData of months) {
+    // Adjust where clause to consider current year and target year
+    const boyCount = await prisma.students.count({
+      where: {
+        AND: [
+          {
+            admission_date: {
+              gte:
+                monthData.startDate >= new Date(currentYear, 0, 1)
+                  ? monthData.startDate
+                  : new Date(targetYear, 0, 1), // Consider current year and target year
+            },
+          },
+          {
+            admission_date: {
+              lt: monthData.endDate, // Include previous day of next month
+            },
+          },
+          {
+            gender: 'MALE',
+          },
+        ],
+      },
+    })
+
+    const girlCount = await prisma.students.count({
+      where: {
+        AND: [
+          {
+            admission_date: {
+              gte:
+                monthData.startDate >= new Date(currentYear, 0, 1)
+                  ? monthData.startDate
+                  : new Date(targetYear, 0, 1), // Consider current year and target year
+            },
+          },
+          {
+            admission_date: {
+              lt: monthData.endDate, // Include previous day of next month
+            },
+          },
+          {
+            gender: 'FEMALE',
+          },
+        ],
+      },
+    })
+
+    allMonthsStats.push({
+      month: monthData.month,
+      boy: boyCount,
+      girl: girlCount,
+    })
+  }
+
+  res.json(allMonthsStats.reverse())
+})
+
+module.exports = {
+  getAdmins,
+  getUsersCount,
+  getStudentAttendanceStats,
+  getStudentAdmissionGenderStats,
+}
