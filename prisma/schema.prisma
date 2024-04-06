@@ -933,3 +933,12 @@ model contact {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 }
+
+// About (Website)
+model about {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}

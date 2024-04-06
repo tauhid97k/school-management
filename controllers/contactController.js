@@ -23,21 +23,30 @@ const createOrUpdateContact = asyncHandler(async (req, res, next) => {
     abortEarly: false,
   })
 
-  // Check if contact already exist
+  // Create or update about
   await prisma.$transaction(async (tx) => {
-    const contact = await tx.contact.findFirst()
+    const findContact = await tx.contact.findFirst()
 
-    await tx.contact.upsert({
-      where: {
-        id: contact.id,
-      },
-      update: data,
-      create: data,
-    })
+    if (findContact) {
+      await tx.contact.update({
+        where: {
+          id: findContact.id,
+        },
+        data,
+      })
 
-    res.json({
-      message: 'Contact saved',
-    })
+      return res.json({
+        message: 'Saved',
+      })
+    } else {
+      await tx.contact.create({
+        data,
+      })
+
+      res.json({
+        message: 'Saved',
+      })
+    }
   })
 })
 
