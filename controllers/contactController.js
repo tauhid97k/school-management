@@ -18,59 +18,25 @@ const getContact = asyncHandler(async (req, res, next) => {
   @access   private
   @desc     Create contact
 */
-const createContact = asyncHandler(async (req, res, next) => {
+const createOrUpdateContact = asyncHandler(async (req, res, next) => {
   const data = await contactValidator().validate(req.body, {
     abortEarly: false,
   })
 
   // Check if contact already exist
   await prisma.$transaction(async (tx) => {
-    const contact = await tx.contact.count()
-    if (contact > 0)
-      return res.status(400).json({
-        message: 'Contact already exist',
-      })
+    const contact = await tx.contact.findFirst()
 
-    await tx.contact.create({
-      data,
-    })
-
-    res.json({
-      message: 'contact added',
-    })
-  })
-})
-
-/*
-  @route    PUT: /contact
-  @access   private
-  @desc     Update contact
-*/
-const updateContact = asyncHandler(async (req, res, next) => {
-  const id = Number(req.params.id)
-  const data = await contactValidator(id).validate(req.body, {
-    abortEarly: false,
-  })
-
-  await prisma.$transaction(async (tx) => {
-    const findContact = await tx.contact.findUnique({
+    await tx.contact.upsert({
       where: {
-        id,
+        id: contact.id,
       },
-    })
-
-    if (!findContact)
-      return res.status(404).json({
-        message: 'No contact found',
-      })
-
-    await tx.contact.update({
-      where: { id: findContact.id },
-      data,
+      update: data,
+      create: data,
     })
 
     res.json({
-      message: 'Contact updated',
+      message: 'Contact saved',
     })
   })
 })
@@ -109,7 +75,6 @@ const deleteContact = asyncHandler(async (req, res, next) => {
 
 module.exports = {
   getContact,
-  createContact,
-  updateContact,
+  createOrUpdateContact,
   deleteContact,
 }

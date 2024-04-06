@@ -4,15 +4,13 @@ const authMiddleware = require('../middlewares/authMiddleware')
 
 const {
   getContact,
-  createContact,
-  updateContact,
+  createOrUpdateContact,
   deleteContact,
 } = require('../controllers/contactController')
 
 // Protected Routes
 router.get('/', getContact)
-router.post('/', authMiddleware(), createContact)
-router.put('/:id', authMiddleware(), updateContact)
+router.post('/', authMiddleware(), createOrUpdateContact)
 router.delete('/:id', authMiddleware(), deleteContact)
 
 module.exports = router
