@@ -923,3 +923,13 @@ model photo_gallery {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 }
+
+// Contact (Website)
+model contact {
+  id            Int      @id @default(autoincrement())
+  phone_numbers Json
+  emails        Json
+  location      String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}

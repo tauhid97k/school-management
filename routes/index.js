@@ -37,6 +37,7 @@ router.use('/applications', require('./applicationRoutes'))
 router.use('/todos', require('./todoRoutes'))
 router.use('/hero-section', require('./heroSectionRoutes'))
 router.use('/chairman-section', require('./chairmanSectionRoutes'))
+router.use('/contact', require('./contactRoutes'))
 
 // Website Routes
 router.use('/photo-gallery', require('./photoGalleryRoutes'))
