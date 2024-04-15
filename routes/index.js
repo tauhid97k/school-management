@@ -39,6 +39,7 @@ router.use('/hero-section', require('./heroSectionRoutes'))
 router.use('/chairman-section', require('./chairmanSectionRoutes'))
 router.use('/contact', require('./contactRoutes'))
 router.use('/about', require('./aboutRoutes'))
+router.use('/social', require('./socialRoutes'))
 
 // Website Routes
 router.use('/photo-gallery', require('./photoGalleryRoutes'))

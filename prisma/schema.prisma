@@ -942,3 +942,14 @@ model about {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 }
+
+// Social (Website)
+model social {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  image      String?
+  link       String?
+  visibility Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
