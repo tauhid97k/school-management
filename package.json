@@ -1,7 +1,7 @@
 {
-  "name": "express-base",
-  "version": "1.0.0",
-  "description": "Backend Base With Express.js",
+  "name": "schooling-backend",
+  "version": "1.1.0",
+  "description": "School management With Express.js",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
