@@ -982,3 +982,14 @@ model information {
   created_at  DateTime          @default(now())
   updated_at  DateTime          @updatedAt
 }
+
+// Shift (Website)
+model shift {
+  id          Int      @id @default(autoincrement())
+  title       String   @unique
+  description String?
+  image       String?
+  visibility  Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}

@@ -45,5 +45,6 @@ router.use('/social', require('./socialRoutes'))
 router.use('/events', require('./eventRoutes'))
 router.use('/photo-gallery', require('./photoGalleryRoutes'))
 router.use('/information', require('./informationRoutes'))
+router.use('/shift', require('./shiftRoutes'))
 
 module.exports = router

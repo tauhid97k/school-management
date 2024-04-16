@@ -1,5 +1,4 @@
 const yup = require('yup')
-const prisma = require('../utils/prisma')
 
 const informationValidator = (id) =>
   yup.object({
