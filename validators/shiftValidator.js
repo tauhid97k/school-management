@@ -9,7 +9,7 @@ const shiftValidator = (id) =>
       .test('unique', 'This title already exist', async (value) => {
         const shift = await prisma.shift.findUnique({
           where: {
-            name: value,
+            title: value,
           },
         })
 

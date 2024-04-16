@@ -30,13 +30,22 @@ const getInformation = asyncHandler(async (req, res, next) => {
   ])
 
   const formatData = information.map(
-    ({ id, title, description, attachment, created_at, updated_at }) => ({
+    ({
+      id,
+      title,
+      description,
+      attachment,
+      status,
+      created_at,
+      updated_at,
+    }) => ({
       id,
       title,
       description,
       attachment: attachment
         ? generateFileLink(`website/information/${attachment}`)
         : null,
+      status,
       created_at,
       updated_at,
     })
