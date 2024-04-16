@@ -35,13 +35,15 @@ router.use('/teacher-notices', require('./teacherNoticeRoutes'))
 router.use('/homeworks', require('./studentHomeworkRoutes'))
 router.use('/applications', require('./applicationRoutes'))
 router.use('/todos', require('./todoRoutes'))
+
+// Website Routes
 router.use('/hero-section', require('./heroSectionRoutes'))
 router.use('/chairman-section', require('./chairmanSectionRoutes'))
 router.use('/contact', require('./contactRoutes'))
 router.use('/about', require('./aboutRoutes'))
 router.use('/social', require('./socialRoutes'))
-
-// Website Routes
+router.use('/events', require('./eventRoutes'))
 router.use('/photo-gallery', require('./photoGalleryRoutes'))
+router.use('/information', require('./informationRoutes'))
 
 module.exports = router

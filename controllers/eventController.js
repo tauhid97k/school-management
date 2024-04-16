@@ -5,39 +5,52 @@ const {
   commonFields,
   paginateWithSorting,
 } = require('../utils/metaData')
+const { formatDate } = require('../utils/transformData')
 const {
-  socialValidator,
-  socialImageValidator,
-} = require('../validators/socialValidator')
+  eventValidator,
+  eventImageValidator,
+} = require('../validators/eventValidator')
 const { v4: uuidV4 } = require('uuid')
 const fs = require('node:fs/promises')
 const generateFileLink = require('../utils/generateFileLink')
 
 /*
-  @route    GET: /social
+  @route    GET: /events
   @access   private
-  @desc     Get social links
+  @desc     Get events
 */
-const getSocialLinks = asyncHandler(async (req, res, next) => {
+const getEvents = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, commonFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
-  const [social, total] = await prisma.$transaction([
-    prisma.social.findMany({
+  const [events, total] = await prisma.$transaction([
+    prisma.events.findMany({
       take,
       skip,
       orderBy,
     }),
-    prisma.social.count(),
+    prisma.events.count(),
   ])
 
-  const formatData = social.map(
-    ({ id, name, link, image, visibility, created_at, updated_at }) => ({
+  const formatData = events.map(
+    ({
       id,
-      name,
-      link,
-      visibility,
-      image: image ? generateFileLink(`website/social/${image}`) : null,
+      title,
+      description,
+      image,
+      date,
+      start_time,
+      end_time,
+      created_at,
+      updated_at,
+    }) => ({
+      id,
+      title,
+      description,
+      image: image ? generateFileLink(`website/events/${image}`) : null,
+      date: date ? formatDate(date) : date,
+      start_time,
+      end_time,
       created_at,
       updated_at,
     })
@@ -54,24 +67,24 @@ const getSocialLinks = asyncHandler(async (req, res, next) => {
 })
 
 /*
-  @route    POST: /social
+  @route    POST: /events
   @access   private
-  @desc     Create social link
+  @desc     Create an event
 */
-const createSocialLink = asyncHandler(async (req, res, next) => {
-  const data = await socialValidator().validate(req.body, {
+const createEvent = asyncHandler(async (req, res, next) => {
+  const data = await eventValidator().validate(req.body, {
     abortEarly: false,
   })
 
   await prisma.$transaction(async (tx) => {
     if (req.files) {
-      const { image } = await socialImageValidator().validate(req.files, {
+      const { image } = await eventImageValidator().validate(req.files, {
         abortEarly: false,
       })
 
-      // Social Img
-      const uniqueFolder = `social_${uuidV4()}_${new Date() * 1000}`
-      const uploadPath = `uploads/website/social/${uniqueFolder}/${image.name}`
+      // Event Img
+      const uniqueFolder = `event_${uuidV4()}_${new Date() * 1000}`
+      const uploadPath = `uploads/website/events/${uniqueFolder}/${image.name}`
       const filePathToSave = `${uniqueFolder}/${image.name}`
 
       image.mv(uploadPath, (error) => {
@@ -85,50 +98,48 @@ const createSocialLink = asyncHandler(async (req, res, next) => {
       data.image = filePathToSave
     }
 
-    await tx.social.create({
+    await tx.events.create({
       data,
     })
 
     res.json({
-      message: 'Social link added',
+      message: 'Event created',
     })
   })
 })
 
 /*
-  @route    PUT: /social/:id
+  @route    PUT: /events/:id
   @access   private
-  @desc     Update a social link
+  @desc     Update an event
 */
-const updateSocialLink = asyncHandler(async (req, res, next) => {
+const updateEvent = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
-  const data = await socialValidator(id).validate(req.body, {
+  const data = await eventValidator(id).validate(req.body, {
     abortEarly: false,
   })
 
   await prisma.$transaction(async (tx) => {
-    const social = await tx.social.findUnique({
+    const event = await tx.events.findUnique({
       where: {
         id,
       },
     })
 
-    if (!social)
+    if (!event)
       return res.status(404).json({
-        message: 'No social link found',
+        message: 'Event not found',
       })
 
     if (req.files) {
-      const { image } = await socialImageValidator().validate(req.files, {
+      const { image } = await eventImageValidator().validate(req.files, {
         abortEarly: false,
       })
 
       // Delete Previous Image (If Exist)
-      if (social.image) {
+      if (event.image) {
         try {
-          const photoDir = `uploads/website/social/${
-            social.image.split('/')[0]
-          }`
+          const photoDir = `uploads/website/events/${event.image.split('/')[0]}`
           await fs.rm(photoDir, { recursive: true })
         } catch (error) {
           return res.json({
@@ -138,8 +149,8 @@ const updateSocialLink = asyncHandler(async (req, res, next) => {
       }
 
       // New Image
-      const uniqueFolder = `social_${uuidV4()}_${new Date() * 1000}`
-      const uploadPath = `uploads/website/social/${uniqueFolder}/${image.name}`
+      const uniqueFolder = `event_${uuidV4()}_${new Date() * 1000}`
+      const uploadPath = `uploads/website/events/${uniqueFolder}/${image.name}`
       const filePathToSave = `${uniqueFolder}/${image.name}`
 
       image.mv(uploadPath, (error) => {
@@ -153,41 +164,41 @@ const updateSocialLink = asyncHandler(async (req, res, next) => {
       data.image = filePathToSave
     }
 
-    await tx.social.update({
-      where: { id: social.id },
+    await tx.events.update({
+      where: { id: event.id },
       data,
     })
 
     res.json({
-      message: 'Social link updated',
+      message: 'Event updated',
     })
   })
 })
 
 /*
-  @route    DELETE: /social
+  @route    DELETE: /events/:id
   @access   private
-  @desc     Delete a social link
+  @desc     Delete and event
 */
-const deleteSocialLink = asyncHandler(async (req, res, next) => {
+const deleteEvent = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
   await prisma.$transaction(async (tx) => {
-    const social = await tx.social.findUnique({
+    const event = await tx.events.findUnique({
       where: {
         id,
       },
     })
 
-    if (!social)
+    if (!event)
       return res.status(404).json({
-        message: 'No social link found',
+        message: 'Event not found',
       })
 
     // Delete Image (If Exist)
-    if (social.image) {
+    if (event.image) {
       try {
-        const photoDir = `uploads/website/social/${social.image.split('/')[0]}`
+        const photoDir = `uploads/website/events/${event.image.split('/')[0]}`
         await fs.rm(photoDir, { recursive: true })
       } catch (error) {
         return res.json({
@@ -196,21 +207,21 @@ const deleteSocialLink = asyncHandler(async (req, res, next) => {
       }
     }
 
-    await tx.social.delete({
+    await tx.events.delete({
       where: {
         id,
       },
     })
 
     res.json({
-      message: 'Social link deleted',
+      message: 'event deleted',
     })
   })
 })
 
 module.exports = {
-  getSocialLinks,
-  createSocialLink,
-  updateSocialLink,
-  deleteSocialLink,
+  getEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
 }

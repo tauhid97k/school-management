@@ -85,6 +85,11 @@ enum weekDay {
   FRIDAY
 }
 
+enum informationStatus {
+  ACTIVE
+  INACTIVE
+}
+
 // Super Admin
 model super_admins {
   id         Int      @id @default(autoincrement())
@@ -952,4 +957,28 @@ model social {
   visibility Boolean  @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+// Event (Website)
+model events {
+  id          Int       @id @default(autoincrement())
+  title       String
+  image       String?
+  description String?
+  date        DateTime?
+  start_time  DateTime?
+  end_time    DateTime
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+}
+
+// Information (Website)
+model information {
+  id          Int               @id @default(autoincrement())
+  title       String
+  description String?
+  attachment  String?
+  status      informationStatus @default(ACTIVE)
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
 }
