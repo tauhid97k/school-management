@@ -35,6 +35,7 @@ router.use('/teacher-notices', require('./teacherNoticeRoutes'))
 router.use('/homeworks', require('./studentHomeworkRoutes'))
 router.use('/applications', require('./applicationRoutes'))
 router.use('/todos', require('./todoRoutes'))
+router.use('/payment-methods', require('./paymentMethodRoutes'))
 
 // Website Routes
 router.use('/hero-section', require('./heroSectionRoutes'))
@@ -46,5 +47,6 @@ router.use('/events', require('./eventRoutes'))
 router.use('/photo-gallery', require('./photoGalleryRoutes'))
 router.use('/information', require('./informationRoutes'))
 router.use('/shift', require('./shiftRoutes'))
+router.use('/header', require('./headerRoutes'))
 
 module.exports = router

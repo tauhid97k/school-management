@@ -75,6 +75,11 @@ enum PaymentStatus {
   UNPAID
 }
 
+enum paymentMethodStatus {
+  ACTIVE
+  INACTIVE
+}
+
 enum weekDay {
   SATURDAY
   SUNDAY
@@ -897,6 +902,16 @@ model todo_list {
   @@index([student_id])
 }
 
+// Payment Methods
+model payment_methods {
+  id         Int                 @id @default(autoincrement())
+  name       String              @unique
+  image      String?
+  status     paymentMethodStatus @default(ACTIVE)
+  created_at DateTime            @default(now())
+  updated_at DateTime            @updatedAt
+}
+
 // Hero Section (Website)
 model hero_section {
   id             Int      @id @default(autoincrement())
@@ -992,4 +1007,14 @@ model shift {
   visibility  Boolean  @default(true)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
+}
+
+// Header Top (Website)
+model header {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  phone      String?
+  image      String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
