@@ -10,7 +10,7 @@ const {
 } = require('../controllers/heroSectionController')
 
 // Protected Routes
-router.get('/', authMiddleware(), getHeroSection)
+router.get('/', getHeroSection)
 router.post('/', authMiddleware(), createHeroSection)
 router.put('/:id', authMiddleware(), updateHeroSection)
 router.delete('/:id', authMiddleware(), deleteHeroSection)

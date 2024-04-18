@@ -10,7 +10,7 @@ const {
 } = require('../controllers/informationController')
 
 // Protected Routes
-router.get('/', authMiddleware(), getInformation)
+router.get('/', getInformation)
 router.post('/', authMiddleware(), createInformation)
 router.put('/:id', authMiddleware(), updateInformation)
 router.delete('/:id', authMiddleware(), deleteInformation)

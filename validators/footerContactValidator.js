@@ -1,6 +1,6 @@
 const yup = require('yup')
 
-const contactValidator = () =>
+const footerContactValidator = () =>
   yup.object({
     phone_numbers: yup
       .array(
@@ -19,4 +19,4 @@ const contactValidator = () =>
     location: yup.string().required('Location is required'),
   })
 
-module.exports = { contactValidator }
+module.exports = { footerContactValidator }

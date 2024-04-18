@@ -1,9 +1,11 @@
 const prisma = require('../utils/prisma')
 const asyncHandler = require('express-async-handler')
-const { contactValidator } = require('../validators/contactValidator')
+const {
+  footerContactValidator,
+} = require('../validators/footerContactValidator')
 
 /*
-  @route    GET: /contact
+  @route    GET: /footer-contact
   @access   public
   @desc     Get contact
 */
@@ -14,12 +16,12 @@ const getContact = asyncHandler(async (req, res, next) => {
 })
 
 /*
-  @route    POST: /contact
+  @route    POST: /footer-contact
   @access   private
   @desc     Create contact
 */
 const createOrUpdateContact = asyncHandler(async (req, res, next) => {
-  const data = await contactValidator().validate(req.body, {
+  const data = await footerContactValidator().validate(req.body, {
     abortEarly: false,
   })
 
@@ -51,7 +53,7 @@ const createOrUpdateContact = asyncHandler(async (req, res, next) => {
 })
 
 /*
-  @route    DELETE: /contact
+  @route    DELETE: /footer-contact
   @access   private
   @desc     Delete contact
 */

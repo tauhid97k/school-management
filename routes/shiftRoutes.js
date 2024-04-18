@@ -10,7 +10,7 @@ const {
 } = require('../controllers/shiftController')
 
 // Protected Routes
-router.get('/', authMiddleware(), getShifts)
+router.get('/', getShifts)
 router.post('/', authMiddleware(), createShift)
 router.put('/:id', authMiddleware(), updateShift)
 router.delete('/:id', authMiddleware(), deleteShift)

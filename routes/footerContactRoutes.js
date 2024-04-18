@@ -6,7 +6,7 @@ const {
   getContact,
   createOrUpdateContact,
   deleteContact,
-} = require('../controllers/contactController')
+} = require('../controllers/footerContactController')
 
 // Protected Routes
 router.get('/', getContact)

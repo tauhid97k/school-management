@@ -10,7 +10,7 @@ const {
 } = require('../controllers/eventController')
 
 // Protected Routes
-router.get('/', authMiddleware(), getEvents)
+router.get('/', getEvents)
 router.post('/', authMiddleware(), createEvent)
 router.put('/:id', authMiddleware(), updateEvent)
 router.delete('/:id', authMiddleware(), deleteEvent)

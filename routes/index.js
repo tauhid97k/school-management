@@ -40,7 +40,6 @@ router.use('/payment-methods', require('./paymentMethodRoutes'))
 // Website Routes
 router.use('/hero-section', require('./heroSectionRoutes'))
 router.use('/chairman-section', require('./chairmanSectionRoutes'))
-router.use('/contact', require('./contactRoutes'))
 router.use('/about', require('./aboutRoutes'))
 router.use('/social', require('./socialRoutes'))
 router.use('/events', require('./eventRoutes'))
@@ -48,5 +47,6 @@ router.use('/photo-gallery', require('./photoGalleryRoutes'))
 router.use('/information', require('./informationRoutes'))
 router.use('/shift', require('./shiftRoutes'))
 router.use('/header', require('./headerRoutes'))
+router.use('/footer-contact', require('./footerContactRoutes'))
 
 module.exports = router
