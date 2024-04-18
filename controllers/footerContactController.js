@@ -7,7 +7,7 @@ const {
 /*
   @route    GET: /footer-contact
   @access   public
-  @desc     Get contact
+  @desc     Get footer contact
 */
 const getFooterContact = asyncHandler(async (req, res, next) => {
   const contact = await prisma.footer_contact.findFirst()

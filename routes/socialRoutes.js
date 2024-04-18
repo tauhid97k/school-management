@@ -10,7 +10,7 @@ const {
 } = require('../controllers/socialController')
 
 // Protected Routes
-router.get('/', authMiddleware(), getSocialLinks)
+router.get('/', getSocialLinks)
 router.post('/', authMiddleware(), createSocialLink)
 router.put('/:id', authMiddleware(), updateSocialLink)
 router.delete('/:id', authMiddleware(), deleteSocialLink)
