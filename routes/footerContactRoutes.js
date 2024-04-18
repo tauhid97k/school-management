@@ -3,14 +3,14 @@ const router = express.Router()
 const authMiddleware = require('../middlewares/authMiddleware')
 
 const {
-  getContact,
-  createOrUpdateContact,
-  deleteContact,
+  getFooterContact,
+  createOrUpdateFooterContact,
+  deleteFooterContact,
 } = require('../controllers/footerContactController')
 
 // Protected Routes
-router.get('/', getContact)
-router.post('/', authMiddleware(), createOrUpdateContact)
-router.delete('/:id', authMiddleware(), deleteContact)
+router.get('/', getFooterContact)
+router.post('/', authMiddleware(), createOrUpdateFooterContact)
+router.delete('/:id', authMiddleware(), deleteFooterContact)
 
 module.exports = router

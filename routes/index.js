@@ -48,5 +48,6 @@ router.use('/information', require('./informationRoutes'))
 router.use('/shift', require('./shiftRoutes'))
 router.use('/header', require('./headerRoutes'))
 router.use('/footer-contact', require('./footerContactRoutes'))
+router.use('/contact', require('./contactRoutes'))
 
 module.exports = router

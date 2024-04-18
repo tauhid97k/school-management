@@ -70,4 +70,25 @@ emailEventEmitter.on('passwordResetEmail', async ({ email, code }) => {
   }
 })
 
+// Get customer enquiry (Contact)
+emailEventEmitter.on(
+  'contactEmail',
+  async ({ name, email, phone, subject, message }) => {
+    try {
+      await mailTransporter.sendMail({
+        from: email,
+        to: process.env.Mail_SENDER,
+        subject,
+        text: `Name: ${name}\nPhone: ${phone}\nMessage: ${message}`,
+      })
+      console.log(`Getting email from ${email} via contact`)
+    } catch (error) {
+      console.error(
+        `Failed to send email to ${process.env.Mail_SENDER} from ${email}:`,
+        error
+      )
+    }
+  }
+)
+
 module.exports = emailEventEmitter

@@ -9,8 +9,8 @@ const {
   @access   public
   @desc     Get contact
 */
-const getContact = asyncHandler(async (req, res, next) => {
-  const contact = await prisma.contact.findFirst()
+const getFooterContact = asyncHandler(async (req, res, next) => {
+  const contact = await prisma.footer_contact.findFirst()
 
   res.json(contact)
 })
@@ -20,17 +20,17 @@ const getContact = asyncHandler(async (req, res, next) => {
   @access   private
   @desc     Create contact
 */
-const createOrUpdateContact = asyncHandler(async (req, res, next) => {
+const createOrUpdateFooterContact = asyncHandler(async (req, res, next) => {
   const data = await footerContactValidator().validate(req.body, {
     abortEarly: false,
   })
 
   // Create or update about
   await prisma.$transaction(async (tx) => {
-    const findContact = await tx.contact.findFirst()
+    const findContact = await tx.footer_contact.findFirst()
 
     if (findContact) {
-      await tx.contact.update({
+      await tx.footer_contact.update({
         where: {
           id: findContact.id,
         },
@@ -41,7 +41,7 @@ const createOrUpdateContact = asyncHandler(async (req, res, next) => {
         message: 'Saved',
       })
     } else {
-      await tx.contact.create({
+      await tx.footer_contact.create({
         data,
       })
 
@@ -57,11 +57,11 @@ const createOrUpdateContact = asyncHandler(async (req, res, next) => {
   @access   private
   @desc     Delete contact
 */
-const deleteContact = asyncHandler(async (req, res, next) => {
+const deleteFooterContact = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
   await prisma.$transaction(async (tx) => {
-    const findContact = await tx.contact.findUnique({
+    const findContact = await tx.footer_contact.findUnique({
       where: {
         id,
       },
@@ -72,7 +72,7 @@ const deleteContact = asyncHandler(async (req, res, next) => {
         message: 'No section',
       })
 
-    await tx.contact.delete({
+    await tx.footer_contact.delete({
       where: {
         id,
       },
@@ -85,7 +85,7 @@ const deleteContact = asyncHandler(async (req, res, next) => {
 })
 
 module.exports = {
-  getContact,
-  createOrUpdateContact,
-  deleteContact,
+  getFooterContact,
+  createOrUpdateFooterContact,
+  deleteFooterContact,
 }
