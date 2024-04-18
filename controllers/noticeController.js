@@ -257,6 +257,7 @@ const getNoticesForAll = asyncHandler(async (req, res, next) => {
       select: {
         id: true,
         title: true,
+        description: true,
         created_at: true,
         updated_at: true,
       },
