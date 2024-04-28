@@ -169,18 +169,12 @@ const getAllTeacherNotices = asyncHandler(async (req, res, next) => {
   ])
 
   const formatNotices = notices.map(
-    ({
-      id,
-      title,
-      status,
-      section: { section_name },
-      class: { class_name },
-    }) => ({
+    ({ id, title, status, section, class: { class_name } }) => ({
       id,
       title,
       status,
       class_name,
-      section_name,
+      section_name: section ? section.section_name : null,
     })
   )
 
