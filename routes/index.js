@@ -37,6 +37,7 @@ router.use('/applications', require('./applicationRoutes'))
 router.use('/todos', require('./todoRoutes'))
 router.use('/payment-methods', require('./paymentMethodRoutes'))
 router.use('/product-categories', require('./productCategoryRoutes'))
+router.use('/products', require('./productRoutes'))
 
 // Website Routes
 router.use('/hero-section', require('./heroSectionRoutes'))

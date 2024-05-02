@@ -929,9 +929,9 @@ model products {
   name                String
   image               String?
   description         String?
-  buying_price        Decimal  @default(0)
-  selling_price       Decimal  @default(0)
-  quantity            Int      @default(0)
+  buying_price        Decimal? @default(0)
+  selling_price       Decimal? @default(0)
+  quantity            Int?     @default(0)
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
 
