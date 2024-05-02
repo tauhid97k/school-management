@@ -912,6 +912,35 @@ model payment_methods {
   updated_at DateTime            @updatedAt
 }
 
+// Product Categories
+model product_categories {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  description String?
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+  products    products[]
+}
+
+// Products
+model products {
+  id                  Int      @id @default(autoincrement())
+  product_category_id Int?
+  name                String
+  image               String?
+  description         String?
+  buying_price        Decimal  @default(0)
+  selling_price       Decimal  @default(0)
+  quantity            Int      @default(0)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  product_category product_categories? @relation(fields: [product_category_id], references: [id], onDelete: Cascade)
+
+  @@index([product_category_id])
+  @@index([name])
+}
+
 // Hero Section (Website)
 model hero_section {
   id             Int      @id @default(autoincrement())
