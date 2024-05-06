@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY . .
 RUN npm i
-RUN npm install -g npx
+
 RUN npm install -g prisma
 
 
