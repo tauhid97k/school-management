@@ -25,11 +25,11 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t school-management-backend .
-          docker tag school-management-backend:latest ${{ secrets.ECR_REPO_URL }}/school-management-backend:${{ github.sha }}
-          docker push ${{ secrets.ECR_REPO_URL }}/school-management-backend:${{ github.sha }}
-          docker tag ${{ secrets.ECR_REPO_URL }}/school-management-backend:${{ github.sha }} ${{ secrets.ECR_REPO_URL }}/school-management-backend:latest
-          docker push ${{ secrets.ECR_REPO_URL }}/school-management-backend:latest
+          docker build -t bazigaar-dr-backend .
+          docker tag bazigaar-dr-backend:latest ${{ secrets.ECR_REPO_URL }}/bazigaar-dr-backend:${{ github.sha }}
+          docker push ${{ secrets.ECR_REPO_URL }}/bazigaar-dr-backend:${{ github.sha }}
+          docker tag ${{ secrets.ECR_REPO_URL }}/bazigaar-dr-backend:${{ github.sha }} ${{ secrets.ECR_REPO_URL }}/bazigaar-dr-backend:latest
+          docker push ${{ secrets.ECR_REPO_URL }}/bazigaar-dr-backend:latest
 
     
           
@@ -39,4 +39,4 @@ jobs:
           mkdir ~/.ssh
           touch ~/.ssh/known_hosts
           ssh-keyscan ${{ secrets.AWS_SSH_DNS }} >> ~/.ssh/known_hosts
-          ssh -i testing ubuntu@${{ secrets.AWS_SSH_DNS }} "chmod +x ~/school-management-backend/setup.sh && ~/school-management-backend/setup.sh"
+          ssh -i testing silicornya@${{ secrets.AWS_SSH_DNS }} "chmod +x ~/product/bazigaar-dr-backend/setup.sh && ~/product/bazigaar-dr-backend/setup.sh"
