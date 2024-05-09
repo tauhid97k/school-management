@@ -929,16 +929,64 @@ model products {
   name                String
   image               String?
   description         String?
-  buying_price        Decimal? @default(0)
-  selling_price       Decimal? @default(0)
-  quantity            Int?     @default(0)
+  is_new              Boolean  @default(false)
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
 
   product_category product_categories? @relation(fields: [product_category_id], references: [id], onDelete: Cascade)
+  product_stocks   product_stocks[]
 
   @@index([product_category_id])
   @@index([name])
+}
+
+// Product Stocks
+model product_stocks {
+  id            Int      @id @default(autoincrement())
+  product_id    Int
+  buying_price  Decimal? @default(0)
+  selling_price Decimal? @default(0)
+  quantity      Int?     @default(0)
+  note          String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  product products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id])
+}
+
+// Product Sells
+model product_sells {
+  id         Int      @id @default(autoincrement())
+  invoice_no String
+  inovice    Json
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// Product Suppliers 
+model product_suppliers {
+  id                  Int      @id @default(autoincrement())
+  product_category_id Int?
+  name                String
+  company_name        String
+  designation         String?
+  phone               String?
+  address             String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+}
+
+// Product Purchase
+model product_purchase {
+  id                  Int      @id @default(autoincrement())
+  product_category_id Int?
+  product_supplier_id Int
+  purchase_amount     Decimal
+  due_amount          Decimal?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
 }
 
 // Hero Section (Website)

@@ -20,9 +20,6 @@ const productValidator = () =>
       }),
     description: yup.string().optional(),
     image: yup.string().optional(),
-    buying_price: yup.number().integer().optional(),
-    selling_price: yup.number().integer().optional(),
-    quantity: yup.number().integer().optional(),
   })
 
 const productImageValidator = () =>
