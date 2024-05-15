@@ -52,7 +52,11 @@ const getStudentsForAttendance = asyncHandler(async (req, res, next) => {
         },
       },
     }),
-    prisma.students.count(),
+    prisma.students.count({
+      where: {
+        class_id: id,
+      },
+    }),
   ])
 
   const formatStudents = students.map(
