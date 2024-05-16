@@ -42,6 +42,15 @@ const studentsFields = [
   'sortOrder',
 ]
 
+const subjectFields = [
+  'class_id',
+  'search',
+  'page',
+  'limit',
+  'sortBy',
+  'sortOrder',
+]
+
 // Attendance Fields
 const attendanceFields = ['date', 'page', 'limit', 'sortBy', 'sortOrder']
 
@@ -125,4 +134,5 @@ module.exports = {
   applicationFields,
   salaryFields,
   studentFeesFields,
+  subjectFields,
 }

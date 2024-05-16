@@ -3,7 +3,7 @@ const prisma = require('../utils/prisma')
 const { subjectValidator } = require('../validators/subjectValidator')
 const {
   selectQueries,
-  commonFields,
+  subjectFields,
   paginateWithSorting,
 } = require('../utils/metaData')
 
@@ -58,16 +58,23 @@ const getSubjectTeachers = asyncHandler(async (req, res, next) => {
   @desc     All subjects
 */
 const getAllSubjects = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, commonFields)
+  const selectedQueries = selectQueries(req.query, subjectFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  let { class_id } = selectedQueries
+
+  const whereClause = class_id ? { class_id: Number(class_id) } : {}
 
   const [subjects, total] = await prisma.$transaction([
     prisma.subjects.findMany({
+      where: whereClause,
       take,
       skip,
       orderBy,
     }),
-    prisma.subjects.count(),
+    prisma.subjects.count({
+      where: whereClause,
+    }),
   ])
 
   res.json({
@@ -97,9 +104,9 @@ const getSubject = asyncHandler(async (req, res, next) => {
           group_id: true,
         },
       },
-      subject_classes: {
+      subject_class: {
         select: {
-          class_id: true,
+          id: true,
         },
       },
     },
@@ -115,16 +122,12 @@ const getSubject = asyncHandler(async (req, res, next) => {
     (subjectGroup) => subjectGroup.group_id
   )
 
-  const classes = findSubject.subject_classes.map(
-    (subjectClass) => subjectClass.class_id
-  )
-
   const formatData = {
     id: findSubject.id,
     name: findSubject.name,
     code: findSubject.code,
+    class_id: findSubject?.subject_class?.id,
     groups: groups,
-    classes: classes,
     created_at: findSubject.created_at,
     updated_at: findSubject.updated_at,
   }
@@ -138,7 +141,7 @@ const getSubject = asyncHandler(async (req, res, next) => {
   @desc     Create a new subject
 */
 const createSubject = asyncHandler(async (req, res, next) => {
-  const { name, code, groups, classes } = await subjectValidator().validate(
+  const { name, code, groups, class_id } = await subjectValidator().validate(
     req.body,
     {
       abortEarly: false,
@@ -147,24 +150,17 @@ const createSubject = asyncHandler(async (req, res, next) => {
 
   // Format Data For Database
   const formatGroups = groups.map((group_id) => ({ group_id }))
-  const formatClasses = classes.map((class_id) => ({ class_id }))
 
   await prisma.subjects.create({
     data: {
       name,
       code,
+      class_id,
       subject_groups: {
         createMany: {
           data: formatGroups,
         },
       },
-      ...(formatGroups.length > 0 && {
-        subject_classes: {
-          createMany: {
-            data: formatClasses,
-          },
-        },
-      }),
     },
   })
 
@@ -179,7 +175,7 @@ const createSubject = asyncHandler(async (req, res, next) => {
 const updateSubject = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
 
-  const { name, code, groups, classes } = await subjectValidator(id).validate(
+  const { name, code, groups, class_id } = await subjectValidator(id).validate(
     req.body,
     {
       abortEarly: false,
@@ -205,16 +201,8 @@ const updateSubject = asyncHandler(async (req, res, next) => {
       },
     })
 
-    // Delete existing entries in subject classes
-    await tx.subject_classes.deleteMany({
-      where: {
-        subject_id: findSubject.id,
-      },
-    })
-
     // Format Data For Database
     const formatGroups = groups.map((group_id) => ({ group_id }))
-    const formatClasses = classes.map((class_id) => ({ class_id }))
 
     await tx.subjects.update({
       where: {
@@ -223,18 +211,12 @@ const updateSubject = asyncHandler(async (req, res, next) => {
       data: {
         name,
         code,
+        class_id,
         subject_groups: {
           createMany: {
             data: formatGroups,
           },
         },
-        ...(formatGroups.length > 0 && {
-          subject_classes: {
-            createMany: {
-              data: formatClasses,
-            },
-          },
-        }),
       },
     })
 

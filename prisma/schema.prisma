@@ -390,14 +390,18 @@ model subjects {
   id                  Int                   @id @default(autoincrement())
   name                String
   code                String                @unique
+  class_id            Int
   created_at          DateTime              @default(now())
   updated_at          DateTime              @updatedAt
   subject_groups      subject_groups[]
-  subject_classes     subject_classes[]
   exam_routines       exam_routines[]
   teacher_assignments teacher_assignments[]
   teacher_subjects    teacher_subjects[]
   routines            routines[]
+
+  subject_class classes @relation(fields: [class_id], references: [id], onDelete: Cascade)
+
+  @@index([class_id])
 }
 
 // Subject Groups
@@ -415,21 +419,6 @@ model subject_groups {
   @@index([group_id])
 }
 
-// Subject Classes
-model subject_classes {
-  id         Int      @id @default(autoincrement())
-  subject_id Int
-  class_id   Int?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  subject subjects @relation(fields: [subject_id], references: [id], onDelete: Cascade)
-  class   classes? @relation(fields: [class_id], references: [id], onDelete: Cascade)
-
-  @@index([subject_id])
-  @@index([class_id])
-}
-
 // Class Management
 model classes {
   id         Int      @id @default(autoincrement())
@@ -438,7 +427,6 @@ model classes {
   updated_at DateTime @updatedAt
 
   sections            sections[]
-  subject_classes     subject_classes[]
   studens             students[]
   class_attendance    class_attendance[]
   exam_results        exam_results[]
@@ -447,6 +435,7 @@ model classes {
   teacher_notices     teacher_notices[]
   class_routines      class_routines[]
   exams               exams[]
+  subjects            subjects[]
 }
 
 // Section Management

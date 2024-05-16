@@ -50,23 +50,19 @@ const subjectValidator = (id) =>
         else return false
       })
       .min(1, 'At least one group is required'),
-    classes: yup
-      .array(yup.number().typeError('Class must be an id'))
-      .test('exist', 'One or more classes are invalid', async (values) => {
-        if (!values || !values.length) return true
-
-        const checkClasses = await prisma.classes.findMany({
+    class_id: yup
+      .number()
+      .typeError('Class id must be a number')
+      .test('exist', 'Class id does not exist', async (value) => {
+        const class_id = await prisma.classes.findUnique({
           where: {
-            id: {
-              in: values,
-            },
+            id: value,
           },
         })
 
-        if (checkClasses.length === values.length) return true
+        if (class_id) return true
         else return false
-      })
-      .optional(),
+      }),
   })
 
 module.exports = { subjectValidator }
