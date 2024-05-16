@@ -30,13 +30,19 @@ jobs:
           docker push ${{ secrets.ECR_REPO_URL }}/bazigaar-dr-backend:${{ github.sha }}
           docker tag ${{ secrets.ECR_REPO_URL }}/bazigaar-dr-backend:${{ github.sha }} ${{ secrets.ECR_REPO_URL }}/bazigaar-dr-backend:latest
           docker push ${{ secrets.ECR_REPO_URL }}/bazigaar-dr-backend:latest
-
+      
+      - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          touch ~/.ssh/testing
+          echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/testing
     
           
       - name: Deploy app
         run: |
-          chmod 400 testing
-          mkdir ~/.ssh
+          chmod 400 ~/.ssh/testing
           touch ~/.ssh/known_hosts
           ssh-keyscan ${{ secrets.AWS_SSH_DNS }} >> ~/.ssh/known_hosts
-          ssh -i testing silicornya@${{ secrets.AWS_SSH_DNS }} "chmod +x ~/product/bazigaar-dr-backend/setup.sh && ~/product/bazigaar-dr-backend/setup.sh"
+          ssh -i ~/.ssh/testing silicornya@${{ secrets.AWS_SSH_DNS }} "chmod +x ~/product/bazigaar-dr-backend/setup.sh && ~/product/bazigaar-dr-backend/setup.sh"
