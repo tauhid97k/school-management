@@ -118,6 +118,7 @@ module.exports = {
   attendanceFields,
   noticeFields,
   teacherNoticeFields,
+  studentsFields,
   examResultFields,
   assignmentFields,
   classRoutineFields,

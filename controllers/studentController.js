@@ -2,7 +2,7 @@ const prisma = require('../utils/prisma')
 const asyncHandler = require('express-async-handler')
 const {
   selectQueries,
-  commonFields,
+  studentsFields,
   paginateWithSorting,
 } = require('../utils/metaData')
 const {
@@ -68,16 +68,22 @@ const getSubjectsForStudent = asyncHandler(async (req, res, next) => {
   @desc     Get all students
 */
 const getStudents = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, commonFields)
-  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+  const selectedQueries = selectQueries(req.query, studentsFields)
+  const { class_id, page, take, skip, orderBy } =
+    paginateWithSorting(selectedQueries)
+
+  const whereClause = class_id ? { class_id: Number(class_id) } : {}
 
   const [students, total] = await prisma.$transaction([
     prisma.students.findMany({
+      where: whereClause,
       take,
       skip,
       orderBy,
     }),
-    prisma.students.count(),
+    prisma.students.count({
+      where: whereClause,
+    }),
   ])
 
   const formatStudents = students.map((student) => ({
