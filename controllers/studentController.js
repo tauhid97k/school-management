@@ -69,8 +69,9 @@ const getSubjectsForStudent = asyncHandler(async (req, res, next) => {
 */
 const getStudents = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, studentsFields)
-  const { class_id, page, take, skip, orderBy } =
-    paginateWithSorting(selectedQueries)
+  const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  let { class_id } = selectedQueries
 
   const whereClause = class_id ? { class_id: Number(class_id) } : {}
 
