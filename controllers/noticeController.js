@@ -22,7 +22,6 @@ const getAllNotice = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, noticeFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
   const { type } = selectedQueries
-  type ? type : null
 
   const [notices, total] = await prisma.$transaction([
     prisma.notices.findMany({
@@ -31,7 +30,9 @@ const getAllNotice = asyncHandler(async (req, res, next) => {
       skip,
       orderBy,
     }),
-    prisma.notices.count(),
+    prisma.notices.count({
+      where: type ? { type } : {},
+    }),
   ])
 
   const formatNotices = notices.map((notice) => ({
