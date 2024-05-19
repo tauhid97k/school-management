@@ -10,6 +10,7 @@ const {
 } = require('../utils/metaData')
 const dayjs = require('dayjs')
 const { formatDate } = require('../utils/transformData')
+const generateFileLink = require('../utils/generateFileLink')
 
 /*
   @route    POST: /attendance/teachers
@@ -31,6 +32,7 @@ const getTeachersForAttendance = asyncHandler(async (req, res, next) => {
       select: {
         id: true,
         name: true,
+        profile_img: true,
         designation: true,
         attendance: {
           where: {
@@ -43,9 +45,12 @@ const getTeachersForAttendance = asyncHandler(async (req, res, next) => {
   ])
 
   const formatTeachers = teachers.map(
-    ({ id, name, designation, attendance }) => ({
+    ({ id, name, designation, attendance, profile_img }) => ({
       id,
       name,
+      profile_img: profile_img
+        ? generateFileLink(`teachers/profiles/${profile_img}`)
+        : null,
       designation: designation.title,
       attendance: attendance.length
         ? {
