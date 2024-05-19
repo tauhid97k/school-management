@@ -33,6 +33,7 @@ const getTeachersApplicationsForAdmin = asyncHandler(async (req, res, next) => {
       include: {
         teacher: {
           select: {
+            profile_img: true,
             id: true,
             name: true,
             designation: true,
@@ -48,6 +49,9 @@ const getTeachersApplicationsForAdmin = asyncHandler(async (req, res, next) => {
       id,
       subject,
       date,
+      profile_img: teacher.profile_img
+        ? generateFileLink(`teachers/profiles/${teacher.profile_img}`)
+        : null,
       teacher_id: teacher.id,
       teacher_name: teacher.name,
       teacher_designation: teacher.designation,
