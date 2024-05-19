@@ -79,7 +79,7 @@ const getStudents = asyncHandler(async (req, res, next) => {
     })
   }
 
-  const whereClause = {}
+  let whereClause = {}
 
   if (class_id) {
     whereClause.class_id = Number(class_id)
