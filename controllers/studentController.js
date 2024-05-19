@@ -73,6 +73,12 @@ const getStudents = asyncHandler(async (req, res, next) => {
 
   let { class_id, roll } = selectedQueries
 
+  if (!class_id && roll) {
+    return res.status(400).json({
+      message: 'Class is required to search roll',
+    })
+  }
+
   const whereClause = {}
 
   if (class_id) {
