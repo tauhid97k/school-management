@@ -75,14 +75,13 @@ const getStudents = asyncHandler(async (req, res, next) => {
 
   const whereClause = {}
 
-  if (class_id && roll) {
-    whereClause = {
-      AND: [{ class_id: Number(class_id) }, { roll }],
-    }
-  } else if (class_id) {
+  if (class_id) {
     whereClause.class_id = Number(class_id)
-  } else if (roll) {
-    whereClause.roll = roll
+    if (roll) {
+      whereClause = {
+        AND: [{ class_id: Number(class_id) }, { roll }],
+      }
+    }
   }
 
   const [students, total] = await prisma.$transaction([
