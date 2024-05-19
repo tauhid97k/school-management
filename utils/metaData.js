@@ -95,7 +95,14 @@ const classRoutineFields = [
 ]
 
 // Application Fields
-const applicationFields = ['date', 'page', 'limit', 'sortBy', 'sortOrder']
+const applicationFields = [
+  'date',
+  'class_id',
+  'page',
+  'limit',
+  'sortBy',
+  'sortOrder',
+]
 
 // Salary Fields
 const salaryFields = [

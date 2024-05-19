@@ -114,8 +114,21 @@ const getStudentsApplicationsForAdmin = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, applicationFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
+  const { class_id } = selectQueries
+
+  let whereClause = {}
+
+  if (class_id) {
+    whereClause = {
+      student: {
+        class_id: Number(class_id),
+      },
+    }
+  }
+
   const [studentApplications, total] = await prisma.$transaction([
     prisma.student_applications.findMany({
+      where: whereClause,
       take,
       skip,
       orderBy,
@@ -140,7 +153,9 @@ const getStudentsApplicationsForAdmin = asyncHandler(async (req, res, next) => {
         },
       },
     }),
-    prisma.student_applications.count(),
+    prisma.student_applications.count({
+      where: whereClause,
+    }),
   ])
 
   const formatData = studentApplications.map(
@@ -497,7 +512,7 @@ const getStudentApplications = asyncHandler(async (req, res, next) => {
 
     if (!findStudent) {
       return res.json({
-        message: 'Teacher not found',
+        message: 'Student not found',
       })
     }
 
