@@ -59,9 +59,18 @@ const salaryValidator = (id) =>
       .typeError('Salary amount must be a valid number')
       .required('Salary amount is required'),
     salary_date: yup.date().required('Salary date is required'),
-    bonus: yup.number().integer().optional(),
-    advance: yup.number().integer().optional(),
-    due: yup.number().integer().optional(),
+    bonus: yup
+      .number()
+      .nullable()
+      .transform((_, val) => (val !== '' ? Number(val) : null)),
+    advance: yup
+      .number()
+      .nullable()
+      .transform((_, val) => (val !== '' ? Number(val) : null)),
+    due: yup
+      .number()
+      .nullable()
+      .transform((_, val) => (val !== '' ? Number(val) : null)),
     payment_status: yup
       .string()
       .required('Payment status is required')
