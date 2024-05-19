@@ -122,7 +122,7 @@ const studentFeeList = asyncHandler(async (req, res, next) => {
   const [studentFees, total] = await prisma.$transaction([
     prisma.student_fees.findMany({
       where: {
-        ...(class_id ? { class_id: Number(class_id) } : {}),
+        ...(class_id ? { student: { class_id: Number(class_id) } } : {}),
         ...(payment_status ? { payment_status } : {}),
       },
       include: {
@@ -151,7 +151,7 @@ const studentFeeList = asyncHandler(async (req, res, next) => {
     }),
     prisma.student_fees.count({
       where: {
-        ...(class_id ? { class_id: Number(class_id) } : {}),
+        ...(class_id ? { student: { class_id: Number(class_id) } } : {}),
         ...(payment_status ? { payment_status } : {}),
       },
     }),
