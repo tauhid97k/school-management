@@ -370,6 +370,35 @@ const updateStudentFee = asyncHandler(async (req, res, next) => {
   })
 })
 
+/*
+  @route    DELETE: /student-fees/:id
+  @access   private
+  @desc     Delete student fee
+*/
+const deleteStudentFee = asyncHandler(async (req, res, next) => {
+  const id = Number(req.params.id)
+
+  await prisma.$transaction(async (tx) => {
+    const findStudentFee = await tx.student_fees.findUnique({
+      where: {
+        id,
+      },
+    })
+
+    if (!findStudentFee) {
+      return res.status(404).json({
+        message: 'Fee information not found',
+      })
+    }
+
+    await tx.student_fees.delete({
+      where: { id: findStudentFee.id },
+    })
+
+    res.json({ message: 'Fee information deleted' })
+  })
+})
+
 module.exports = {
   getStudentInfo,
   studentFeeList,
@@ -377,4 +406,5 @@ module.exports = {
   getStudentFeesHistory,
   createStudentFee,
   updateStudentFee,
+  deleteStudentFee,
 }
