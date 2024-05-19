@@ -43,6 +43,7 @@ const getStudentsForAttendance = asyncHandler(async (req, res, next) => {
       select: {
         id: true,
         name: true,
+        profile_img: true,
         roll: true,
         class_id: true,
         class_attendance: {
@@ -63,6 +64,9 @@ const getStudentsForAttendance = asyncHandler(async (req, res, next) => {
     ({ id, name, roll, class_id, class_attendance }) => ({
       id,
       name,
+      profile_img: profile_img
+        ? generateFileLink(`students/profiles/${profile_img}`)
+        : null,
       roll,
       class_id,
       attendance: class_attendance.length
