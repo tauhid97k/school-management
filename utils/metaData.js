@@ -34,6 +34,7 @@ const commonFields = ['search', 'page', 'limit', 'sortBy', 'sortOrder']
 
 const studentsFields = [
   'class_id',
+  'roll',
   'gender',
   'search',
   'page',

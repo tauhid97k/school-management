@@ -71,9 +71,19 @@ const getStudents = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, studentsFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
-  let { class_id } = selectedQueries
+  let { class_id, roll } = selectedQueries
 
-  const whereClause = class_id ? { class_id: Number(class_id) } : {}
+  const whereClause = {}
+
+  if (class_id && roll) {
+    whereClause = {
+      AND: [{ class_id: Number(class_id) }, { roll }],
+    }
+  } else if (class_id) {
+    whereClause.class_id = Number(class_id)
+  } else if (roll) {
+    whereClause.roll = roll
+  }
 
   const [students, total] = await prisma.$transaction([
     prisma.students.findMany({
