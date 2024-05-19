@@ -163,6 +163,9 @@ const getStudentsApplicationsForAdmin = asyncHandler(async (req, res, next) => {
       id,
       subject,
       date,
+      profile_img: student.profile_img
+        ? generateFileLink(`students/profiles/${student.profile_img}`)
+        : null,
       student_name: student.name,
       student_roll: student.roll,
       class_name: student.class.class_name,
