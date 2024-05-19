@@ -117,9 +117,14 @@ const getStudentInfo = asyncHandler(async (req, res, next) => {
 const studentFeeList = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, studentFeesFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+  const { class_id, payment_status } = selectedQueries
 
   const [studentFees, total] = await prisma.$transaction([
     prisma.student_fees.findMany({
+      where: {
+        ...(class_id ? { class_id: Number(class_id) } : {}),
+        ...(payment_status ? { payment_status } : {}),
+      },
       include: {
         student: {
           select: {
@@ -144,7 +149,12 @@ const studentFeeList = asyncHandler(async (req, res, next) => {
       skip,
       orderBy,
     }),
-    prisma.student_fees.count(),
+    prisma.student_fees.count({
+      where: {
+        ...(class_id ? { class_id: Number(class_id) } : {}),
+        ...(payment_status ? { payment_status } : {}),
+      },
+    }),
   ])
 
   // Format Student Fees

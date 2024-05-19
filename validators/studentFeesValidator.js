@@ -27,13 +27,15 @@ const studentFeesValidator = (id) =>
       .number()
       .integer()
       .typeError('Fee amount must be an integer')
-      .optional(),
+      .optional()
+      .nullable(),
     due_type: yup.string().optional(),
     due_amount: yup
       .number()
       .integer()
       .typeError('Fee amount must be an integer')
-      .optional(),
+      .optional()
+      .nullable(),
     payment_status: yup
       .string()
       .required('Payment status is required')
