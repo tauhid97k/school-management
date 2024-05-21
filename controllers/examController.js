@@ -4,6 +4,7 @@ const {
   selectQueries,
   commonFields,
   paginateWithSorting,
+  examFields,
 } = require('../utils/metaData')
 const {
   examValidator,
@@ -401,11 +402,13 @@ const getAllClassesAndSections = asyncHandler(async (req, res, next) => {
   @desc     All exams
 */
 const getAllExams = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, commonFields)
+  const selectedQueries = selectQueries(req.query, examFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+  const { class_id } = selectQueries
 
   const [exams, total] = await prisma.$transaction([
     prisma.exams.findMany({
+      where: class_id ? { class_id: Number(class_id) } : {},
       take,
       skip,
       orderBy,
@@ -418,7 +421,9 @@ const getAllExams = asyncHandler(async (req, res, next) => {
         },
       },
     }),
-    prisma.exams.count(),
+    prisma.exams.count({
+      where: class_id ? { class_id: Number(class_id) } : {},
+    }),
   ])
 
   // Format Exams

@@ -61,6 +61,16 @@ const noticeFields = ['type', 'page', 'limit', 'sortBy', 'sortOrder']
 // Teacher Noticeboard Fields
 const teacherNoticeFields = ['status', 'page', 'limit', 'sortBy', 'sortOrder']
 
+// Exam Field
+const examFields = [
+  'class_id',
+  'section_id',
+  'page',
+  'limit',
+  'sortBy',
+  'sortOrder',
+]
+
 // Exam Result Fields
 const examResultFields = [
   'class_id',
@@ -136,6 +146,7 @@ module.exports = {
   noticeFields,
   teacherNoticeFields,
   studentsFields,
+  examFields,
   examResultFields,
   assignmentFields,
   classRoutineFields,
