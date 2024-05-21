@@ -53,6 +53,7 @@ const subjectValidator = (id) =>
     class_id: yup
       .number()
       .typeError('Class id must be a number')
+      .required('Class is required')
       .test('exist', 'Class id does not exist', async (value) => {
         const class_id = await prisma.classes.findUnique({
           where: {

@@ -10,6 +10,7 @@ const {
 } = require('../utils/metaData')
 const dayjs = require('dayjs')
 const { formatDate } = require('../utils/transformData')
+const generateFileLink = require('../utils/generateFileLink')
 
 /*
   @route    GET: /attendance/classes/:id/students
@@ -21,13 +22,6 @@ const getStudentsForAttendance = asyncHandler(async (req, res, next) => {
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   let { date } = selectedQueries
-
-  if (!date) {
-    return res.status(400).json({
-      message: 'Date is required',
-    })
-  }
-
   date = new Date(date).toISOString()
 
   const id = Number(req.params.id)
@@ -61,7 +55,7 @@ const getStudentsForAttendance = asyncHandler(async (req, res, next) => {
   ])
 
   const formatStudents = students.map(
-    ({ id, name, roll, class_id, class_attendance }) => ({
+    ({ id, name, roll, class_id, class_attendance, profile_img }) => ({
       id,
       name,
       profile_img: profile_img
