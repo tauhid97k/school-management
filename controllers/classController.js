@@ -79,33 +79,25 @@ const getClassSubjects = asyncHandler(async (req, res, next) => {
       return res.status(404).json({ message: 'No class found' })
     }
 
-    const subjects = await tx.subject_classes.findMany({
+    const subjects = await tx.subjects.findMany({
       where: {
         class_id: id,
       },
       include: {
-        class: {
+        subject_class: {
           select: {
             id: true,
             class_name: true,
           },
         },
-        subject: {
-          select: {
-            id: true,
-            name: true,
-            code: true,
-          },
-        },
       },
     })
 
-    const formatData = subjects.map(({ id, subject, class: getClass }) => ({
-      id,
-      subject_id: subject.id,
-      subject_name: subject.name,
-      class_id: getClass.id,
-      class_name: getClass.class_name,
+    const formatData = subjects.map(({ id, name, subject_class }) => ({
+      subject_id: id,
+      subject_name: name,
+      class_id: subject_class.id,
+      class_name: subject_class.class_name,
     }))
 
     res.json(formatData)
