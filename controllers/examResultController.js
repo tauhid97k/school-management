@@ -725,7 +725,7 @@ const publishExamResult = asyncHandler(async (req, res, next) => {
     })
 
     res.json({
-      message: 'Result Publish Updated',
+      message: 'Result status updated',
     })
   })
 })
