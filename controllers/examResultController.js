@@ -231,7 +231,7 @@ const getExamsForResultForTeacher = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, examResultFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
-  let { class_id } = selectQueries
+  let { class_id } = selectedQueries
   class_id = class_id ? Number(class_id) : null
 
   const findTeacher = await prisma.teachers.findUnique({
@@ -273,7 +273,7 @@ const getExamsForResultForTeacher = asyncHandler(async (req, res, next) => {
         exam: {
           AND: [
             class_id ? { class_id } : { class_id: { in: formatClasses } },
-            class_id ? {} : { section_id: { in: formatSections } },
+            { section_id: { in: formatSections } },
             { status: 'CONCLUDED' },
           ],
         },
