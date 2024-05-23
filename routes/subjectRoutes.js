@@ -12,8 +12,8 @@ const {
 
 // Protected Routes
 router.get('/', authMiddleware(), getAllSubjects)
-router.get('/:id/teachers', authMiddleware(), getSubjectTeachers)
 router.get('/:id', authMiddleware(), getSubject)
+router.get('/:id/teachers', authMiddleware(), getSubjectTeachers)
 router.post('/', authMiddleware(), createSubject)
 router.put('/:id', authMiddleware(), updateSubject)
 router.delete('/:id', authMiddleware(), deleteSubject)
