@@ -231,6 +231,9 @@ const getExamsForResultForTeacher = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, examResultFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
+  let { class_id } = selectQueries
+  class_id = class_id ? Number(class_id) : null
+
   const findTeacher = await prisma.teachers.findUnique({
     where: {
       id,
@@ -269,7 +272,9 @@ const getExamsForResultForTeacher = asyncHandler(async (req, res, next) => {
       where: {
         exam: {
           AND: [
-            { class_id: { in: formatClasses } },
+            class_id
+              ? { class_id: { in: [class_id] } }
+              : { class_id: { in: formatClasses } },
             { section_id: { in: formatSections } },
             { status: 'CONCLUDED' },
           ],
@@ -298,7 +303,9 @@ const getExamsForResultForTeacher = asyncHandler(async (req, res, next) => {
       where: {
         exam: {
           AND: [
-            { class_id: { in: formatClasses } },
+            class_id
+              ? { class_id: { in: [class_id] } }
+              : { class_id: { in: formatClasses } },
             { section_id: { in: formatSections } },
             { status: 'CONCLUDED' },
           ],
@@ -571,6 +578,18 @@ const createExamResult = asyncHandler(async (req, res, next) => {
   const data = await examResultValidator().validate(req.body, {
     abortEarly: false,
   })
+
+  await prisma.$transaction(async (tx) => {
+    const examRoutine = await tx.exam_routines.findMany({
+      where: {
+        exam_id: data.exam_id,
+      },
+    })
+
+    console.log(examRoutine)
+  })
+
+  return res.json('Hehe')
 
   await prisma.exam_results.create({
     data,
