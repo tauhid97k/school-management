@@ -18,8 +18,11 @@ const {
 */
 const getExamForTeacher = asyncHandler(async (req, res, next) => {
   const id = Number(req.params.id)
-  const selectedQueries = selectQueries(req.query, commonFields)
+  const selectedQueries = selectQueries(req.query, examFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
+
+  let { class_id } = selectedQueries
+  class_id = class_id ? Number(class_id) : null
 
   const findTeacher = await prisma.teachers.findUnique({
     where: {
@@ -58,7 +61,10 @@ const getExamForTeacher = asyncHandler(async (req, res, next) => {
       where: {
         OR: [
           {
-            AND: [{ section_id: null }, { class_id: { in: formatClasses } }],
+            AND: [
+              { section_id: null },
+              class_id ? { class_id } : { class_id: { in: formatClasses } },
+            ],
           },
           {
             section_id: { in: formatSections },
@@ -112,7 +118,10 @@ const getExamForTeacher = asyncHandler(async (req, res, next) => {
       where: {
         OR: [
           {
-            AND: [{ section_id: null }, { class_id: { in: formatClasses } }],
+            AND: [
+              { section_id: null },
+              class_id ? { class_id } : { class_id: { in: formatClasses } },
+            ],
           },
           {
             section_id: { in: formatSections },
