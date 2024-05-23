@@ -32,7 +32,7 @@ const getSubjectTeachers = asyncHandler(async (req, res, next) => {
       where: {
         subject_id: findSubject.id,
       },
-      select: {
+      include: {
         teacher: {
           select: {
             id: true,
