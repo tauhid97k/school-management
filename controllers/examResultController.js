@@ -272,9 +272,7 @@ const getExamsForResultForTeacher = asyncHandler(async (req, res, next) => {
       where: {
         exam: {
           AND: [
-            class_id
-              ? { class_id: { in: [class_id] } }
-              : { class_id: { in: formatClasses } },
+            class_id ? { class_id } : { class_id: { in: formatClasses } },
             { section_id: { in: formatSections } },
             { status: 'CONCLUDED' },
           ],
@@ -303,9 +301,7 @@ const getExamsForResultForTeacher = asyncHandler(async (req, res, next) => {
       where: {
         exam: {
           AND: [
-            class_id
-              ? { class_id: { in: [class_id] } }
-              : { class_id: { in: formatClasses } },
+            class_id ? { class_id } : { class_id: { in: formatClasses } },
             { section_id: { in: formatSections } },
             { status: 'CONCLUDED' },
           ],
