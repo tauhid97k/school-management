@@ -329,9 +329,11 @@ const getTeacherApplicationDetails = asyncHandler(async (req, res, next) => {
       subject: findApplication.subject,
       description: findApplication.description,
       date: formatDate(findApplication.date),
-      attachment: generateFileLink(
-        `teachers/applications/${findApplication.attachment}`
-      ),
+      attachment: findApplication.attachment
+        ? generateFileLink(
+            `teachers/applications/${findApplication.attachment}`
+          )
+        : null,
       teacher_id: findApplication.teacher.id,
       teacher_name: findApplication.teacher.name,
       teacher_designation: findApplication.teacher.designation.title,
@@ -606,9 +608,11 @@ const getStudentApplicationDetails = asyncHandler(async (req, res, next) => {
       subject: findApplication.subject,
       description: findApplication.description,
       date: formatDate(findApplication.date),
-      attachment: generateFileLink(
-        `students/applications/${findApplication.attachment}`
-      ),
+      attachment: findApplication.attachment
+        ? generateFileLink(
+            `students/applications/${findApplication.attachment}`
+          )
+        : null,
       student_id: findApplication.student.id,
       student_name: findApplication.student.name,
       student_class: findApplication.student.class.class_name,
