@@ -273,7 +273,7 @@ const getExamsForResultForTeacher = asyncHandler(async (req, res, next) => {
         exam: {
           AND: [
             class_id ? { class_id } : { class_id: { in: formatClasses } },
-            { section_id: { in: formatSections } },
+            class_id ? {} : { section_id: { in: formatSections } },
             { status: 'CONCLUDED' },
           ],
         },
