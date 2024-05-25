@@ -37,7 +37,7 @@ const getAllGroups = asyncHandler(async (req, res, next) => {
   @desc     Add a new group
 */
 const createGroup = asyncHandler(async (req, res, next) => {
-  const data = await groupValidator.validate(req.body, { abortEarly: false })
+  const data = await groupValidator().validate(req.body, { abortEarly: false })
   await prisma.groups.create({ data })
 
   res.status(201).json({ message: 'Group added successfully' })
@@ -49,9 +49,12 @@ const createGroup = asyncHandler(async (req, res, next) => {
   @desc     Update a group
 */
 const updateGroup = asyncHandler(async (req, res, next) => {
-  const data = await groupValidator.validate(req.body, { abortEarly: false })
-
   const id = Number(req.params.id)
+
+  const data = await groupValidator(id).validate(req.body, {
+    abortEarly: false,
+  })
+
   await prisma.$transaction(async (tx) => {
     const findGroup = await tx.groups.findUnique({
       where: {
