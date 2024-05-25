@@ -33,24 +33,24 @@ const getTeacherNoticeForStudent = asyncHandler(async (req, res, next) => {
     return res.status(404).json({ message: 'Student not found' })
   }
 
-  // let whereCondition = {}
+  let whereCondition = {}
 
-  // if (findStudent.class_id && !findStudent.section_id) {
-  //   whereCondition = {
-  //     AND: [{ class_id: findStudent.class_id }, { status: 'PUBLISHED' }],
-  //   }
-  // } else if (findStudent.section_id) {
-  //   whereCondition = {
-  //     AND: [{ section_id: findStudent.section_id }, { status: 'PUBLISHED' }],
-  //   }
-  // }
+  if (findStudent.class_id && !findStudent.section_id) {
+    whereCondition = {
+      AND: [{ class_id: findStudent.class_id }, { status: 'PUBLISHED' }],
+    }
+  } else if (findStudent.section_id) {
+    whereCondition = {
+      AND: [{ section_id: findStudent.section_id }, { status: 'PUBLISHED' }],
+    }
+  } else {
+    return res.status(400).json({ message: 'Invalid student data' })
+  }
 
   // Get Notices
   const [notices, total] = await prisma.$transaction([
     prisma.teacher_notices.findMany({
-      where: {
-        section_id: findStudent.section_id,
-      },
+      where: whereCondition,
       include: {
         teacher: {
           select: {
@@ -69,9 +69,7 @@ const getTeacherNoticeForStudent = asyncHandler(async (req, res, next) => {
       orderBy,
     }),
     prisma.teacher_notices.count({
-      where: {
-        section_id: findStudent.section_id,
-      },
+      where: whereCondition,
     }),
   ])
 
