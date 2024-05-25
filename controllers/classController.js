@@ -131,7 +131,7 @@ const getClass = asyncHandler(async (req, res, next) => {
   @desc     Create a new class
 */
 const createClass = asyncHandler(async (req, res, next) => {
-  const data = await classValidator.validate(req.body, { abortEarly: false })
+  const data = await classValidator().validate(req.body, { abortEarly: false })
   await prisma.classes.create({ data })
 
   res.status(201).json({ message: 'Class created successfully' })
@@ -143,9 +143,12 @@ const createClass = asyncHandler(async (req, res, next) => {
   @desc     Update a class
 */
 const updateClass = asyncHandler(async (req, res, next) => {
-  const data = await classValidator.validate(req.body, { abortEarly: false })
-
   const id = Number(req.params.id)
+
+  const data = await classValidator(id).validate(req.body, {
+    abortEarly: false,
+  })
+
   await prisma.$transaction(async (tx) => {
     const findClass = await tx.classes.findUnique({
       where: {
