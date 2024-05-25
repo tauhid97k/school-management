@@ -171,7 +171,6 @@ const getStudent = asyncHandler(async (req, res, next) => {
 */
 const createStudent = asyncHandler(async (req, res, next) => {
   let data = await studentValidator().validate(req.body, { abortEarly: false })
-
   await prisma.$transaction(async (tx) => {
     if (req.files) {
       const { profile_img } = await studentProfileImageValidator().validate(

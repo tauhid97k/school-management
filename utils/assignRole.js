@@ -20,7 +20,6 @@ const assignRole = asyncHandler(async (userId, roleName, tx) => {
         role_id: role.id,
       },
     })
-    return
   } else if (role.name === 'teacher') {
     await tx.user_roles.upsert({
       where: {
@@ -34,7 +33,6 @@ const assignRole = asyncHandler(async (userId, roleName, tx) => {
         role_id: role.id,
       },
     })
-    return
   } else if (role.name === 'student') {
     await tx.user_roles.upsert({
       where: {

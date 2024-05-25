@@ -32,7 +32,31 @@ const teacherValidator = (id) =>
         }
       }),
     profile_img: yup.string().optional(),
-    password: yup.string().required('Password is required'),
+    password: yup
+      .string()
+      .test('required', 'Password is required', async (value) => {
+        const findTeacher = await prisma.teachers.findUnique({
+          where: {
+            email: value,
+          },
+        })
+
+        if (findTeacher && !id) {
+          return false
+        }
+
+        if (findTeacher && id) {
+          if (findTeacher.id === id) {
+            return true
+          } else {
+            return false
+          }
+        }
+
+        if (!findTeacher) {
+          return true
+        }
+      }),
     date_of_birth: yup.string().required('Date of birth is required'),
     blood_group: yup
       .string()
