@@ -68,6 +68,13 @@ const getAllSubjects = asyncHandler(async (req, res, next) => {
   const [subjects, total] = await prisma.$transaction([
     prisma.subjects.findMany({
       where: whereClause,
+      include: {
+        subject_class: {
+          select: {
+            class_name: true,
+          },
+        },
+      },
       take,
       skip,
       orderBy,
@@ -77,8 +84,18 @@ const getAllSubjects = asyncHandler(async (req, res, next) => {
     }),
   ])
 
+  const formatData = subjects.map(
+    ({ id, code, name, subject_class, created_at, updated_at }) => ({
+      id,
+      code,
+      name: `${name} - ${subject_class.class_name}`,
+      created_at,
+      updated_at,
+    })
+  )
+
   res.json({
-    data: subjects,
+    data: formatData,
     meta: {
       page,
       limit: take,
