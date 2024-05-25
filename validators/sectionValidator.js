@@ -79,8 +79,21 @@ const sectionValidator = (id) =>
             },
           })
 
-          if (findSection) return false
-          else return true
+          if (findSection && !id) {
+            return false
+          }
+
+          if (findSection && id) {
+            if (findSection.id === id) {
+              return true
+            } else {
+              return false
+            }
+          }
+
+          if (!findSection) {
+            return true
+          }
         }
       ),
   })
