@@ -1,215 +1,168 @@
-const asyncHandler = require('express-async-handler')
-const prisma = require('../utils/prisma')
+const asyncHandler = require("express-async-handler")
+const prisma = require("../utils/prisma")
 const {
   selectQueries,
   paginateWithSorting,
   salaryFields,
-} = require('../utils/metaData')
-const { salaryValidator } = require('../validators/salaryValidator')
-const generateFileLink = require('../utils/generateFileLink')
-const { formatDate } = require('../utils/transformData')
+} = require("../utils/metaData")
+const { salaryValidator } = require("../validators/salaryValidator")
+const dayjs = require("dayjs")
+const generateFileLink = require("../utils/generateFileLink")
 
 /*
-  @route    GET: /salaries/user-info
+  @route    GET: /salaries/generate-teachers-invoice
   @access   private
-  @desc     Get Teacher/Admin info for salary
+  @desc     Generate teacher salary invoice
 */
-const getUserTypeWithInfo = asyncHandler(async (req, res, next) => {
-  const selectedQueries = selectQueries(req.query, salaryFields)
+const generateTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
+  const bangladeshDate = new Date().toLocaleString("en-US", {
+    timeZone: "Asia/Dhaka",
+  })
 
-  const { user_type, user_id } = selectedQueries
+  // Current Date (BD)
+  const currentDate = new Date(bangladeshDate)
+  const year = currentDate.getFullYear()
+  const month = currentDate.getMonth()
 
-  if (!user_type) {
+  // First day of the month and 25th day of the month
+  const firstDay = new Date(year, month, 1)
+  const lastDayOfMonth = new Date(year, month + 1, 0)
+
+  // Check if invoice is auto generated for this month
+  const generatedInvoiceExist = await prisma.teacher_salaries.findFirst({
+    where: {
+      AND: [
+        { issued_at: { gte: firstDay, lte: lastDayOfMonth } },
+        { invoice_type: "AUTOMATIC" },
+      ],
+    },
+  })
+
+  if (generatedInvoiceExist) {
+    // Get the generated invoice month & year
+    const monthAndYear = dayjs(generatedInvoiceExist.issued_at).format(
+      "MMM-YYYY"
+    )
+
     return res.status(400).json({
-      message: 'User type is required',
+      message: `Invoice already generated for ${monthAndYear}`,
     })
   }
 
-  let response = {
-    user_type: '',
-    users: [],
-    user_info: {},
-  }
-
-  // Get Users based on user type (Admin/Teacher)
-  if (user_type === 'teacher') {
-    response.user_type = 'teacher'
-    response.users = await prisma.teachers.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-    })
-  } else if (user_type === 'admin') {
-    response.user_type = 'admin'
-    response.users = await prisma.admins.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-    })
-  } else if (user_type !== 'admin' || user_type !== 'teacher') {
-    response.user_type = user_type
-    response.users = await prisma.staffs.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-    })
-  }
-
-  // User information based on user_id
-  if (user_id && user_type === 'teacher') {
-    const getTeacher = await prisma.teachers.findUnique({
-      where: {
-        id: Number(user_id),
-      },
-      select: {
-        id: true,
-        name: true,
-        profile_img: true,
-        designation: {
-          select: {
-            title: true,
-          },
+  const teachers = await prisma.teachers.findMany({
+    where: {
+      status: "ACTIVE",
+    },
+    select: {
+      id: true,
+      salary: true,
+      salaries: {
+        select: {
+          due: true,
+          advance: true,
         },
-        salary: true,
-        joining_date: true,
+        orderBy: {
+          issued_at: "desc",
+        },
+        take: 1,
       },
-    })
+    },
+  })
 
-    // Format Teacher
-    const formatTeacher = {
-      id: getTeacher.id,
-      name: getTeacher.name,
-      profile_img: getTeacher.profile_img
-        ? generateFileLink(`teachers/profiles/${getTeacher.profile_img}`)
-        : null,
-      designation: getTeacher.designation.title,
-      salary: getTeacher.salary,
-      joining_date: getTeacher.joining_date,
+  // Calculate Teacher's salary, due, advanced, bonus
+  const teachersInfo = teachers.map((teacher) => {
+    let newAmount = teacher.salary
+    const previousInvoice = teacher.salaries[0]
+
+    if (previousInvoice) {
+      if (previousInvoice.due) {
+        newAmount += previousInvoice.due
+      }
+
+      if (previousInvoice.advance) {
+        newAmount -= previousInvoice.advance
+      }
     }
 
-    response.user_info = formatTeacher
-  } else if (user_id && user_type === 'admin') {
-    const getAdmin = await prisma.admins.findUnique({
-      where: {
-        id: Number(user_id),
-      },
-      select: {
-        id: true,
-        name: true,
-        profile_img: true,
-        created_at: true,
-      },
-    })
-
-    // Format admin
-    const formatAdmin = {
-      id: getAdmin.id,
-      name: getAdmin.name,
-      profile_img: getAdmin.profile_img ? getAdmin.profile_img : null,
-      joining_date: getAdmin.created_at,
+    return {
+      teacher_id: teacher.id,
+      amount: newAmount,
+      bonus: null,
+      advance: previousInvoice?.advance || null,
+      due: previousInvoice?.due || null,
+      invoice_type: "AUTOMATIC",
     }
+  })
 
-    response.user_info = formatAdmin
-  } else if (user_id && (user_type !== 'admin' || user_type !== 'teacher')) {
-    const getStaff = await prisma.staffs.findUnique({
-      where: {
-        id: Number(user_id),
-      },
-      select: {
-        id: true,
-        name: true,
-        profile_img: true,
-        joining_date: true,
-      },
-    })
+  // Create Invoice
+  await prisma.teacher_salaries.createMany({
+    data: teachersInfo,
+  })
 
-    // Format staff
-    const formatStaff = {
-      id: getStaff.id,
-      name: getStaff.name,
-      profile_img: getStaff.profile_img
-        ? generateFileLink(`staffs/profiles/${getStaff.profile_img}`)
-        : null,
-      joining_date: getStaff.joining_date,
-    }
-
-    response.user_info = formatStaff
-  }
-
-  res.json(response)
+  res.json({
+    message: "Teacher salary invoices generated",
+  })
 })
 
 /*
-  @route    GET: /salaries
+  @route    GET: /salaries/teachers-invoice
   @access   private
-  @desc     Get All Salaries
+  @desc     GET current month's salary invoices
 */
-const getSalaries = asyncHandler(async (req, res, next) => {
+const teachersSalaryInvoice = asyncHandler(async (req, res, next) => {
   const selectedQueries = selectQueries(req.query, salaryFields)
   const { page, take, skip, orderBy } = paginateWithSorting(selectedQueries)
 
   const [salaries, total] = await prisma.$transaction([
-    prisma.salaries.findMany({
-      take,
-      skip,
-      orderBy,
+    prisma.teacher_salaries.findMany({
       include: {
         teacher: {
           select: {
             id: true,
             name: true,
-            designation: true,
-            profile_img: true,
-          },
-        },
-        admin: {
-          select: {
-            id: true,
-            name: true,
-            designation: true,
-            profile_img: true,
-          },
-        },
-        staff: {
-          select: {
-            id: true,
-            name: true,
-            designation: true,
+            designation: {
+              select: {
+                title: true,
+              },
+            },
             profile_img: true,
           },
         },
       },
+      take,
+      skip,
+      orderBy,
     }),
-    prisma.salaries.count(),
+    prisma.teacher_salaries.count(),
   ])
 
-  const formatSalaries = salaries.map((salary) => {
-    const { admin, teacher, staff, admin_id, teacher_id, staff_id, ...rest } =
-      salary
-    let user_details = teacher || admin || staff
-    user_details = {
-      name: user_details.name,
-      designation: user_details.designation.title,
-      profile_img:
-        (teacher
-          ? generateFileLink(`teachers/profiles/${teacher.profile_img}`)
-          : null) ||
-        (admin
-          ? generateFileLink(`admins/profiles/${admin.profile_img}`)
-          : null) ||
-        (staff
-          ? generateFileLink(`staffs/profiles/${staff.profile_img}`)
-          : null),
-    }
-
-    return {
-      ...rest,
-      ...user_details,
-    }
-  })
+  const formatSalaries = salaries.map(
+    ({
+      teacher,
+      id,
+      amount,
+      advance,
+      due,
+      bonus,
+      status,
+      invoice_type,
+      issued_at,
+    }) => ({
+      id,
+      name: teacher.name,
+      designation: teacher.designation.title,
+      profile_img: teacher.profile_img
+        ? generateFileLink(`teachers/profiles/${teacher.profile_img}`)
+        : null,
+      amount,
+      advance,
+      due,
+      bonus,
+      status,
+      invoice_type,
+      issued_at,
+    })
+  )
 
   res.json({
     data: formatSalaries,
@@ -221,240 +174,4 @@ const getSalaries = asyncHandler(async (req, res, next) => {
   })
 })
 
-/*
-  @route    GET: /salaries/:id
-  @access   private
-  @desc     Get salary details
-*/
-const getSalaryDetails = asyncHandler(async (req, res, next) => {
-  const id = Number(req.params.id)
-
-  await prisma.$transaction(async (tx) => {
-    const findSalary = await tx.salaries.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            name: true,
-            designation: true,
-            profile_img: true,
-          },
-        },
-        admin: {
-          select: {
-            id: true,
-            name: true,
-            designation: true,
-            profile_img: true,
-          },
-        },
-        staff: {
-          select: {
-            id: true,
-            name: true,
-            designation: true,
-            profile_img: true,
-          },
-        },
-      },
-    })
-
-    if (!findSalary) {
-      return res.status(400).json({
-        message: 'Salary details not found',
-      })
-    }
-
-    // Format salary details
-    const {
-      admin,
-      teacher,
-      staff,
-      admin_id,
-      teacher_id,
-      staff_id,
-      salary_date,
-      ...rest
-    } = findSalary
-
-    let user_details = teacher || admin || staff
-
-    user_details = {
-      user_id: user_details.id,
-      name: user_details.name,
-      designation: user_details.designation.title,
-      profile_img:
-        (teacher
-          ? generateFileLink(`teachers/profiles/${teacher.profile_img}`)
-          : null) ||
-        (admin
-          ? generateFileLink(`admins/profiles/${admin.profile_img}`)
-          : null) ||
-        (staff
-          ? generateFileLink(`staffs/profiles/${staff.profile_img}`)
-          : null),
-    }
-
-    const formatSalary = {
-      ...rest,
-      salary_date: formatDate(salary_date),
-      ...user_details,
-    }
-
-    res.json(formatSalary)
-  })
-})
-
-/*
-  @route    POST: /salaries
-  @access   private
-  @desc     Create salary for admin/teacher/staff
-*/
-const createSalary = asyncHandler(async (req, res, next) => {
-  const data = await salaryValidator().validate(req.body, { abortEarly: false })
-
-  if (data.user_type === 'admin') {
-    await prisma.salaries.create({
-      data: {
-        user_type: data.user_type,
-        salary_amount: data.salary_amount,
-        salary_date: data.salary_date,
-        bonus: data.bonus,
-        advance: data.advance,
-        due: data.due,
-        payment_status: data.payment_status,
-        admin_id: data.user_id,
-      },
-    })
-
-    return res.json({
-      message: 'Salary created',
-    })
-  } else if (data.user_type === 'teacher') {
-    await prisma.salaries.create({
-      data: {
-        user_type: data.user_type,
-        salary_amount: data.salary_amount,
-        salary_date: data.salary_date,
-        bonus: data.bonus,
-        advance: data.advance,
-        due: data.due,
-        payment_status: data.payment_status,
-        teacher_id: data.user_id,
-      },
-    })
-
-    return res.json({
-      message: 'Salary created',
-    })
-  } else if (data.user_type !== 'teacher' || data.user_type !== 'admin') {
-    await prisma.salaries.create({
-      data: {
-        user_type: data.user_type,
-        salary_amount: data.salary_amount,
-        salary_date: data.salary_date,
-        bonus: data.bonus,
-        advance: data.advance,
-        due: data.due,
-        payment_status: data.payment_status,
-        staff_id: data.user_id,
-      },
-    })
-
-    return res.json({
-      message: 'Salary created',
-    })
-  }
-
-  res.status(400).json({
-    message: 'User type did not match',
-  })
-})
-
-/*
-  @route    PUT: /salaries
-  @access   private
-  @desc     Update salary for admin/teacher/staff
-*/
-const updateSalary = asyncHandler(async (req, res, next) => {
-  const id = Number(req.params.id)
-
-  const data = await salaryValidator().validate(req.body, { abortEarly: false })
-
-  if (data.user_type === 'admin') {
-    await prisma.salaries.update({
-      where: {
-        id,
-      },
-      data: {
-        user_type: data.user_type,
-        salary_amount: data.salary_amount,
-        salary_date: data.salary_date,
-        bonus: data.bonus,
-        advance: data.advance,
-        due: data.due,
-        payment_status: data.payment_status,
-        admin_id: data.user_id,
-      },
-    })
-
-    return res.json({
-      message: 'Salary updated',
-    })
-  } else if (data.user_type === 'teacher') {
-    await prisma.salaries.update({
-      where: {
-        id,
-      },
-      data: {
-        user_type: data.user_type,
-        salary_amount: data.salary_amount,
-        salary_date: data.salary_date,
-        bonus: data.bonus,
-        advance: data.advance,
-        due: data.due,
-        payment_status: data.payment_status,
-        teacher_id: data.user_id,
-      },
-    })
-
-    return res.json({
-      message: 'Salary updated',
-    })
-  } else if (data.user_type !== 'teacher' || data.user_type !== 'admin') {
-    await prisma.salaries.update({
-      where: {
-        id,
-      },
-      data: {
-        user_type: data.user_type,
-        salary_amount: data.salary_amount,
-        salary_date: data.salary_date,
-        bonus: data.bonus,
-        advance: data.advance,
-        due: data.due,
-        payment_status: data.payment_status,
-        staff_id: data.user_id,
-      },
-    })
-
-    return res.json({
-      message: 'Salary updated',
-    })
-  }
-
-  res.status(400).json({
-    message: 'User type did not match',
-  })
-})
-
-module.exports = {
-  getUserTypeWithInfo,
-  getSalaries,
-  getSalaryDetails,
-  createSalary,
-  updateSalary,
-}
+module.exports = { generateTeacherSalaryInvoice, teachersSalaryInvoice }

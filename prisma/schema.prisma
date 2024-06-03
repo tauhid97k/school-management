@@ -13,6 +13,11 @@ enum VerifyType {
   PASSWORD_RESET
 }
 
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
 enum genderType {
   MALE
   FEMALE
@@ -75,6 +80,11 @@ enum PaymentStatus {
   UNPAID
 }
 
+enum InvoiceType {
+  MANUAL
+  AUTOMATIC
+}
+
 enum paymentMethodStatus {
   ACTIVE
   INACTIVE
@@ -116,6 +126,7 @@ model admins {
   email_verified_at DateTime?
   phone_number      String?
   address           String?
+  salary            Float     @default(0)
   is_suspended      Boolean   @default(false)
   school_name       String    @unique
   school_address    String
@@ -125,7 +136,6 @@ model admins {
   user_roles          user_roles[]
   verification_tokens verification_tokens[]
   personal_tokens     personal_tokens[]
-  salaries            salaries[]
   todo_list           todo_list[]
 }
 
@@ -146,12 +156,13 @@ model staffs {
   joining_date      DateTime?
   phone_number      String
   address           String
-  salary            Int
+  salary            Float      @default(0)
   profile_img       String?
   cover_letter      String?    @db.Text
   education         Json?      @db.Json
   experience        Json?      @db.Json
   is_suspended      Boolean    @default(false)
+  status            Status     @default(INACTIVE)
   created_at        DateTime   @default(now())
   updated_at        DateTime   @updatedAt
 
@@ -161,7 +172,6 @@ model staffs {
   personal_tokens     personal_tokens[]
   verification_tokens verification_tokens[]
   user_roles          user_roles?
-  salaries            salaries[]
 }
 
 // Teacher
@@ -180,12 +190,13 @@ model teachers {
   joining_date      DateTime?
   phone_number      String
   address           String     @db.Text
-  salary            Int
+  salary            Float      @default(0)
   profile_img       String?
   cover_letter      String?    @db.Text
   education         Json       @db.Json
   experience        Json?      @db.Json
   is_suspended      Boolean    @default(false)
+  status            Status     @default(INACTIVE)
   created_at        DateTime   @default(now())
   updated_at        DateTime   @updatedAt
 
@@ -201,9 +212,9 @@ model teachers {
   teacher_subjects     teacher_subjects[]
   teacher_notices      teacher_notices[]
   teacher_applications teacher_applications[]
-  salaries             salaries[]
   routines             routines[]
   todo_list            todo_list[]
+  salaries             teacher_salaries[]
 }
 
 // Student
@@ -229,6 +240,7 @@ model students {
   profile_img       String?
   guardians         Json?      @db.Json
   is_suspended      Boolean    @default(false)
+  status            Status     @default(ACTIVE)
   created_at        DateTime   @default(now())
   updated_at        DateTime   @updatedAt
 
@@ -289,7 +301,7 @@ model verification_tokens {
 
   reachers teachers? @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   admins   admins?   @relation(fields: [admin_id], references: [id], onDelete: Cascade)
-  ttudents students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  students students? @relation(fields: [student_id], references: [id], onDelete: Cascade)
   staffs   staffs?   @relation(fields: [staff_id], references: [id], onDelete: Cascade)
 
   @@index([admin_id])
@@ -506,8 +518,6 @@ model teacher_subjects {
   @@index([teacher_id])
 }
 
-// Student Classes
-
 // Exam Categories
 model exam_categories {
   id         Int      @id @default(autoincrement())
@@ -644,30 +654,24 @@ model expenses {
 }
 
 // Salaries
-model salaries {
-  id             Int           @id @default(autoincrement())
-  user_type      String
-  teacher_id     Int?
-  admin_id       Int?
-  staff_id       Int?
-  salary_date    DateTime      @db.Date
-  salary_amount  Float
-  bonus          Float?        @default(0)
-  advance        Float?        @default(0)
-  due            Float?        @default(0)
-  payment_status PaymentStatus
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
+model teacher_salaries {
+  id           Int           @id @default(autoincrement())
+  teacher_id   Int
+  amount       Float
+  bonus        Float?
+  advance      Float?
+  due          Float?
+  status       PaymentStatus @default(UNPAID)
+  issued_at    DateTime      @default(now())
+  invoice_type InvoiceType
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
 
-  teacher teachers? @relation(fields: [teacher_id], references: [id])
-  admin   admins?   @relation(fields: [admin_id], references: [id])
-  staff   staffs?   @relation(fields: [staff_id], references: [id])
+  teacher teachers @relation(fields: [teacher_id], references: [id])
 
   @@index([teacher_id])
-  @@index([admin_id])
-  @@index([staff_id])
-  @@index([user_type])
-  @@index([salary_date])
+  @@index([issued_at])
+  @@index([status])
 }
 
 // Student Fees
