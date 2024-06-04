@@ -10,10 +10,14 @@ const {
 } = require("../controllers/salaryController")
 
 // Protected Routes
-router.get("/teachers", getTeachersForSalary)
-router.get("/teachers/:id", getTeacherDetailsForSalary)
-router.get("/generate-teachers-invoice", generateTeacherSalaryInvoice)
-router.get("/teachers-invoice", teachersSalaryInvoice)
-router.post("/teachers-invoice", createTeacherSalaryInvoice)
+router.get("/teachers", authMiddleware(), getTeachersForSalary)
+router.get("/teachers/:id", authMiddleware(), getTeacherDetailsForSalary)
+router.get(
+  "/generate-teachers-invoice",
+  authMiddleware(),
+  generateTeacherSalaryInvoice
+)
+router.get("/teachers-invoice", authMiddleware(), teachersSalaryInvoice)
+router.post("/teachers-invoice", authMiddleware(), createTeacherSalaryInvoice)
 
 module.exports = router
