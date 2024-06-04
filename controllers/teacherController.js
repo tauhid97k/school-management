@@ -1,21 +1,21 @@
-const prisma = require('../utils/prisma')
-const asyncHandler = require('express-async-handler')
+const prisma = require("../utils/prisma")
+const asyncHandler = require("express-async-handler")
 const {
   selectQueries,
   commonFields,
   paginateWithSorting,
-} = require('../utils/metaData')
-const bcrypt = require('bcrypt')
+} = require("../utils/metaData")
+const bcrypt = require("bcrypt")
 const {
   teacherValidator,
   teacherProfileImageValidator,
-} = require('../validators/teacherValidator')
-const dayjs = require('dayjs')
-const { formatDate } = require('../utils/transformData')
-const { v4: uuidV4 } = require('uuid')
-const generateFileLink = require('../utils/generateFileLink')
-const fs = require('node:fs/promises')
-const assignRole = require('../utils/assignRole')
+} = require("../validators/teacherValidator")
+const dayjs = require("dayjs")
+const { formatDate } = require("../utils/transformData")
+const { v4: uuidV4 } = require("uuid")
+const generateFileLink = require("../utils/generateFileLink")
+const fs = require("node:fs/promises")
+const assignRole = require("../utils/assignRole")
 
 /*
   @route    GET: /teachers/:id/classes
@@ -33,7 +33,7 @@ const getClassesForTeacher = asyncHandler(async (req, res, next) => {
     })
 
     if (!findTeacher) {
-      return res.status(404).json({ message: 'No teacher found' })
+      return res.status(404).json({ message: "No teacher found" })
     }
 
     // Get Classes for this teacher
@@ -67,7 +67,7 @@ const getSubjectsForTeacher = asyncHandler(async (req, res, next) => {
     })
 
     if (!findTeacher) {
-      return res.status(404).json({ message: 'No teacher found' })
+      return res.status(404).json({ message: "No teacher found" })
     }
 
     // Get Subjects for this teacher
@@ -103,7 +103,7 @@ const getTeacherSalaries = asyncHandler(async (req, res, next) => {
 
   if (!findTeacher) {
     return res.status(400).json({
-      message: 'Teacher not found',
+      message: "Teacher not found",
     })
   }
 
@@ -257,7 +257,7 @@ const getTeacher = asyncHandler(async (req, res, next) => {
 
   if (!findTeacher)
     return res.status(404).json({
-      message: 'No teacher found',
+      message: "No teacher found",
     })
 
   // Format Data
@@ -361,7 +361,7 @@ const createTeacher = asyncHandler(async (req, res, next) => {
       profile_img.mv(uploadPath, (error) => {
         if (error)
           return res.status(500).json({
-            message: 'Error saving Profile image',
+            message: "Error saving Profile image",
           })
       })
 
@@ -415,10 +415,10 @@ const createTeacher = asyncHandler(async (req, res, next) => {
       },
     })
 
-    await assignRole(teacher.id, 'teacher', tx)
+    await assignRole(teacher.id, "teacher", tx)
 
     res.json({
-      message: 'Teacher added',
+      message: "Teacher added",
     })
   })
 })
@@ -449,7 +449,7 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
 
     if (!findTeacher)
       return res.status(404).json({
-        message: 'No teacher found',
+        message: "No teacher found",
       })
 
     // Delete Previous records (Classes)
@@ -485,12 +485,12 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
       if (findTeacher.profile_img) {
         try {
           const photoDir = `uploads/teachers/profiles/${
-            findTeacher.profile_img.split('/')[0]
+            findTeacher.profile_img.split("/")[0]
           }`
           await fs.rm(photoDir, { recursive: true })
         } catch (error) {
           return res.json({
-            message: 'Error deleting previous profile image',
+            message: "Error deleting previous profile image",
           })
         }
       }
@@ -503,7 +503,7 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
       profile_img.mv(uploadPath, (error) => {
         if (error)
           return res.status(500).json({
-            message: 'Error saving Profile image',
+            message: "Error saving Profile image",
           })
       })
 
@@ -558,9 +558,9 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
       },
     })
 
-    await assignRole(teacher.id, 'teacher', tx)
+    await assignRole(teacher.id, "teacher", tx)
 
-    res.json({ message: 'Teacher updated successfully' })
+    res.json({ message: "Teacher updated successfully" })
   })
 })
 
@@ -581,19 +581,19 @@ const deleteTeacher = asyncHandler(async (req, res, next) => {
 
     if (!findTeacher)
       return res.status(404).json({
-        message: 'No teacher found',
+        message: "No teacher found",
       })
 
     // Delete Profile Image
     if (findTeacher.profile_img) {
       try {
         const photoDir = `uploads/teachers/profiles/${
-          findTeacher.profile_img.split('/')[0]
+          findTeacher.profile_img.split("/")[0]
         }`
         await fs.rm(photoDir, { recursive: true })
       } catch (error) {
         return res.json({
-          message: 'Error deleting profile image',
+          message: "Error deleting profile image",
         })
       }
     }
@@ -602,7 +602,7 @@ const deleteTeacher = asyncHandler(async (req, res, next) => {
       where: { id },
     })
 
-    res.json({ message: 'Teacher deleted' })
+    res.json({ message: "Teacher deleted" })
   })
 })
 
