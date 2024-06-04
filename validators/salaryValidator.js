@@ -1,19 +1,21 @@
 const yup = require("yup")
 const prisma = require("../utils/prisma")
 
-const salaryValidator = (id) =>
+const teacherSalaryValidator = (id) =>
   yup.object({
-    user_type: yup
-      .string()
-      .required("User type is required")
-      .test("exist", "User type does not exist", async (value) => {
-        const findUserRole = await prisma.roles.findUnique({
+    teacher_id: yup
+      .number()
+      .typeError("Teacher id must be a number")
+      .required("Teacher id is required")
+      .test("exist", "Teacher id does not exist", async (value) => {
+        const teacher = await prisma.teachers.findUnique({
           where: {
-            name: value,
+            id: value,
           },
         })
 
-        return findUserRole ? true : false
+        if (teacher) return true
+        else return false
       }),
     amount: yup
       .number()
@@ -28,14 +30,7 @@ const salaryValidator = (id) =>
       .number()
       .nullable()
       .transform((_, val) => (val !== "" ? Number(val) : null)),
-    due: yup
-      .number()
-      .nullable()
-      .transform((_, val) => (val !== "" ? Number(val) : null)),
-    status: yup
-      .string()
-      .required("Payment status is required")
-      .oneOf(["PAID", "UNPAID"]),
+    status: yup.string().required("Payment status is required").oneOf(["PAID"]),
   })
 
-module.exports = { salaryValidator }
+module.exports = { teacherSalaryValidator }
