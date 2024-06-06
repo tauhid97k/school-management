@@ -61,8 +61,8 @@ const getTeacherDetailsForSalary = asyncHandler(async (req, res, next) => {
       name: findTeacher.name,
       designation: findTeacher.designation.title,
       salary: findTeacher.salary,
-      profile_img: teacher.profile_img
-        ? generateFileLink(`teachers/profiles/${teacher.profile_img}`)
+      profile_img: findTeacher.profile_img
+        ? generateFileLink(`teachers/profiles/${findTeacher.profile_img}`)
         : null,
       joining_date: findTeacher.joining_date,
     }
