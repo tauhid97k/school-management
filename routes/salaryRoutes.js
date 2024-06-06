@@ -7,9 +7,11 @@ const {
   generateTeacherSalaryInvoice,
   teachersSalaryInvoice,
   createTeacherSalaryInvoice,
+  generateSalaryInvoice,
 } = require("../controllers/salaryController")
 
 // Protected Routes
+router.post("/generate", authMiddleware(), generateSalaryInvoice)
 router.get("/teachers/:id", authMiddleware(), getTeacherDetailsForSalary)
 router.get("/teachers", authMiddleware(), getTeachersForSalary)
 router.get(

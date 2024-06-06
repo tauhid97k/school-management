@@ -5,7 +5,10 @@ const {
   paginateWithSorting,
   salaryFields,
 } = require("../utils/metaData")
-const { teacherSalaryValidator } = require("../validators/salaryValidator")
+const {
+  teacherSalaryValidator,
+  generateSalaryValidator,
+} = require("../validators/salaryValidator")
 const dayjs = require("dayjs")
 const generateFileLink = require("../utils/generateFileLink")
 
@@ -166,6 +169,25 @@ const generateTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
 })
 
 /*
+  @route    POST: /salaries/generate
+  @access   private
+  @desc     Generate teacher's or staffs's salary
+*/
+const generateSalaryInvoice = asyncHandler(async (req, res, next) => {
+  const data = await generateSalaryValidator().validate(req.body, {
+    abortEarly: false,
+  })
+
+  if (data.type === "teachers") {
+    generateTeacherSalaryInvoice()
+  } else {
+    res.status(501).json({ message: "Not implemented yet" })
+  }
+
+  res.json({ message: `Salary Invoice generated for ${data.type}` })
+})
+
+/*
   @route    GET: /salaries/teachers-invoice
   @access   private
   @desc     GET current month's salary invoices
@@ -319,6 +341,7 @@ const createTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
 })
 
 module.exports = {
+  generateSalaryInvoice,
   getTeachersForSalary,
   getTeacherDetailsForSalary,
   generateTeacherSalaryInvoice,

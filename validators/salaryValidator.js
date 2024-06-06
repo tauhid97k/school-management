@@ -36,4 +36,12 @@ const teacherSalaryValidator = (id) =>
     status: yup.string().required("Payment status is required").oneOf(["PAID"]),
   })
 
-module.exports = { teacherSalaryValidator }
+const generateSalaryValidator = (id) =>
+  yup.object({
+    type: yup
+      .string()
+      .required("Type is required")
+      .oneOf(["teachers", "staffs"]),
+  })
+
+module.exports = { teacherSalaryValidator, generateSalaryValidator }
