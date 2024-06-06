@@ -21,15 +21,18 @@ const teacherSalaryValidator = (id) =>
       .number()
       .integer()
       .typeError("Amount must be a valid number")
-      .required("Amount is required"),
+      .required("Amount is required")
+      .min(1, "Invalid minimum amount"),
     bonus: yup
       .number()
       .nullable()
-      .transform((_, val) => (val !== "" ? Number(val) : null)),
+      .transform((_, val) => (val !== "" ? Number(val) : null))
+      .min(1, "Invalid minimum amount"),
     advance: yup
       .number()
       .nullable()
-      .transform((_, val) => (val !== "" ? Number(val) : null)),
+      .transform((_, val) => (val !== "" ? Number(val) : null))
+      .min(1, "Invalid minimum amount"),
     status: yup.string().required("Payment status is required").oneOf(["PAID"]),
   })
 
