@@ -235,6 +235,11 @@ const teachersSalaryInvoice = asyncHandler(async (req, res, next) => {
   })
 })
 
+/*
+  @route    POST: /salaries/teachers-invoice
+  @access   private
+  @desc     Create custom invoice for a teacher
+*/
 const createTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
   const data = await teacherSalaryValidator().validate(req.body, {
     abortEarly: false,
@@ -267,6 +272,13 @@ const createTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
     let advance
     const previousInvoice = teacherSalaryAndInvoice.salaries[0]
 
+    // Check if salary amount is greater
+    if (data.amount > salary) {
+      return res.status(400).json({
+        message: "Amount cannot exceed base salary",
+      })
+    }
+
     // Check due
     if (data.amount < salary) {
       due = salary - data.amount
@@ -288,7 +300,7 @@ const createTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
     }
 
     const invoiceInput = {
-      teacher_id: teacher.id,
+      teacher_id: teacherSalaryAndInvoice.id,
       amount: salary,
       advance: advance || null,
       due: due || null,
