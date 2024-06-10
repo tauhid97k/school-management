@@ -1,16 +1,16 @@
-const asyncHandler = require("express-async-handler")
-const prisma = require("../utils/prisma")
+const asyncHandler = require('express-async-handler')
+const prisma = require('../utils/prisma')
 const {
   selectQueries,
   paginateWithSorting,
   salaryFields,
-} = require("../utils/metaData")
+} = require('../utils/metaData')
 const {
   teacherSalaryValidator,
   generateSalaryValidator,
-} = require("../validators/salaryValidator")
-const dayjs = require("dayjs")
-const generateFileLink = require("../utils/generateFileLink")
+} = require('../validators/salaryValidator')
+const dayjs = require('dayjs')
+const generateFileLink = require('../utils/generateFileLink')
 
 /*
   @route    GET: /salaries/teachers
@@ -56,7 +56,7 @@ const getTeacherDetailsForSalary = asyncHandler(async (req, res, next) => {
     })
 
     if (!findTeacher) {
-      return res.status(404).json({ message: "No teacher found" })
+      return res.status(404).json({ message: 'No teacher found' })
     }
 
     const formatTeacher = {
@@ -80,8 +80,8 @@ const getTeacherDetailsForSalary = asyncHandler(async (req, res, next) => {
   @desc     Generate teacher salary invoice
 */
 const generateTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
-  const bangladeshDate = new Date().toLocaleString("en-US", {
-    timeZone: "Asia/Dhaka",
+  const bangladeshDate = new Date().toLocaleString('en-US', {
+    timeZone: 'Asia/Dhaka',
   })
 
   // Current Date (BD)
@@ -98,7 +98,7 @@ const generateTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
     where: {
       AND: [
         { issued_at: { gte: firstDay, lte: lastDayOfMonth } },
-        { invoice_type: "AUTOMATIC" },
+        { invoice_type: 'AUTOMATIC' },
       ],
     },
   })
@@ -106,7 +106,7 @@ const generateTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
   if (generatedInvoiceExist) {
     // Get the generated invoice month & year
     const monthAndYear = dayjs(generatedInvoiceExist.issued_at).format(
-      "MMM-YYYY"
+      'MMM-YYYY'
     )
 
     return res.status(400).json({
@@ -116,7 +116,7 @@ const generateTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
 
   const teachers = await prisma.teachers.findMany({
     where: {
-      status: "ACTIVE",
+      status: 'ACTIVE',
     },
     select: {
       id: true,
@@ -127,7 +127,7 @@ const generateTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
           advance: true,
         },
         orderBy: {
-          issued_at: "desc",
+          issued_at: 'desc',
         },
         take: 1,
       },
@@ -154,7 +154,7 @@ const generateTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
       amount: newAmount,
       advance: previousInvoice?.advance || null,
       due: previousInvoice?.due || null,
-      invoice_type: "AUTOMATIC",
+      invoice_type: 'AUTOMATIC',
     }
   })
 
@@ -164,27 +164,8 @@ const generateTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
   })
 
   res.json({
-    message: "Teacher salary invoices generated",
+    message: 'Teacher salary invoices generated',
   })
-})
-
-/*
-  @route    POST: /salaries/generate
-  @access   private
-  @desc     Generate teacher's or staffs's salary
-*/
-const generateSalaryInvoice = asyncHandler(async (req, res, next) => {
-  const data = await generateSalaryValidator().validate(req.body, {
-    abortEarly: false,
-  })
-
-  if (data.type === "teachers") {
-    generateTeacherSalaryInvoice()
-  } else {
-    res.status(501).json({ message: "Not implemented yet" })
-  }
-
-  res.json({ message: `Salary Invoice generated for ${data.type}` })
 })
 
 /*
@@ -282,7 +263,7 @@ const createTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
             advance: true,
           },
           orderBy: {
-            issued_at: "desc",
+            issued_at: 'desc',
           },
           take: 1,
         },
@@ -297,7 +278,7 @@ const createTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
     // Check if salary amount is greater
     if (data.amount > salary) {
       return res.status(400).json({
-        message: "Amount cannot exceed base salary",
+        message: 'Amount cannot exceed base salary',
       })
     }
 
@@ -326,7 +307,7 @@ const createTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
       amount: salary,
       advance: advance || null,
       due: due || null,
-      invoice_type: "MANUAL",
+      invoice_type: 'MANUAL',
     }
 
     // Create Invoice
@@ -335,13 +316,12 @@ const createTeacherSalaryInvoice = asyncHandler(async (req, res, next) => {
     })
 
     res.json({
-      message: "Teacher salary invoice created",
+      message: 'Teacher salary invoice created',
     })
   })
 })
 
 module.exports = {
-  generateSalaryInvoice,
   getTeachersForSalary,
   getTeacherDetailsForSalary,
   generateTeacherSalaryInvoice,
