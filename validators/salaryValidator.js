@@ -33,7 +33,10 @@ const teacherSalaryValidator = (id) =>
       .nullable()
       .transform((_, val) => (val !== '' ? Number(val) : null))
       .min(1, 'Invalid minimum amount'),
-    status: yup.string().required('Payment status is required').oneOf(['PAID']),
+    status: yup
+      .string()
+      .required('Payment status is required')
+      .oneOf(['PAID', 'UNPAID']),
   })
 
 const staffSalaryValidator = (id) =>
@@ -68,6 +71,9 @@ const staffSalaryValidator = (id) =>
       .nullable()
       .transform((_, val) => (val !== '' ? Number(val) : null))
       .min(1, 'Invalid minimum amount'),
-    status: yup.string().required('Payment status is required').oneOf(['PAID']),
+    status: yup
+      .string()
+      .required('Payment status is required')
+      .oneOf(['PAID', 'UNPAID']),
   })
 module.exports = { teacherSalaryValidator, staffSalaryValidator }

@@ -574,7 +574,7 @@ const createStaffSalaryInvoice = asyncHandler(async (req, res, next) => {
   await prisma.$transaction(async () => {
     const staffSalaryAndInvoice = await prisma.staffs.findFirst({
       where: {
-        id: Number(data.teacher_id),
+        id: Number(data.staff_id),
       },
       select: {
         id: true,
