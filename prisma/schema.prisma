@@ -172,6 +172,7 @@ model staffs {
   personal_tokens     personal_tokens[]
   verification_tokens verification_tokens[]
   user_roles          user_roles?
+  salaries            staff_salaries[]
 }
 
 // Teacher
@@ -653,7 +654,7 @@ model expenses {
   expense_category expense_categories @relation(fields: [expense_category_id], references: [id], onDelete: Cascade)
 }
 
-// Salaries
+// Teacher Salaries
 model teacher_salaries {
   id           Int           @id @default(autoincrement())
   teacher_id   Int
@@ -670,6 +671,27 @@ model teacher_salaries {
   teacher teachers @relation(fields: [teacher_id], references: [id])
 
   @@index([teacher_id])
+  @@index([issued_at])
+  @@index([status])
+}
+
+// Staff Salaries
+model staff_salaries {
+  id           Int           @id @default(autoincrement())
+  staff_id     Int
+  amount       Float
+  bonus        Float?
+  advance      Float?
+  due          Float?
+  status       PaymentStatus @default(UNPAID)
+  issued_at    DateTime      @default(now())
+  invoice_type InvoiceType
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+
+  staff staffs @relation(fields: [staff_id], references: [id])
+
+  @@index([staff_id])
   @@index([issued_at])
   @@index([status])
 }
