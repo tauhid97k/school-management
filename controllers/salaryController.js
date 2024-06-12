@@ -55,6 +55,8 @@ const getTeacherDetailsForSalary = asyncHandler(async (req, res, next) => {
         salaries: {
           select: {
             due: true,
+            advance: true,
+            issued_at: true,
           },
           orderBy: {
             issued_at: 'desc',
@@ -68,6 +70,21 @@ const getTeacherDetailsForSalary = asyncHandler(async (req, res, next) => {
       return res.status(404).json({ message: 'No teacher found' })
     }
 
+    let payable_salary
+    let lastAdvance
+
+    if (findTeacher.salaries[0].advance) {
+      lastAdvance = findTeacher.salaries[0].advance
+    }
+
+    const finalSalary = lastAdvance
+      ? findTeacher.salary - lastAdvance
+      : findTeacher.salary
+
+    if (findTeacher.salaries[0].due) {
+      payable_salary = finalSalary + findTeacher.salaries[0].due
+    }
+
     const formatTeacher = {
       id: findTeacher.id,
       name: findTeacher.name,
@@ -77,9 +94,8 @@ const getTeacherDetailsForSalary = asyncHandler(async (req, res, next) => {
         ? generateFileLink(`teachers/profiles/${findTeacher.profile_img}`)
         : null,
       due: findTeacher.salaries[0].due ?? 0,
-      payable_salary: findTeacher.salaries[0].due
-        ? findTeacher.salaries[0].due + findTeacher.salary
-        : findTeacher.salary,
+      payable_salary,
+      advance: lastAdvance,
       joining_date: findTeacher.joining_date,
     }
 
