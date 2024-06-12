@@ -52,6 +52,15 @@ const getTeacherDetailsForSalary = asyncHandler(async (req, res, next) => {
         profile_img: true,
         salary: true,
         joining_date: true,
+        salaries: {
+          select: {
+            due: true,
+          },
+          orderBy: {
+            issued_at: 'desc',
+          },
+          take: 1,
+        },
       },
     })
 
@@ -67,6 +76,10 @@ const getTeacherDetailsForSalary = asyncHandler(async (req, res, next) => {
       profile_img: findTeacher.profile_img
         ? generateFileLink(`teachers/profiles/${findTeacher.profile_img}`)
         : null,
+      due: findTeacher.salaries[0].due ?? 0,
+      payable_salary: findTeacher.salaries[0].due
+        ? findTeacher.salaries[0].due + findTeacher.salary
+        : findTeacher.salary,
       joining_date: findTeacher.joining_date,
     }
 
